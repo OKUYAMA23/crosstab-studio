@@ -324,3 +324,5 @@ body.md-moving, body.md-moving * { cursor: move !important; user-select: none; }
 .md-tbox:hover .md-th-se, .md-touch .md-th-se { opacity: 1; }
 .md-th-e:hover, .md-th-s:hover { background: rgba(33,115,70,.25); }
 .md-tables { overflow-x: auto; padding-bottom: 8px; } .md-tbox { margin-right: 10px; }
+.md-welcome { margin-bottom: 10px; } .md-welcome-h { font-size: 26px; font-weight: 700; color: var(--accent-d, #1E5C3A); margin: 2px 0 8px; }
+.md-welcome p { margin: 6px 0; line-height: 1.6; } .md-welcome-v { color: var(--ink-sub); font-size: 12px; }
