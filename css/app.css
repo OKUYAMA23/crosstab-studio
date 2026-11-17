@@ -46,7 +46,7 @@ button, input, select, textarea { font-family: inherit; font-size: 13px; color: 
 .md-palbtn .md-pal i:first-child { border-left: 1px solid #8FA89A; } .md-palbtn .md-pal i:last-child { border-right: 1px solid #8FA89A; }
 .md-main { flex: 1; display: flex; min-height: 0; }
 .md-center { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-.md-view { flex: 1; position: relative; min-height: 0; overflow: auto; background: var(--ground); }
+.md-view { flex: 1; position: relative; min-height: 0; overflow: auto; overflow-anchor: none; background: var(--ground); }
 .md-sheets { flex: none; height: 28px; display: flex; align-items: stretch; background: #EAF3EE; border-top: 1px solid var(--rule); padding-left: 6px; overflow: hidden; }
 .md-sheet { border: 0; border-right: 1px solid var(--rule); background: transparent; padding: 0 10px; font-size: 13px; color: var(--ink-ui); cursor: pointer; white-space: nowrap; max-width: 150px; overflow: hidden; text-overflow: ellipsis; display: inline-flex; align-items: center; gap: 4px; flex: 0 1 auto; min-width: 44px; }
 .md-sheet:hover { background: var(--hover); }
