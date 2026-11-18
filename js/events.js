@@ -270,7 +270,7 @@
   var act = {
     closeModal: closeModal,
     openCsv: async function () { var f = await A.pickFile('.csv,.tsv,.txt,.xlsx,.xlsm,.xls'); if (f) A.handleFile(f); },
-    replaceCsv: async function () { var f = await A.pickFile('.csv,.tsv,.txt,.xlsx,.xlsm,.xls'); if (!f) return; try { var r = await A.xlsxIn(new Uint8Array(await f.arrayBuffer()), f.name); await A.loadCsv(r.buf, r.name, true); } catch (e) { A.toast(e.message, true); } },
+    replaceCsv: async function () { var f = await A.pickFile('.csv,.tsv,.txt,.xlsx,.xlsm,.xls'); if (!f) return; try { var r = await A.xlsxIn(new Uint8Array(await f.arrayBuffer()), f.name); await A.loadCsv(r.buf, r.name, true); if (S.P.srcUrl) { S.P.srcUrl = null; A.render(); } } catch (e) { A.toast(e.message, true); } },
     openProject: projectDialog,
     openProjName: function (arg) { A.openProjectByName(arg); },
     save: async function () { if (!S.data) return; if (S.projName) { await A.saveProjectAs(S.projName); refreshProjects(); } else act.saveAs(); },
@@ -454,6 +454,28 @@
       };
     },
     // 尺度得点：複数の項目の平均点・合計点を、新しい列として作る
+    openUrl: function () {
+      var cur = S.P.srcUrl || '';
+      modal('Google スプレッドシートから読み込む',
+        '<label class="md-field">回答のスプレッドシートの URL<input type="text" id="md_url" value="' + esc(cur) + '" placeholder="https://docs.google.com/spreadsheets/d/…"></label>' +
+        '<p class="md-hint" style="margin:8px 0 4px">Google フォームの「回答」タブ →「スプレッドシートにリンク」で開いたスプレッドシートの URL を貼ります。読み込むには、次のどちらかが必要です。</p>' +
+        '<ul class="md-hint" style="margin:0;padding-left:1.4em"><li>共有を「リンクを知っている全員（閲覧者）」にする</li><li>「ファイル → 共有 → ウェブに公開」で、シートと CSV を選んで公開し、その URL を使う</li></ul>' +
+        '<p class="md-hint" style="margin:8px 0 0;color:#C00000">どちらも、URL を知っている人なら誰でも回答を見られる状態になります。個人を特定できる回答（氏名・メールアドレスなど）を含むときは、この方法を使わず、CSV をダウンロードして入れてください。</p>' +
+        '<p class="md-hint" style="margin:6px 0 0">URL はプロジェクトに残すので、あとで「最新に更新」を押すだけで、増えた回答を読み込み直せます（解析の設定は残ります）。</p>',
+        '<button class="md-btn" data-act="closeModal">やめる</button><button class="md-btn md-btn-primary" id="md_url_go">読み込む</button>', 560);
+      $('#md_url_go').onclick = async function () {
+        var u = $('#md_url').value.trim(); if (!u) { A.toast('URL を入れてください。', true); return; }
+        try { A.sheetCsvUrl(u); } catch (e) { A.toast(e.message, true); return; }
+        closeModal();
+        var keep = !!(S.data && S.P.tabs.length) && confirm('解析を残したまま、このスプレッドシートの回答に差し替えますか。\n（「キャンセル」で新しく始めます）');
+        try { await A.loadUrl(u, keep); A.toast('スプレッドシートから回答を読み込みました（' + S.data.nrow + ' 件）。'); } catch (e) { A.toast(e.message, true); }
+      };
+    },
+    refreshUrl: async function () {
+      if (!S.P.srcUrl) { A.toast('URL から読み込んだデータではありません。', true); return; }
+      var n0 = S.data ? S.data.nrow : 0;
+      try { await A.loadUrl(S.P.srcUrl, true); A.toast('最新の回答に更新しました（' + S.data.nrow + ' 件。前回より ' + (S.data.nrow - n0 >= 0 ? '+' : '') + (S.data.nrow - n0) + ' 件）。'); } catch (e) { A.toast(e.message, true); }
+    },
     scoreNew: function () { scoreDialog(null); },
     guide: function () { guideDialog(); },
     scoreEdit: function (arg) { scoreDialog(+arg); },
@@ -561,6 +583,7 @@
       h('データの扱い') +
       '<ul style="margin:0;padding-left:1.4em">' +
       '<li>読み込んだデータと結果は、' + (web ? 'この端末の中' : 'このパソコンの中') + 'だけで扱い、外部に送信しません。AI のサービスにもつないでいません。</li>' +
+      '<li>Google スプレッドシートの URL から読み込むときは、そのスプレッドシートから回答を受け取るだけで、こちらから何かを送ることはありません。読み込むには、スプレッドシートを「リンクを知っている全員」に共有するか、ウェブに公開する必要があります。</li>' +
       '<li>Excel ファイル（.xlsx）は、1 枚目のシートを CSV と同じ形の表に直して読み込みます。日付は「年/月/日 時:分:秒」の文字にします。プロジェクトには、直した表（CSV）を保存します。</li>' +
       '<li>プロジェクトは' + (web ? 'この端末（ブラウザの中）に保存します。ブラウザのデータを消すと消えるので、大事なものは「ファイルに書き出す」で .prj ファイルにも保存してください。' : 'この端末（ブラウザの中）に保存します。') + '</li>' +
       '</ul>' +

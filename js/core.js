@@ -388,6 +388,41 @@
     if (r.nSheets > 1) toast('シートが ' + r.nSheets + ' 枚あります。1 枚目の「' + r.sheet + '」を読み込みます。ほかのシートを使うときは、そのシートを 1 枚目にして保存し直してください。');
     return { buf: r.bytes, name: name.replace(/\.(xlsx|xlsm|xls)$/i, '') + '.csv' };
   }
+  // Google スプレッドシート（フォームの回答先）の URL を、CSV を取り出す URL に直す
+  function sheetCsvUrl(s) {
+    s = String(s || '').trim(); var m;
+    if (!/^https?:\/\//i.test(s)) throw new Error('URL（https:// で始まるもの）を入れてください。');
+    if (/docs\.google\.com\/forms\//i.test(s)) throw new Error('これは Google フォームの URL です。フォームの「回答」タブの「スプレッドシートにリンク」で開いたスプレッドシートの URL を入れてください。');
+    if ((m = /docs\.google\.com\/spreadsheets\/d\/e\/([^/?#]+)/i.exec(s))) {          // 「ウェブに公開」の URL
+      var g = /[?&#]gid=(\d+)/.exec(s);
+      return 'https://docs.google.com/spreadsheets/d/e/' + m[1] + '/pub?output=csv' + (g ? '&single=true&gid=' + g[1] : '');
+    }
+    if ((m = /docs\.google\.com\/spreadsheets\/d\/([^/?#]+)/i.exec(s))) {             // 共有のリンク（編集画面の URL）
+      var g2 = /[?&#]gid=(\d+)/.exec(s);
+      return 'https://docs.google.com/spreadsheets/d/' + m[1] + '/export?format=csv' + (g2 ? '&gid=' + g2[1] : '');
+    }
+    return s;                                                                    // CSV を直接返す URL
+  }
+  var URL_HELP = 'スプレッドシートの共有を「リンクを知っている全員（閲覧者）」にするか、「ファイル → 共有 → ウェブに公開」で CSV を選んで作った URL を使ってください。';
+  async function fetchSheet(url) {
+    var u = sheetCsvUrl(url), r;
+    try { r = await fetch(u, { credentials: 'omit', cache: 'no-store', redirect: 'follow' }); }
+    catch (e) { throw new Error('スプレッドシートを読み込めませんでした。共有されていないか、通信できません。' + URL_HELP); }
+    if (!r.ok) throw new Error('スプレッドシートを読み込めませんでした（' + r.status + '）。' + URL_HELP);
+    var buf = new Uint8Array(await r.arrayBuffer()), head = new TextDecoder().decode(buf.subarray(0, 300)).toLowerCase();
+    if (/<!doctype html|<html/.test(head)) throw new Error('CSV ではなく、ログインなどの画面が返ってきました。' + URL_HELP);
+    return buf;
+  }
+  // URL から読み込む。keepTabs のときは解析を残して差し替える（最新の回答に更新）
+  async function loadUrl(url, keepTabs) {
+    busy(true, 'スプレッドシートから回答を読み込んでいます');
+    try {
+      var buf = await fetchSheet(url), d = new Date(), name = 'Google スプレッドシートの回答_' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') + '.csv';
+      busy(false);
+      await loadCsv(buf, name, keepTabs);
+      S.P.srcUrl = String(url).trim(); markDirty(); App.render();
+    } finally { busy(false); }
+  }
   async function handleFile(file) {
     try {
       var buf = new Uint8Array(await file.arrayBuffer()), name = file.name;
@@ -400,7 +435,7 @@
   }
 
   window.App = window.App || {};
-  Object.assign(window.App, { xlsxIn: xlsxIn, compVars: compVars, compDefs: compDefs, errLog: errLog, clearErrLog: clearErrLog, logErr: logErr, S: S, MAX_TABS: MAX_TABS, TYPE_NAMES: TYPE_NAMES, $: $, esc: esc, clone: clone, toast: toast, busy: busy, api: api, apiData: apiData, zip: zip, safeName: safeName,
+  Object.assign(window.App, { loadUrl: loadUrl, sheetCsvUrl: sheetCsvUrl, xlsxIn: xlsxIn, compVars: compVars, compDefs: compDefs, errLog: errLog, clearErrLog: clearErrLog, logErr: logErr, S: S, MAX_TABS: MAX_TABS, TYPE_NAMES: TYPE_NAMES, $: $, esc: esc, clone: clone, toast: toast, busy: busy, api: api, apiData: apiData, zip: zip, safeName: safeName,
     v: v, def: def, tabById: tabById, slotCols: slotCols, sameChoices: sameChoices, setItems: setItems, defaultCatsMany: defaultCatsMany, curTab: curTab, curFig: curFig, isCat: isCat, defaultCats: defaultCats, setSlot: setSlot, autoName: autoName, newTab: newTab, newFig: newFig, tabReady: tabReady,
     buildReq: buildReq, markDirty: markDirty, schedule: schedule, scheduleAll: scheduleAll, syncResults: syncResults, commit: commit, undo: undo, redo: redo, fixSel: fixSel, tableDefaults: tableDefaults,
     pickFile: pickFile, saveBlob: saveBlob, baseName: baseName, loadCsv: loadCsv, handleFile: handleFile, newProject: newProject,

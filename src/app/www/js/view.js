@@ -291,7 +291,9 @@
     h.home = gFile + gEdit + rbGroup('解析', bNew, sEditAn, sOrder, sFold) + rbGroup('書き出し', bExport);
     var sv = S.ui.selVar !== null ? A.v(S.ui.selVar) : null;
     h.data = rbGroup('取り込み', rbLarge({ act: 'openCsv', name: 'CSV を開く', ic: 'csv', tip: '回答の CSV ファイル、または Excel ファイル（.xlsx。1 枚目のシート）を選んで読み込みます（Ctrl+O）。' }),
-      rbLarge({ act: 'replaceCsv', name: '差し替え', ic: 'refresh', tip: '回答が増えた新しい CSV（または Excel ファイル）に差し替えます。同じ質問の列には、解析の設定を引き継ぎます。', off: !has })) +
+      rbLarge({ act: 'replaceCsv', name: '差し替え', ic: 'refresh', tip: '回答が増えた新しい CSV（または Excel ファイル）に差し替えます。同じ質問の列には、解析の設定を引き継ぎます。', off: !has }),
+      rbStack(rbSmall({ act: 'openUrl', name: 'URL から', ic: 'link', tip: 'Google フォームの回答のスプレッドシートを、URL から読み込みます（共有の設定が必要です）。' }),
+        rbSmall({ act: 'refreshUrl', name: '最新に更新', ic: 'refresh', tip: 'URL から読み込んだスプレッドシートを読み込み直し、増えた回答を反映します。解析の設定は残ります。', off: !(has && S.P.srcUrl) }))) +
       rbGroup('尺度', rbLarge({ act: 'scoreNew', name: '尺度得点を作る', ic: 'add', tip: '複数の項目（順序のある質問）の平均点・合計点を、新しい列として作ります。t 検定や相関などで使えます。', off: !has })) +
       rbGroup('表示', rbRadio('ui.dataView', 'vars', '質問の一覧', 'vars', '列（質問）ごとの種類と回答数を表示します。', !has, true), rbRadio('ui.dataView', 'raw', '回答の一覧', 'data', '回答そのものを表で表示します。', !has, true)) +
       rbGroup('選んだ列', rbStack('<label class="md-rfield" data-tip="選んだ列の種類を変えます。自動の判定が合わないときに直します。">種類<select data-var="type"' + (sv ? '' : ' disabled') + '>' + options([['nominal', '単一回答'], ['ordinal', '順序あり'], ['multi', '複数回答'], ['numeric', '数値'], ['text', '使わない（自由記述など）']], sv ? (sv.type === 'time' || sv.type === 'empty' ? 'text' : sv.type) : '') + '</select></label>',
@@ -423,7 +425,7 @@
     }).join('') + (S.projList.items.length > 8 ? '<button class="md-link" data-act="openProject">ほかのプロジェクトを見る</button>' : '') + '</div>' : '';
     return '<div class="md-drop" id="md_drop">' + window.icon('csv', 56) + '<h1>ここに CSV ファイルをドロップ</h1>' +
       '<p>Google フォームの回答（スプレッドシートの「ファイル → ダウンロード → カンマ区切り形式（.csv）」）をそのまま入れられます。Excel ファイル（.xlsx）も、1 枚目のシートを読み込めます。1 行目が質問、2 行目以降が回答の表です。</p>' +
-      '<div class="md-row"><button class="md-btn md-btn-primary" data-act="openCsv">ファイルを選ぶ</button></div>' + list +
+      '<div class="md-row"><button class="md-btn md-btn-primary" data-act="openCsv">ファイルを選ぶ</button><button class="md-btn" data-act="openUrl">Google スプレッドシートの URL から</button></div>' + list +
       '<p>データはこのパソコンの中だけで処理され、外部には送信されません。</p></div>';
   }
   // 数値の列：直した回答・読めない回答の件数と、確かめる画面へのボタン。数値として読める選択肢の列には切り替えのボタン
