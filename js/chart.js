@@ -478,7 +478,7 @@
       o.push('<circle cx="' + r1(horiz ? pm : mid) + '" cy="' + r1(horiz ? mid : pm) + '" r="' + r1(r) + '" fill="' + fill + '" stroke="#000000" stroke-width="' + w + '" data-tip="' + esc(tip) + '"/>');
       if (st.labels) { var t = fmtV(b.mean); if (horiz) T(pm, mid - r - 4, t, { size: st.fsLabel, anchor: 'middle' }); else T(mid + r + 4, pm + st.fsLabel * 0.35, t, { size: st.fsLabel }); }
     }
-    function fmtV(v) { var big = (m.box || []).some(function (b) { return isNum(b.mean) && Math.abs(b.mean) >= 100; }); return v.toFixed(big ? 1 : 2); }   // 図の中で小数の桁をそろえる
+    function fmtV(v) { var big = (m.box || []).some(function (b) { return isNum(b.mean) && Math.abs(b.mean) >= 100; }); var s = v.toFixed(big ? 1 : 2); return /^-0\.?0*$/.test(s) ? s.slice(1) : s; }   // 図の中で小数の桁をそろえる
     // ---- 色分けの表（セルの値に応じて色を付け、カラーバーで対応を示す）
     function drawHeat() {
       var nr = m.cats.length, nc = m.series.length, rowTot = m.count.map(function (r) { return sum(r); }), colTot = m.series.map(function (_, j) { return sum(m.count.map(function (r) { return r[j]; })); });

@@ -80,10 +80,11 @@
   }
   function fmtP(p) { if (p === null || p === undefined) return '–'; if (p < 0.001) return '< ' + (S.P.settings.lead0 ? '0.001' : '.001'); var s = p.toFixed(3); return S.P.settings.lead0 ? s : s.replace(/^0/, ''); }
   function pText(p) { return 'p ' + (p < 0.001 ? '' : '= ') + fmtP(p); }
+  function fixed(v, d) { var s = (+v).toFixed(d); return /^-0\.?0*$/.test(s) ? s.slice(1) : s; }   // 「-0.00」は「0.00」にする
   function fmtCell(val, f) {
     if (val === null || val === undefined || (typeof val === 'number' && isNaN(val))) return '–';
-    if (f === 'int') return String(Math.round(val)); if (f === 'pct') return (val * 100).toFixed(1); if (f === 'num1') return (+val).toFixed(1);
-    if (f === 'num2') return (+val).toFixed(2); if (f === 'num3') return (+val).toFixed(3); if (f === 'p') return fmtP(val); return String(val);
+    if (f === 'int') return String(Math.round(val)); if (f === 'pct') return (val * 100).toFixed(1); if (f === 'num1') return fixed(val, 1);
+    if (f === 'num2') return fixed(val, 2); if (f === 'num3') return fixed(val, 3); if (f === 'p') return fmtP(val); return String(val);
   }
 
   // ---------------- 表（画面・コピー・報告書で同じものを使う）
@@ -114,7 +115,7 @@
         : { V: V, lo: 0, hi: by === 'count' ? mx : Math.min(100, Math.ceil(mx / 10) * 10), by: by, label: by === 'row' ? '行の割合 (%)' : by === 'col' ? '列の割合 (%)' : '人数' };
     }
     out.push({ caption: x.rowLabel + ' × ' + x.colLabel + '（人数' + (mode === 'none' ? '' : mode === 'row' ? 'と行の割合' : 'と列の割合') + '）', rows: rows, bold: bold, total: { row: true, col: true }, note: notes.join(' '), heat: heat });
-    function mtab(cap, M, d, note) { var rr = [[''].concat(x.cols)]; M.forEach(function (r3, i3) { rr.push([x.rows[i3]].concat(r3.map(function (v) { return v === null ? '–' : (+v).toFixed(d); }))); }); out.push({ caption: cap, rows: rr, note: note }); }
+    function mtab(cap, M, d, note) { var rr = [[''].concat(x.cols)]; M.forEach(function (r3, i3) { rr.push([x.rows[i3]].concat(r3.map(function (v) { return v === null ? '–' : fixed(v, d); }))); }); out.push({ caption: cap, rows: rr, note: note }); }
     if (t.expected && x.expected) mtab('期待度数（関連がないと仮定したときの人数）', x.expected, 1, '5 未満のセルが多いときは、フィッシャーの正確確率検定が適しています。');
     if (t.resid && x.resid) mtab('調整済み標準化残差', x.resid, 2, '絶対値が ' + x.crit.toFixed(2) + ' を超えるセルは、期待される値との差が有意。');
     return out;
@@ -708,6 +709,8 @@
     var h = target(tab) + sec('解析の種類', '<div style="font-weight:700;margin-bottom:2px">' + esc(d.name) + '</div>', hint(d.desc), '<button class="md-btn" data-act="changeType">種類を変える</button>');
     h += sec('選択肢の設定', d.slots.map(function (sd) {
       var sl = tab.slots[sd.id];
+      // 回帰分析の説明変数は、設問ごとの回答をそのまま使う（まとめた選択肢の一覧は意味を持たないので出さない）
+      if (sd.many && sd.types.indexOf('numeric') >= 0) return '<div class="md-sub"><b>' + esc(sd.label) + '</b>' + (sl.cols.length ? '：' + sl.cols.length + ' 個の設問' : '') + '</div>' + hint('説明変数は、それぞれの設問の回答をそのまま使います（「無回答」などは除きます）。単一回答の設問は、選択肢の並びの先頭を基準にします。');
       if (sd.many) return '<div class="md-sub"><b>' + esc(sd.label) + '</b>' + (sl.cols.length ? '：' + sl.cols.length + ' 個の設問（人数は合計）' : '') + '</div>' + (sl.cols.length ? catsEditor(tab, sd.id, sl, null) : hint('設問はまだ選ばれていません。中央の解析の欄で選んでください。'));
       var x = sl.col !== null ? A.v(sl.col) : null;
       return '<div class="md-sub"><b>' + esc(sd.label) + '</b>' + (x ? '：' + esc(x.label) : '') + '</div>' + (x ? catsEditor(tab, sd.id, sl, x) : hint('設問はまだ選ばれていません。中央の解析の欄で選んでください。'));
