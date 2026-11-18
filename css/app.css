@@ -326,3 +326,5 @@ body.md-moving, body.md-moving * { cursor: move !important; user-select: none; }
 .md-tables { overflow-x: auto; padding-bottom: 8px; } .md-tbox { margin-right: 10px; }
 .md-welcome { margin-bottom: 10px; } .md-welcome-h { font-size: 26px; font-weight: 700; color: var(--accent-d, #1E5C3A); margin: 2px 0 8px; }
 .md-welcome p { margin: 6px 0; line-height: 1.6; } .md-welcome-v { color: var(--ink-sub); font-size: 12px; }
+.md-swatch-pick { width: 26px; height: 20px; cursor: pointer; flex: none; border: 1px solid #8FA89A; border-radius: 2px; padding: 0; }
+.md-swatch-pick.set { outline: 2px solid #1E5C3A; outline-offset: 1px; }
