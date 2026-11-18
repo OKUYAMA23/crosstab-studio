@@ -707,14 +707,16 @@
     var tab = A.curTab(); if (!tab) return needTab('解析');
     var d = A.def(tab.type), multiNote = tab.type === 'multi' || (tab.type === 'freq' && tab.slots.a.col !== null && A.v(tab.slots.a.col) && A.v(tab.slots.a.col).type === 'multi');
     var h = target(tab) + sec('解析の種類', '<div style="font-weight:700;margin-bottom:2px">' + esc(d.name) + '</div>', hint(d.desc), '<button class="md-btn" data-act="changeType">種類を変える</button>');
-    h += sec('選択肢の設定', d.slots.map(function (sd) {
+    var slotsH = d.slots.map(function (sd) {
       var sl = tab.slots[sd.id];
       // 回帰分析の説明変数は、設問ごとの回答をそのまま使う（まとめた選択肢の一覧は意味を持たないので出さない）
       if (sd.many && sd.types.indexOf('numeric') >= 0) return '<div class="md-sub"><b>' + esc(sd.label) + '</b>' + (sl.cols.length ? '：' + sl.cols.length + ' 個の設問' : '') + '</div>' + hint('説明変数は、それぞれの設問の回答をそのまま使います（「無回答」などは除きます）。単一回答の設問は、選択肢の並びの先頭を基準にします。');
       if (sd.many) return '<div class="md-sub"><b>' + esc(sd.label) + '</b>' + (sl.cols.length ? '：' + sl.cols.length + ' 個の設問（人数は合計）' : '') + '</div>' + (sl.cols.length ? catsEditor(tab, sd.id, sl, null) : hint('設問はまだ選ばれていません。中央の解析の欄で選んでください。'));
       var x = sl.col !== null ? A.v(sl.col) : null;
       return '<div class="md-sub"><b>' + esc(sd.label) + '</b>' + (x ? '：' + esc(x.label) : '') + '</div>' + (x ? catsEditor(tab, sd.id, sl, x) : hint('設問はまだ選ばれていません。中央の解析の欄で選んでください。'));
-    }).join(''), hint('選択肢の名前は書き換えられます。同じ名前にした選択肢は 1 つにまとめ、チェックを外した選択肢は解析から除きます。' + (multiNote ? '複数回答で選んだ人が 1% 未満の回答（自由記述）は、最初から「その他」にまとめています。' : '')));
+    }).join('');
+    // 選択肢を直せる欄があるときだけ、直し方の説明を付ける（数値や回帰分析の説明変数だけのときは付けない）
+    h += sec('選択肢の設定', slotsH, slotsH.indexOf('md-cats') < 0 ? '' : hint('選択肢の名前は書き換えられます。同じ名前にした選択肢は 1 つにまとめ、チェックを外した選択肢は解析から除きます。' + (multiNote ? '複数回答で選んだ人が 1% 未満の回答（自由記述）は、最初から「その他」にまとめています。' : '')));
     var fv = tab.filter && tab.filter.col !== null ? A.v(tab.filter.col) : null;
     h += sec('絞り込み（一部の回答者だけで解析）', '<label class="md-field"><span>条件にする質問</span><select data-filter="col"><option value="">（絞り込まない）</option>' +
       S.P.vars.filter(A.isCat).map(function (x) { return '<option value="' + x.col + '"' + (fv && fv.col === x.col ? ' selected' : '') + '>' + esc(x.label) + '</option>'; }).join('') + '</select></label>' +
