@@ -182,6 +182,8 @@
     (d.opts || []).forEach(function (o) { tab.opts[o.id] = o.default; });
     // 設問ごとに色を変える図なので、既定の色を多色にする（これからの図の既定で色を決めているときは、それに従う）
     if (d.slots.some(function (s) { return s.many; })) { if (!(S.P.figDefault && S.P.figDefault.palette)) tab.figs[0].palette = 'cud'; if (!(S.P.figDefault && S.P.figDefault.orient)) tab.figs[0].orient = 'v'; }
+    // 回答日時の推移は、日ごとの回答数で見るのが自然なので、縦軸を人数にする
+    if (type === 'timeline' && !(S.P.figDefault && S.P.figDefault.value)) tab.figs[0].value = 'count';
     S.P.tabs.push(tab);
     return tab;
   }

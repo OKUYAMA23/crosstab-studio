@@ -393,7 +393,7 @@
     },
     figDefault: function () { var f = A.curFig(), o = {}; FIG_STYLE_KEYS.concat(['w', 'h', 'orient']).forEach(function (k) { o[k] = f[k]; }); A.commit(function () { S.P.figDefault = A.clone(o); }); A.toast('これから作る図に、この書式を使います。'); },
     figApplyAll: function () { var f = A.curFig(), o = {}, n = 0; FIG_STYLE_KEYS.forEach(function (k) { o[k] = f[k]; }); A.commit(function () { S.P.tabs.forEach(function (t) { t.figs.forEach(function (g) { Object.assign(g, A.clone(o)); n++; }); }); S.P.figDefault = Object.assign(S.P.figDefault || {}, A.clone(o)); }); A.toast('すべての図の書式をそろえました（' + n + ' 個）。'); },
-    figReset: function () { var tab = A.curTab(), k = Math.min(S.ui.selFig, tab.figs.length - 1), kind = tab.figs[k].kind; A.commit(function () { tab.figs[k] = A.newFig(); tab.figs[k].kind = kind; }); },
+    figReset: function () { var tab = A.curTab(), k = Math.min(S.ui.selFig, tab.figs.length - 1), kind = tab.figs[k].kind; A.commit(function () { tab.figs[k] = A.newFig(); tab.figs[k].kind = kind; if (tab.type === 'timeline' && !(S.P.figDefault && S.P.figDefault.value)) tab.figs[k].value = 'count'; }); },
     addFig: function () { var tab = A.curTab(); if (tab) addFig(tab); },
     addFigTo: function (arg) { var tab = A.tabById(arg); if (tab) addFig(tab); },
     delFig: function () { var tab = A.curTab(); if (tab) delFig(tab, Math.min(S.ui.selFig, tab.figs.length - 1)); },

@@ -339,7 +339,7 @@ an_spearman <- function(df, req) {
   a <- abs(rho); strength <- if (a < 0.2) "ごく弱い" else if (a < 0.4) "弱い" else if (a < 0.7) "中程度の" else "強い"
   stats_txt <- paste0("ρ = ", fmt_num(rho), ", ", fmt_p(res$p, lead0), ", n = ", n)
   res$headline <- list(hl("ρ", fmt_num(rho)), hl("p", fmt_p(res$p, lead0, FALSE)), hl("n", as.character(n)))
-  res$row <- list(stat = paste0("ρ = ", fmt_num(rho)), effect = paste0("ρ = ", fmt_num(rho)))
+  res$row <- list(stat = paste0("ρ = ", fmt_num(rho)), effect = "–")
   sig <- res$p < alpha
   top <- function(s) if (identical(s$type, "numeric")) "値が大きい人" else paste0(q(unique(slot_labels(s))[1]), "の側の回答をした人")
   res$notes <- c("相関の強さの表現（|ρ| が 0.2 未満：ごく弱い、0.4 未満：弱い、0.7 未満：中程度、0.7 以上：強い）は目安であり、分野によって基準が異なります。",

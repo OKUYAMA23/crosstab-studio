@@ -221,7 +221,7 @@ an_pearson <- function(df, req) {
   a <- abs(r); strength <- if (a < 0.2) "ごく弱い" else if (a < 0.4) "弱い" else if (a < 0.7) "中程度の" else "強い"
   st <- paste0("r = ", fmt_num(r), ", 95% CI ", fmt_ci(ci), ", ", fmt_p(res$p, lead0), ", n = ", n)
   res$headline <- list(hl("r", fmt_num(r)), hl("p", fmt_p(res$p, lead0, FALSE)), hl("n", as.character(n)))
-  res$row <- list(stat = paste0("r = ", fmt_num(r)), effect = paste0("r = ", fmt_num(r)))
+  res$row <- list(stat = paste0("r = ", fmt_num(r)), effect = "–")
   sig <- res$p < alpha
   res$report <- paste0(q(sx$label), "と", q(sy$label), "の関連をピアソンの相関係数で調べた。その結果、",
                        if (sig) paste0(strength, if (r > 0) "正" else "負", "の相関が認められた") else "統計的に有意な相関は認められなかった", "（", st, "）。",
@@ -275,6 +275,13 @@ an_alpha <- function(df, req) {
                        "得点は、選択肢に", q(sm$it$lev[1]), "の側から ", length(sm$it$lev), "〜1 点を付けた。")
   res$notes <- c("α の目安は 0.7 以上（0.8 以上なら高い）とされることが多いですが、項目数が多いほど高くなりやすい点に注意してください。",
                  "逆の向きの項目（逆転項目）は、作業ウィンドウの「逆転項目」で指定すると、得点を反転して計算します。")
+  # α が負：多くは逆転項目の指定漏れ（項目間の相関が負）
+  if (a < 0) {
+    neg <- colnames(X)[itc < 0]
+    res$notes <- c(paste0("α が負の値です。項目どうしの相関が負になっていて、多くは逆の向きの項目（逆転項目）を指定していないことが原因です。",
+                          if (length(neg)) paste0("残りの項目の合計と負の相関を持つ項目（", paste(neg, collapse = "、"), "）が逆転項目でないか、質問文を確かめてください。") else ""), res$notes)
+    res$report <- paste0(res$report, "なお、α は負の値であり、逆転項目の扱いを確認する必要がある。")
+  }
   res$chk <- chk
   finish(res, alpha)
 }
@@ -314,7 +321,11 @@ an_factor <- function(df, req) {
                        "）を行った。", if (identical(nf0, "auto")) paste0("相関行列の固有値が 1 を超える数から因子の数を ", nf, " とした。") else paste0("因子の数を ", nf, " とした。"),
                        paste(grp, collapse = "。"), "。", if (length(weak)) paste0("どの因子にも 0.40 以上負荷しなかった項目は", paste(weak, collapse = "、"), "であった。") else "",
                        if (!is.null(pv)) paste0("因子の寄与率は", paste0(fn, " ", fmt_num(100 * pv, 1), "%", collapse = "、"), "であった。") else "")
-  res$notes <- c("段階の得点のピアソン相関行列から、最尤法で因子を求めています。因子の数は、固有値・解釈のしやすさ・先行研究を合わせて決めてください。",
+  # 共通性が 1 に近い（0.99 以上）項目は、推定が不安定な状態（ヘイウッドケース）の可能性がある
+  hey <- rownames(L)[h2 >= 0.99]
+  heyNote <- if (length(hey)) paste0("共通性が 1 に近い項目（", paste(hey, collapse = "、"), "）があります。推定が不安定になっている（ヘイウッドケース）可能性が高く、その項目の負荷量は信頼できません。因子の数を減らすか、その項目を除いて計算し直してください。") else NULL
+  if (length(hey)) res$report <- paste0(res$report, "ただし、", paste(hey, collapse = "、"), "の共通性が 1 に近く（ヘイウッドケース）、解は不安定である可能性がある。")
+  res$notes <- c(heyNote, "段階の得点のピアソン相関行列から、最尤法で因子を求めています。因子の数は、固有値・解釈のしやすさ・先行研究を合わせて決めてください。",
                  "因子に名前を付けるときは、高く負荷した項目の内容を読んで判断します。尺度として使う項目が決まったら、クロンバックの α で信頼性を確かめてください。")
   finish(res, alpha)
 }

@@ -51,6 +51,7 @@
     s = String(s); var lines = [], cur = '';
     for (var i = 0; i < s.length; i++) {
       var ch = s[i];
+      if (cur && /[。、，．）」』】〕〉》！？・ー：；)\]}.,!?:;]/.test(ch)) { cur += ch; continue; }   // 句読点や閉じかっこは行の頭に置かない（少しはみ出しても前の行に付ける）
       if (cur && tw(cur + ch, size, st) > maxW) {
         var m = /[A-Za-z0-9.%]+$/.exec(cur);                                      // 英単語の途中では切らない
         if (m && /[A-Za-z0-9.%]/.test(ch) && m[0].length < cur.length) { lines.push(cur.slice(0, cur.length - m[0].length)); cur = m[0] + ch; }
@@ -648,13 +649,20 @@
       function tk(sc) { var t = []; for (var v = sc.min; v <= sc.max + sc.step * 1e-6; v += sc.step) t.push(Math.round(v * 1e6) / 1e6); return t; }
       sx.ticks = tk(sx); sy2.ticks = tk(sy2);
       cTitle = st.cTitle === null || st.cTitle === undefined ? (m.xTitle || '') : st.cTitle; vTitle = st.vTitle === null || st.vTitle === undefined ? (m.yTitle || '') : st.vTitle;
-      var tickW = maxOf(sy2.ticks.map(function (t) { return tw(fmtTick(t), st.fsTick, st); }));
       var sL = aLines(vTitle, H - top - bottom - 60), bL = aLines(cTitle, W - left - right - 40);
-      var X0 = left + aRes(sL) + tickW + tickPad + 4, X1 = W - right - 6, Y0 = top + 6, Y1 = H - bottom - (st.fsTick + tickPad + 4) - aRes(bL);
-      if (X1 - X0 < 40) X1 = X0 + 40; if (Y1 - Y0 < 40) Y1 = Y0 + 40;
-      var u = Math.min((X1 - X0) / (sx.max - sx.min), (Y1 - Y0) / (sy2.max - sy2.min));       // 縦横同じ縮尺
-      var cx = (X0 + X1) / 2, cy = (Y0 + Y1) / 2, mx = (sx.max + sx.min) / 2, my = (sy2.max + sy2.min) / 2;
-      var x0 = cx - (sx.max - sx.min) / 2 * u, x1 = cx + (sx.max - sx.min) / 2 * u, y0 = cy - (sy2.max - sy2.min) / 2 * u, y1 = cy + (sy2.max - sy2.min) / 2 * u;
+      // 縦横同じ縮尺のまま、短い方の軸の範囲を広げて、描く範囲いっぱいに使う（余白と、点の名前の重なりを減らす）
+      var X0, X1, Y0, Y1, u, mx = 0, my = 0, tickW = maxOf(sy2.ticks.map(function (t) { return tw(fmtTick(t), st.fsTick, st); }));
+      function fill(sc, c, half) { var st0 = nice(c - half, c + half, 5).step; sc.min = c - half; sc.max = c + half; sc.step = st0; sc.ticks = []; for (var v = Math.ceil(sc.min / st0 - 1e-9) * st0; v <= sc.max + st0 * 1e-9; v += st0) sc.ticks.push(Math.round(v * 1e6) / 1e6); }
+      for (var pass = 0; pass < 2; pass++) {
+        X0 = left + aRes(sL) + tickW + tickPad + 4; X1 = W - right - 6; Y0 = top + 6; Y1 = H - bottom - (st.fsTick + tickPad + 4) - aRes(bL);
+        if (X1 - X0 < 40) X1 = X0 + 40; if (Y1 - Y0 < 40) Y1 = Y0 + 40;
+        if (pass === 0) { mx = (sx.max + sx.min) / 2; my = (sy2.max + sy2.min) / 2; u = Math.min((X1 - X0) / (sx.max - sx.min), (Y1 - Y0) / (sy2.max - sy2.min)); }
+        else u = Math.min((X1 - X0) / (sx.max - sx.min), (Y1 - Y0) / (sy2.max - sy2.min));
+        fill(sx, mx, (X1 - X0) / 2 / u); fill(sy2, my, (Y1 - Y0) / 2 / u);
+        tickW = maxOf(sy2.ticks.map(function (t) { return tw(fmtTick(t), st.fsTick, st); }));
+      }
+      var cx = (X0 + X1) / 2, cy = (Y0 + Y1) / 2;
+      var x0 = X0, x1 = X1, y0 = Y0, y1 = Y1;
       plot = { x0: x0, y0: y0, x1: x1, y1: y1 };
       function px(v) { return cx + (v - mx) * u; } function py(v) { return cy - (v - my) * u; }
       sy2.ticks.forEach(function (t) { tick(x0, py(t), false); T(x0 - tickPad, py(t) + st.fsTick * 0.35, fmtTick(t), { anchor: 'end' }); });
@@ -674,9 +682,12 @@
       m.pts.forEach(function (p, si) {
         p.x.forEach(function (xv, i) {
           var X = px(xv), Y = py(p.y[i]), s = p.labels[i], w = tw(s, fsP, st), h = fsP;
-          var cand = [[X + 7, Y + h * 0.35, 'start'], [X - 7, Y + h * 0.35, 'end'], [X, Y - 8, 'middle'], [X, Y + h + 6, 'middle'], [X + 7, Y - 6, 'start'], [X + 7, Y + h + 2, 'start'], [X - 7, Y - 6, 'end'], [X - 7, Y + h + 2, 'end']];
-          var pick = cand[0];
-          for (var c = 0; c < cand.length; c++) { var q = cand[c], bx = q[2] === 'start' ? q[0] : q[2] === 'end' ? q[0] - w : q[0] - w / 2, b = [bx - 1, q[1] - h, bx + w + 1, q[1] + 2]; if (free(b)) { pick = q; break; } }
+          var cand = [[X + 7, Y + h * 0.35, 'start'], [X - 7, Y + h * 0.35, 'end'], [X, Y - 8, 'middle'], [X, Y + h + 6, 'middle'], [X + 7, Y - 6, 'start'], [X + 7, Y + h + 2, 'start'], [X - 7, Y - 6, 'end'], [X - 7, Y + h + 2, 'end'],
+            [X, Y - 8 - h, 'middle'], [X, Y + 2 * h + 8, 'middle'], [X + 7, Y - 6 - h, 'start'], [X - 7, Y - 6 - h, 'end'], [X + 7, Y + 2 * h + 4, 'start'], [X - 7, Y + 2 * h + 4, 'end']];
+          var pick = null, best = null, bestOv = Infinity;
+          function ov(b) { var a = 0; boxes.forEach(function (q) { var dx = Math.min(b[2], q[2]) - Math.max(b[0], q[0]), dy = Math.min(b[3], q[3]) - Math.max(b[1], q[1]); if (dx > 0 && dy > 0) a += dx * dy; }); if (b[0] < x0 || b[2] > x1 || b[1] < y0 || b[3] > y1) a += 1e6; return a; }
+          for (var c = 0; c < cand.length; c++) { var q = cand[c], bx = q[2] === 'start' ? q[0] : q[2] === 'end' ? q[0] - w : q[0] - w / 2, b = [bx - 1, q[1] - h, bx + w + 1, q[1] + 2]; if (free(b)) { pick = q; break; } var a0 = ov(b); if (a0 < bestOv) { bestOv = a0; best = q; } }
+          if (!pick) pick = best || cand[0];                                  // どこも空いていないときは、重なりのいちばん少ない位置にする
           var bx2 = pick[2] === 'start' ? pick[0] : pick[2] === 'end' ? pick[0] - w : pick[0] - w / 2; boxes.push([bx2 - 1, pick[1] - h, bx2 + w + 1, pick[1] + 2]);
           T(pick[0], pick[1], s, { size: fsP, anchor: pick[2], bold: si === 0, halo: true });
         });

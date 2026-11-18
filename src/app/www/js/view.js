@@ -164,7 +164,7 @@
         if (bg) st += 'background:' + bg + ';';
         st += 'color:' + ink + ';';
         var txt = (t.textCols && t.textCols[j - 1]) || rowHead;
-        st += 'text-align:' + (head ? 'center' : txt ? 'left' : 'right') + ';' + (head || rowHead || (t.bold && t.bold[i] && t.bold[i][j]) ? 'font-weight:bold;' : '') + (head || txt ? 'white-space:normal;max-width:200px;word-break:keep-all;overflow-wrap:break-word;' : 'white-space:nowrap;');
+        st += 'text-align:' + (head ? 'center' : txt ? 'left' : 'right') + ';' + (head || rowHead || (t.bold && t.bold[i] && t.bold[i][j]) ? 'font-weight:bold;' : '') + (head || txt ? 'white-space:normal;max-width:200px;line-break:strict;' + (rowHead ? 'min-width:7em;' : head ? 'min-width:3.5em;' : '') : 'white-space:nowrap;');
         h += (head || rowHead ? '<th' : '<td') + ' style="' + st + '">' + esc(c) + (head || rowHead ? '</th>' : '</td>');
       });
       h += '</tr>';
