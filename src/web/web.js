@@ -59,49 +59,22 @@
   }, function () {});
 })();
 
-// ---------------- 利用の確認：最後にインターネットで確かめてから 14 日を過ぎたら、機能を止める
-//   起動したとき・画面に戻ったとき・通信が戻ったときに ping.json を取りに行き、取れた日時を覚える。
-//   ping.json の active が false なら、公開を終えたものとして止める（公開を止めるときの終了の合図）。
+// ---------------- 公開終了の合図：ping.json の active が false なら、公開を終えたことを知らせて止める
+//   ping.json はアプリと同じ場所から読む（手元に置いた写しは、その写しの ping.json を読むので止まらない）。
+//   取れないとき（通信がないとき）は何もしない。以前あった「2 週間つながないと止まる」決まりは 0.8.3 でなくした。
 (function () {
   'use strict';
-  var A = window.App, KEY = 'cts-last-online', LIMIT = 14 * 864e5;   // 画面や説明書には書かない（止まったときだけ理由を出す）
-  function get() { try { return +localStorage.getItem(KEY) || 0; } catch (e) { return 0; } }
-  function set(t) { try { localStorage.setItem(KEY, String(t)); } catch (e) {} }
-  if (!get()) set(Date.now());                                       // 初めて開いたとき（一式を受け取った時点で通信できている）
-  function lock(title, msg, canRetry) {
-    var el = document.getElementById('md_lock');
-    if (!el) { el = document.createElement('div'); el.id = 'md_lock'; document.body.appendChild(el); }
-    el.innerHTML = '<div class="md-lock-box"><img src="icons/icon-192.png" width="64" height="64" alt=""><h1>' + title + '</h1><p>' + msg + '</p>' +
-      (canRetry ? '<button class="md-btn md-btn-primary" id="md_lock_retry">もう一度確かめる</button>' : '') + '<p class="md-lock-note">保存したプロジェクトは消えていません。</p></div>';
-    if (canRetry) document.getElementById('md_lock_retry').onclick = function () { this.textContent = '確かめています…'; check(true); };
-  }
-  function unlock() { var el = document.getElementById('md_lock'); if (el) el.remove(); }
-  function evaluate() {
-    var last = get(), now = Date.now(), left = last + LIMIT - now;
-    if (now + 36e5 < last) left = -1;                                // 端末の時計が戻されているときは確かめ直しを求める
-    if (left <= 0) {
-      lock('インターネットにつないでください', 'このアプリは、2 週間に 1 回以上、インターネットにつないだ状態で開く必要があります。最後に確かめてから 2 週間を過ぎたため、今は機能を使えません。インターネットにつないでから「もう一度確かめる」を押してください。', true);
-      return;
-    }
-    unlock();
-  }
-  async function check(manual) {
+  async function check() {
     try {
       var r = await fetch('ping.json?t=' + Date.now(), { cache: 'no-store' });
-      if (r.ok) {
-        var d = await r.json();
-        if (d && d.active === false) { lock('公開を終了しました', esc2(d.message || 'このアプリの公開は終了しました。'), false); return; }
-        set(Date.now());
+      if (!r.ok) return;
+      var d = await r.json();
+      if (d && d.active === false) {
+        var el = document.createElement('div'); el.id = 'md_lock';
+        el.innerHTML = '<div class="md-lock-box"><img src="icons/icon-192.png" width="64" height="64" alt=""><h1>公開を終了しました</h1><p>' + String(d.message || 'このアプリの公開は終了しました。').replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }) + '</p></div>';
+        document.body.appendChild(el);
       }
-    } catch (e) { /* 通信できないときは、覚えている日時で判断する */ }
-    evaluate();
-    if (manual && document.getElementById('md_lock_retry')) document.getElementById('md_lock_retry').textContent = 'もう一度確かめる';
+    } catch (e) { /* 通信できないときは何もしない */ }
   }
-  function esc2(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-  evaluate();
-  check(false);
-  window.addEventListener('online', function () { check(false); });
-  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') check(false); });
-  setInterval(function () { check(false); }, 60 * 60 * 1000);
-  window.CTS_ONLINE = { check: check, last: get };
+  check();
 })();

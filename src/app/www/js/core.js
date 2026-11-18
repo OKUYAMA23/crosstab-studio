@@ -99,8 +99,20 @@
     finally { busy(false); }
   }
   // R がデータを持っていないとき（R を起動し直したあとなど）は、手元のデータを送り直す
+  // 尺度得点（画面で作った列）の定義。R には依頼のたびに渡し、元のデータの右に足して計算してもらう
+  function compVars() { return S.P.vars.filter(function (x) { return x.comp; }).sort(function (a, b) { return a.col - b.col; }); }
+  function itemSlot(c) {
+    var vr = v(c); if (!vr) return null;
+    var s = { col: vr.col, type: vr.type, delim: vr.delim, label: vr.label, cats: (vr.cats || []).filter(function (k) { return !k.special; }).map(function (k) { return { label: k.v, values: [k.v] }; }) };
+    if (vr.type === 'numeric') { if (vr.fix) s.fix = vr.fix; if (vr.unit) s.unit = vr.unit; }
+    return s;
+  }
+  function compDefs() {
+    return compVars().map(function (x) { return { col: x.col, name: x.label, method: x.comp.method, reverse: x.comp.reverse || [], items: x.comp.items.map(itemSlot).filter(Boolean) }; });
+  }
   async function apiData(path, body) {
     body.dataId = S.data.dataId;
+    if (!body.computed && compVars().length) body.computed = compDefs();
     var d = await api(path, body);
     if (d && d.noData) { var up = await uploadData(S.data.bytes, S.data.name); S.data.dataId = up.dataId; body.dataId = up.dataId; d = await api(path, body); }
     return d;
@@ -179,7 +191,7 @@
       if (s.many) {
         var vs = sl.cols.map(v);
         slots[s.id] = { many: true, cols: sl.cols, type: vs[0].type, delim: vs[0].delim, labels: vs.map(function (x) { return x.label; }), fulls: vs.map(function (x) { return x.full || x.label; }),
-          items: vs.map(function (x) { return x.item || ''; }), stems: vs.map(function (x) { return x.stem || ''; }), cats: onCats, reverse: (sl.reverse || []).filter(function (c) { return sl.cols.indexOf(c) >= 0; }) };
+          items: vs.map(function (x) { return x.item || ''; }), stems: vs.map(function (x) { return x.stem || ''; }), cats: onCats, reverse: (sl.reverse || []).filter(function (c) { return sl.cols.indexOf(c) >= 0; }), vars: sl.cols.map(itemSlot).filter(Boolean) };
         return;
       }
       if (s.optional && (sl.col === null || sl.col === undefined)) return;       // 任意の欄を使わないとき
@@ -189,7 +201,8 @@
     });
     var flt = null;
     if (tab.filter && tab.filter.col !== null && tab.filter.values && tab.filter.values.length) { var fv = v(tab.filter.col); if (fv) flt = { col: fv.col, type: fv.type, delim: fv.delim, label: fv.label, full: fv.full || fv.label, values: tab.filter.values }; }
-    return { type: tab.type, slots: slots, filter: flt, opts: Object.assign({}, tab.opts, { alpha: S.P.settings.alpha, lead0: S.P.settings.lead0 }) };
+    var usesComp = Object.keys(slots).some(function (k) { var s = slots[k]; return (s.cols || [s.col]).some(function (c) { var x = v(c); return x && x.comp; }); }) || (flt && v(flt.col) && v(flt.col).comp);
+    return { computed: usesComp ? compDefs() : undefined, type: tab.type, slots: slots, filter: flt, opts: Object.assign({}, tab.opts, { alpha: S.P.settings.alpha, lead0: S.P.settings.lead0 }) };
   }
   var timers = {}, seqs = {};
   function schedule(id) { clearTimeout(timers[id]); timers[id] = setTimeout(function () { runTab(id); }, 100); }
@@ -284,6 +297,12 @@
         var o = oldVars.find(function (y) { return y.header === x.header; });
         if (o) { map[o.col] = x.col; if (!/…$/.test(o.label)) x.label = o.label; if (o.type !== x.type && ['nominal', 'ordinal'].indexOf(o.type) >= 0 && ['nominal', 'ordinal'].indexOf(x.type) >= 0) x.type = o.type; }
       });
+      // 尺度得点の列は、元の列の番号を付け直して右に足し直す
+      oldVars.filter(function (o) { return o.comp; }).sort(function (a, b) { return a.col - b.col; }).forEach(function (o) {
+        var items = o.comp.items.map(function (c) { return map[c]; }).filter(Boolean); if (items.length < 2) return;
+        var nc = nv.length + 1, cv = clone(o); cv.col = nc; cv.comp.items = items; cv.comp.reverse = (o.comp.reverse || []).map(function (c) { return map[c]; }).filter(Boolean);
+        map[o.col] = nc; nv.push(cv);
+      });
       S.P.vars = nv;
       S.P.tabs.forEach(function (t) {
         Object.keys(t.slots).forEach(function (sid) {
@@ -359,18 +378,27 @@
     if (!S.data) return;
     if (await saveBlob(new Blob([projectJson()], { type: 'application/octet-stream' }), baseName() + '.prj', 'CrossTab Studio のプロジェクト', '.prj')) toast('プロジェクトをファイルに書き出しました。別のパソコンに持っていくときに使えます。');
   }
+  // Excel ファイルなら CSV に直す（名前の拡張子は .csv に替える。データは CSV としてプロジェクトに入る）
+  async function xlsxIn(buf, name) {
+    var isZip = buf[0] === 0x50 && buf[1] === 0x4B, isOle = buf[0] === 0xD0 && buf[1] === 0xCF;
+    if (!(/\.(xlsx|xlsm|xls)$/i.test(name) || isZip && !/\.(prj|ctsproj)/i.test(name)) || !(isZip || isOle)) return { buf: buf, name: name };
+    var r = await App.xlsxToCsv(buf);
+    if (r.nSheets > 1) toast('シートが ' + r.nSheets + ' 枚あります。1 枚目の「' + r.sheet + '」を読み込みます。ほかのシートを使うときは、そのシートを 1 枚目にして保存し直してください。');
+    return { buf: r.bytes, name: name.replace(/\.(xlsx|xlsm|xls)$/i, '') + '.csv' };
+  }
   async function handleFile(file) {
     try {
-      var buf = new Uint8Array(await file.arrayBuffer());
+      var buf = new Uint8Array(await file.arrayBuffer()), name = file.name;
+      var r = await xlsxIn(buf, name); buf = r.buf; name = r.name;
       var isProj = /\.(prj|ctsproj)(\.json)?$/i.test(file.name) || (buf[0] === 0x7B && new TextDecoder().decode(buf.subarray(0, 60)).indexOf('"CrossTabStudio"') >= 0);
       if (isProj) { await openProjectText(new TextDecoder().decode(buf), file.name.replace(/\.(prj|ctsproj)(\.json)?$/i, '')); return; }
-      if (S.data && S.P.tabs.length) { App.askReplace(buf, file.name); return; }
-      await loadCsv(buf, file.name, false);
+      if (S.data && S.P.tabs.length) { App.askReplace(buf, name); return; }
+      await loadCsv(buf, name, false);
     } catch (e) { toast(e.message, true); }
   }
 
   window.App = window.App || {};
-  Object.assign(window.App, { errLog: errLog, clearErrLog: clearErrLog, logErr: logErr, S: S, MAX_TABS: MAX_TABS, TYPE_NAMES: TYPE_NAMES, $: $, esc: esc, clone: clone, toast: toast, busy: busy, api: api, apiData: apiData, zip: zip, safeName: safeName,
+  Object.assign(window.App, { xlsxIn: xlsxIn, compVars: compVars, compDefs: compDefs, errLog: errLog, clearErrLog: clearErrLog, logErr: logErr, S: S, MAX_TABS: MAX_TABS, TYPE_NAMES: TYPE_NAMES, $: $, esc: esc, clone: clone, toast: toast, busy: busy, api: api, apiData: apiData, zip: zip, safeName: safeName,
     v: v, def: def, tabById: tabById, slotCols: slotCols, sameChoices: sameChoices, setItems: setItems, defaultCatsMany: defaultCatsMany, curTab: curTab, curFig: curFig, isCat: isCat, defaultCats: defaultCats, setSlot: setSlot, autoName: autoName, newTab: newTab, newFig: newFig, tabReady: tabReady,
     buildReq: buildReq, markDirty: markDirty, schedule: schedule, scheduleAll: scheduleAll, syncResults: syncResults, commit: commit, undo: undo, redo: redo, fixSel: fixSel, tableDefaults: tableDefaults,
     pickFile: pickFile, saveBlob: saveBlob, baseName: baseName, loadCsv: loadCsv, handleFile: handleFile, newProject: newProject,

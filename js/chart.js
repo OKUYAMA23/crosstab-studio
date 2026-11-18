@@ -5,7 +5,7 @@
   'use strict';
   var mctx = document.createElement('canvas').getContext('2d'), uid = 0;
   var JA_ALIAS = { 'MS Gothic': 'ＭＳ ゴシック', 'MS PGothic': 'ＭＳ Ｐゴシック', 'MS Mincho': 'ＭＳ 明朝', 'Yu Gothic': '游ゴシック', 'Yu Mincho': '游明朝', 'Meiryo': 'メイリオ', 'BIZ UDGothic': 'BIZ UDゴシック', 'BIZ UDMincho': 'BIZ UD明朝' };
-  var KIND_NAMES = { stack100: '帯グラフ', group: '集合棒', stack: '積み上げ棒', heat: '色分けの表', bar: '棒グラフ', line: '折れ線グラフ', pie: '円グラフ', mean: '平均と信頼区間', box: '箱ひげ図', scatter: '散布図', hist: 'ヒストグラム', map: '布置図', cloud: 'ワードクラウド', wbar: '頻出語の棒グラフ', net: '共起ネットワーク' };
+  var KIND_NAMES = { stack100: '帯グラフ', group: '集合棒', stack: '積み上げ棒', heat: '色分けの表', bar: '棒グラフ', line: '折れ線グラフ', pie: '円グラフ', mean: '平均と信頼区間', coef: '係数と信頼区間', box: '箱ひげ図', scatter: '散布図', hist: 'ヒストグラム', map: '布置図', cloud: 'ワードクラウド', wbar: '頻出語の棒グラフ', net: '共起ネットワーク' };
   // 配色。ramp＝濃淡（濃い色→淡い色の段階）、div＝2 方向（低い側→中央→高い側）、cat＝多色、pat＝白黒の模様。hide＝一覧に出さない（古いプロジェクトのため残す）
   //   濃淡と 2 方向は ColorBrewer、viridis 系は matplotlib の知覚的に均等な配色、多色は論文誌でよく使われる配色（ggsci）と Paul Tol・Okabe-Ito の色覚に配慮した配色を元にした
   var PALETTES = {
@@ -129,7 +129,7 @@
     if (f.type === 'items' && res.xtab) return { type: 'items', items: res.xtab.rows, choices: res.xtab.cols, count: res.xtab.count, prefer: f.prefer };
     if (f.type === 'freq') return { type: 'freq', cats: f.cats, series: f.series, count: f.count, base: f.base, catTitle: f.catTitle, multi: !!f.multi, time: !!f.time, prefer: f.prefer };
     if (f.type === 'multi') return { type: 'multi', cats: f.cats, series: f.series, count: f.count, pct: f.pct, catTitle: f.catTitle, seriesTitle: f.seriesTitle };
-    if (f.type === 'box') return { type: 'box', cats: f.cats, box: f.box, catTitle: f.catTitle, valueTitle: f.valueTitle, series: [], prefer: f.prefer };
+    if (f.type === 'box') return { type: 'box', cats: f.cats, box: f.box, catTitle: f.catTitle, valueTitle: f.valueTitle, series: [], prefer: f.prefer, coef: f.coef || null, ref: f.ref };
     if (f.type === 'scatter') return { type: 'scatter', x: f.x, y: f.y, xTitle: f.xTitle, yTitle: f.yTitle, series: [], cats: [], fit: f.fit || null };
     if (f.type === 'hist') return { type: 'hist', edges: f.edges, counts: f.counts, series: f.series, xTitle: f.xTitle, seriesTitle: f.seriesTitle, intBins: !!f.intBins, box: f.box, boxCats: f.boxCats, catTitle: f.catTitle, cats: [] };
     if (f.type === 'words') return { type: 'words', words: f.words, n: f.n, base: f.base, net: f.net, prefer: f.prefer || 'wbar', series: [], cats: [] };
@@ -139,6 +139,7 @@
   function kinds(m) {
     if (!m) return [];
     if (m.type === 'freq') return m.time ? ['line', 'bar'] : m.multi ? ['bar'] : ['bar', 'pie'];   // 複数回答は合計が 100% を超えるので円グラフにしない。日時の推移は折れ線
+    if (m.type === 'box' && m.coef) return ['coef'];                     // 回帰係数の図（点と 95% 信頼区間）
     if (m.type === 'box') return m.box && m.box.length && m.box[0].mean !== undefined && m.prefer === 'mean' ? ['mean', 'box'] : ['box'];   // 平均の比較（t 検定・分散分析）は平均と信頼区間
     return { xtab: ['stack100', 'group', 'stack', 'heat', 'pie'], items: ['stack100', 'group', 'heat', 'pie'], multi: ['group'], scatter: ['scatter'], hist: ['hist', 'box'], map: ['map'], words: ['wbar', 'cloud', 'net'] }[m.type] || [];
   }
@@ -148,7 +149,7 @@
   function colorKeys(m, st) {
     var k = kindOf(m, st); if (k === 'heat' || k === 'cloud' || k === 'net') return [];
     var ser = seriesFor(m, st); if (ser.length) return ser;
-    return { box: ['box'], mean: ['mean'], scatter: ['pt'], wbar: ['回答数'] }[k] || [];
+    return { box: ['box'], mean: ['mean'], coef: ['mean'], scatter: ['pt'], wbar: ['回答数'] }[k] || [];
   }
   function kindOf(m, st) { var k = kinds(m); return k.indexOf(st.kind) >= 0 ? st.kind : (m.prefer && k.indexOf(m.prefer) >= 0 ? m.prefer : k[0]); }
 
@@ -354,7 +355,7 @@
     }
     // ---- 棒グラフ・箱ひげ図（分類の軸と数値の軸を持つ図）
     function drawAxes() {
-      var nc = m.cats.length, ns = Math.max(1, (m.series || []).length), isBox = kind === 'box' || kind === 'mean', isLine = kind === 'line', lines = [];
+      var nc = m.cats.length, ns = Math.max(1, (m.series || []).length), isBox = kind === 'box' || kind === 'mean' || kind === 'coef', isLine = kind === 'line', lines = [];
       var rowTot = isBox ? [] : m.count.map(function (r) { return sum(r); });
       var mode = kind === 'stack100' ? 'pct' : kind === 'stack' ? 'count' : (st.value === 'count' ? 'count' : 'pct');
       var colTot = isBox ? [] : (m.series || []).map(function (_, j) { return sum(m.count.map(function (r) { return r[j]; })); });
@@ -362,7 +363,7 @@
       function val(i, j) { return mode === 'count' ? m.count[i][j] : pctOf(i, j); }
       var stacked = kind === 'stack100' || kind === 'stack', hi = 0, sc, vAuto;
       if (isBox) {
-        var all = []; m.box.forEach(function (b) { all = kind === 'mean' ? all.concat([b.mean, b.lo, b.hi].filter(isNum)) : all.concat(b.stats, b.out || []); });
+        var all = isNum(m.ref) ? [m.ref] : []; m.box.forEach(function (b) { all = kind !== 'box' ? all.concat([b.mean, b.lo, b.hi].filter(isNum)) : all.concat(b.stats, b.out || []); });
         sc = scaleFor(st, Math.min.apply(null, all), Math.max.apply(null, all), nice(Math.min.apply(null, all), Math.max.apply(null, all), 5)); vAuto = m.valueTitle || '';
       } else {
         var lwMax = 0;
@@ -407,12 +408,13 @@
         if (horiz) { if (gridOn && t > sc.min) line(p, y0, p, y1, st.lwGrid, st.gridColor, gridDash); tick(p, y1, true); if (show(i)) T(p, y1 + tickPad + st.fsTick * 0.85, fmtTick(t), { anchor: 'middle' }); }
         else { if (gridOn && t > sc.min) line(x0, p, x1, p, st.lwGrid, st.gridColor, gridDash); tick(x0, p, false); if (show(i)) T(x0 - tickPad, p + st.fsTick * 0.35, fmtTick(t), { anchor: 'end' }); }
       });
+      if (isBox && isNum(m.ref) && m.ref > sc.min && m.ref < sc.max) { var pr = pos(m.ref); if (horiz) line(pr, y0, pr, y1, Math.max(0.75, st.lwAxis), '#000000', '4 3'); else line(x0, pr, x1, pr, Math.max(0.75, st.lwAxis), '#000000', '4 3'); }   // 回帰係数の図の基準線（β = 0、オッズ比 = 1）
       var band = (horiz ? y1 - y0 : x1 - x0) / nc, thick = band * Math.max(10, Math.min(100, +st.barW || 70)) / 100;
       var skipK = horiz ? Math.max(1, Math.ceil(lhT / Math.max(1, band))) : isLine ? Math.max(1, Math.ceil((maxOf(labs.map(function (l) { return tw(l[0], st.fsTick, st); })) + 8) / Math.max(1, band))) : Math.max(1, Math.ceil(st.fsTick * 1.3 / Math.max(1, band)));   // 折れ線の日付は折り返さずに間引く       // 帯が細すぎるときは名前を間引く
       for (var c = 0; c < nc; c++) {
         var b0 = (horiz ? y0 : x0) + band * c + (band - thick) / 2, mid = b0 + thick / 2;
         if (c % skipK === 0) { if (horiz) TL(x0 - tickPad - 1, mid - (labs[c].length - 1) * lhT / 2 + st.fsTick * 0.35, labs[c], { anchor: 'end' }); else TL(mid, y1 + tickPad + st.fsTick * 0.9, labs[c], { anchor: 'middle' }); }
-        if (isBox) { (kind === 'mean' ? drawMean : drawBox)(m.box[c], b0, thick, mid, pos, horiz, m.cats[c]); continue; }
+        if (isBox) { (kind !== 'box' ? drawMean : drawBox)(m.box[c], b0, thick, mid, pos, horiz, m.cats[c]); continue; }
         if (isLine) { for (var s0 = 0; s0 < ns; s0++) { (lines[s0] = lines[s0] || []).push([mid, pos(val(c, s0)), m.cats[c] + (ns > 1 ? ' / ' + dispS[s0] : '') + '：' + m.count[c][s0] + (mode === 'count' ? '' : '（' + pctOf(c, s0).toFixed(1) + '%）')]); } continue; }
         var acc = 0;
         for (var s = 0; s < ns; s++) {
@@ -466,7 +468,7 @@
     function drawMean(b, b0, thick, mid, pos, horiz, name) {
       if (!isNum(b.mean)) return;
       var col = seriesColors(['mean'], st)[0], w = Math.max(0.75, st.lwAxis), cap = Math.min(thick * 0.3, 10), ci = isNum(b.lo) && isNum(b.hi), r = Math.max(3.5, Math.min(7, thick * 0.12));
-      var tip = name + '：平均 ' + fmtV(b.mean) + (ci ? '（95% 信頼区間 ' + fmtV(b.lo) + '～' + fmtV(b.hi) + '）' : '') + '、n = ' + b.n;
+      var tip = name + '：' + (m.coef || '平均') + ' ' + fmtV(b.mean) + (ci ? '（95% 信頼区間 ' + fmtV(b.lo) + '～' + fmtV(b.hi) + '）' : '') + (b.n ? '、n = ' + b.n : '');
       var pm = pos(b.mean), fill = /^pat:/.test(col) ? '#000000' : col;
       if (ci) {
         var pl = pos(b.lo), ph = pos(b.hi);

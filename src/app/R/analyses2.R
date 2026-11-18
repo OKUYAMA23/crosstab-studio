@@ -505,3 +505,119 @@ register("textmine", "テキストマイニング（自由記述）", "自由記
               O_select("edges", "共起ネットワークの線の数", list("30" = "30 本", "60" = "60 本", "100" = "100 本"), "60"),
               O_check("compound", "漢字・カタカナの続く語をつなげる（例：自然＋環境 → 自然環境）", TRUE),
               list(id = "stop", kind = "text", label = "除く語（読点「、」で区切る）", default = "", hint = "集計から外したい語を書きます。例：特に、なし、自然")), an_textmine)
+
+# ---------------------------------------------------------------- 回帰分析（重回帰・ロジスティック回帰）
+# 説明変数の行列を作る。単一回答はダミー変数（先頭の選択肢を基準）、順序のある回答は段階の得点、数値はそのまま
+reg_design <- function(df, xs) {
+  if (is.null(xs) || length(xs) == 0) stop_user("説明変数を 1 つ以上選んでください。")
+  cols <- list(); info <- list(); notes <- character(0)
+  for (v in xs) {
+    if (identical(v$type, "nominal")) {
+      f <- droplevels(slot_factor(df, v)); lv <- levels(f)
+      if (length(lv) < 2) { notes <- c(notes, paste0(q(v$label), "は回答のある選択肢が 1 つしかないため、説明変数から除きました。")); next }
+      for (l in lv[-1]) { nm <- paste0(v$label, "：", l); cols[[nm]] <- ifelse(is.na(f), NA_real_, as.numeric(f == l)); info[[nm]] <- list(var = v$label, base = lv[1], dummy = TRUE, level = l, slot = v) }
+    } else {
+      x <- as.numeric(slot_score(df, v)); cols[[v$label]] <- x; info[[v$label]] <- list(var = v$label, dummy = FALSE, slot = v)
+      if (identical(v$type, "ordinal")) { lv <- levels(slot_factor(df, v)); info[[v$label]]$scores <- paste0(q(v$label), "は", paste(paste0(lv, " = ", rev(seq_along(lv))), collapse = "、")) }
+    }
+  }
+  if (!length(cols)) stop_user("使える説明変数がありません。")
+  list(X = do.call(cbind, cols), info = info, notes = notes)
+}
+reg_scorenote <- function(info) {
+  sc <- unlist(lapply(info, function(z) z$scores)); if (!length(sc)) return("")
+  paste0("順序のある回答は段階の得点として入れています（", paste(sc, collapse = "。"), "）。")
+}
+reg_vif <- function(X) {
+  if (ncol(X) < 2) return(rep(NA_real_, ncol(X)))
+  vapply(seq_len(ncol(X)), function(j) { r2 <- summary(stats::lm(X[, j] ~ X[, -j]))$r.squared; if (r2 >= 1) Inf else 1 / (1 - r2) }, 0)
+}
+reg_common <- function(df, req, y) {
+  d <- reg_design(df, req$slots$x$vars)
+  if (any(vapply(req$slots$x$vars, function(v) identical(as.integer(v$col), as.integer(req$slots$y$col)), TRUE))) stop_user("目的変数と同じ設問が説明変数に入っています。説明変数から外してください。")
+  ok <- !is.na(y) & stats::complete.cases(d$X); X <- d$X[ok, , drop = FALSE]; y <- y[ok]
+  colnames(X) <- names(d$info)
+  const <- apply(X, 2, function(x) length(unique(x)) < 2)
+  if (any(const)) stop_user(paste0(q(colnames(X)[const]), collapse = "、"), "は、対象の人の中で値がすべて同じなので、説明変数にできません。")
+  if (nrow(X) <= ncol(X) + 1) stop_user("人数（", nrow(X), " 人）が説明変数の数に比べて少なすぎます。")
+  list(X = X, y = y, info = d$info, notes = d$notes, n = nrow(X), k = ncol(X))
+}
+reg_rankcheck <- function(fit, X) {
+  bad <- is.na(stats::coef(fit))[-1]
+  if (any(bad)) stop_user("説明変数", paste0(q(colnames(X)[bad]), collapse = "、"), "が、ほかの説明変数から完全に決まってしまうため（多重共線性）、係数を計算できません。どちらかを外してください。")
+}
+an_reg <- function(df, req) {
+  alpha <- opt(req, "alpha", 0.05); lead0 <- opt(req, "lead0", TRUE); sy <- req$slots$y
+  rc <- reg_common(df, req, as.numeric(slot_score(df, sy))); X <- rc$X; y <- rc$y; n <- rc$n; k <- rc$k
+  if (length(unique(y)) < 2) stop_user("目的変数の値がすべて同じなので、回帰分析ができません。")
+  fit <- stats::lm(y ~ X); reg_rankcheck(fit, X); sm <- summary(fit); co <- sm$coefficients; ci <- stats::confint(fit)
+  fs <- sm$fstatistic; pF <- stats::pf(fs[1], fs[2], fs[3], lower.tail = FALSE)
+  sdx <- apply(X, 2, stats::sd); sdy <- stats::sd(y); beta <- co[-1, 1] * sdx / sdy; bci <- ci[-1, , drop = FALSE] * sdx / sdy; vif <- reg_vif(X)
+  rn <- c("切片", colnames(X))
+  cells <- lapply(seq_along(rn), function(i) list(co[i, 1], co[i, 2], if (i > 1) beta[i - 1] else NULL, ci[i, 1], ci[i, 2], co[i, 3], co[i, 4], if (i > 1 && !is.na(vif[i - 1])) vif[i - 1] else NULL))
+  base <- unique(unlist(lapply(rc$info, function(z) if (isTRUE(z$dummy)) paste0(q(z$var), "は「", z$base, "」")))) 
+  res <- list(test = "重回帰分析", p = unname(pF), n = n_info(nrow(df), n), notes = rc$notes)
+  res$grids <- list(list(kind = "grid", title = "回帰係数", corner = "", rows = A(rn), cols = A(c("B", "標準誤差", "β", "95% 信頼区間の下限", "上限", "t", "p", "VIF")),
+                         fmt = A(c("num2", "num2", "num2", "num2", "num2", "num2", "p", "num2")), cells = cells,
+                         note = paste0("B は偏回帰係数、β は標準化偏回帰係数です。", reg_scorenote(rc$info),
+                                       if (length(base)) paste0("単一回答はダミー変数にし、", paste(base, collapse = "、"), "を基準（0）にしています。") else "")),
+                    list(kind = "grid", title = "モデルの当てはまり", corner = "", rows = A("モデル"), cols = A(c("R²", "調整済み R²", "F", "自由度 1", "自由度 2", "p", "n")),
+                         fmt = A(c("num2", "num2", "num2", "int", "int", "p", "int")), cells = list(list(sm$r.squared, sm$adj.r.squared, unname(fs[1]), unname(fs[2]), unname(fs[3]), unname(pF), n))))
+  stat <- paste0("F(", fs[2], ", ", fs[3], ") = ", fmt_num(fs[1]))
+  res$headline <- list(hl("R²", fmt_num(sm$r.squared)), hl("調整済み R²", fmt_num(sm$adj.r.squared)), hl(paste0("F(", fs[2], ", ", fs[3], ")"), fmt_num(fs[1])), hl("p", fmt_p(pF, lead0, FALSE)), hl("n", as.character(n)))
+  res$row <- list(stat = stat, effect = paste0("R² = ", fmt_num(sm$r.squared)))
+  res$fig <- list(type = "box", cats = A(colnames(X)), box = lapply(seq_len(k), function(j) list(stats = A(rep(beta[j], 5)), out = A(numeric(0)), n = n, mean = unname(beta[j]), lo = unname(bci[j, 1]), hi = unname(bci[j, 2]))),
+                  catTitle = "説明変数", valueTitle = "標準化係数 β（95% 信頼区間）", coef = "β", ref = 0)
+  if (any(vif > 10, na.rm = TRUE)) res$notes <- c(res$notes, paste0("VIF が 10 を超える説明変数（", paste(colnames(X)[vif > 10 & !is.na(vif)], collapse = "、"), "）があります。説明変数どうしの相関が強く（多重共線性）、係数が不安定な可能性があります。"))
+  if (n < 10 * k) res$notes <- c(res$notes, paste0("説明変数 1 つあたりの人数が ", fmt_num(n / k, 1), " 人です。10 人以上が目安とされます。"))
+  sigx <- which(co[-1, 4] < alpha)
+  res$report <- paste0(q(sy$label), "を目的変数、", paste(q(unique(vapply(rc$info, function(z) z$var, ""))), collapse = "・"), "を説明変数とする重回帰分析（強制投入法）を行った（n = ", n, "）。",
+                       "モデルは", if (pF < alpha) "統計的に有意であり" else "統計的に有意ではなく", "（", stat, ", ", fmt_p(pF, lead0), "）、決定係数は R² = ", fmt_num(sm$r.squared), "（調整済み R² = ", fmt_num(sm$adj.r.squared), "）であった。",
+                       if (length(sigx)) paste0("統計的に有意な説明変数は、", paste(vapply(sigx, function(j) paste0(q(colnames(X)[j]), "（β = ", fmt_num(beta[j]), ", ", fmt_p(co[j + 1, 4], lead0), "）"), ""), collapse = "、"), "であった。")
+                       else "統計的に有意な説明変数はなかった。")
+  finish(res, alpha)
+}
+register("reg", "重回帰分析", "回帰分析", "数値（または段階の得点）を、複数の質問から説明・予測します。説明変数ごとの影響の大きさ（標準化係数 β）と、モデル全体の説明力（R²）を出します。",
+         list(S("y", "目的変数（説明したい値）", c("numeric", "ordinal"), "例：勉強時間、満足度"), S("x", "説明変数（複数選べます）", c("numeric", "ordinal", "nominal"), "例：学年、性別、通学時間", many = TRUE)),
+         list(), an_reg)
+
+an_logit <- function(df, req) {
+  alpha <- opt(req, "alpha", 0.05); lead0 <- opt(req, "lead0", TRUE); sy <- req$slots$y
+  f <- droplevels(slot_factor(df, sy))
+  if (nlevels(f) != 2) stop_user("ロジスティック回帰分析の目的変数は 2 択です。", q(sy$label), "は現在 ", nlevels(f), " 個の選択肢があります。「選択肢の設定」でまとめるか、チェックを外して 2 つにしてください。")
+  ev <- levels(f)[1]; rc <- reg_common(df, req, ifelse(is.na(f), NA_real_, as.numeric(f == ev))); X <- rc$X; y <- rc$y; n <- rc$n; k <- rc$k
+  if (length(unique(y)) < 2) stop_user("対象の人の目的変数の回答がすべて同じなので、分析できません。")
+  fit <- suppressWarnings(stats::glm(y ~ X, family = stats::binomial())); reg_rankcheck(fit, X)
+  co <- summary(fit)$coefficients; z975 <- stats::qnorm(0.975)
+  or <- exp(co[, 1]); lo <- exp(co[, 1] - z975 * co[, 2]); hi <- exp(co[, 1] + z975 * co[, 2]); vif <- reg_vif(X)
+  lr <- fit$null.deviance - fit$deviance; dfl <- fit$df.null - fit$df.residual; pL <- stats::pchisq(lr, dfl, lower.tail = FALSE)
+  cs <- 1 - exp(-lr / n); nk <- cs / (1 - exp(-fit$null.deviance / n)); acc <- mean((stats::fitted(fit) >= 0.5) == (y == 1)); nev <- sum(y)
+  rn <- c("切片", colnames(X))
+  cells <- lapply(seq_along(rn), function(i) list(co[i, 1], co[i, 2], co[i, 3], co[i, 4], or[i], lo[i], hi[i], if (i > 1 && !is.na(vif[i - 1])) vif[i - 1] else NULL))
+  base <- unique(unlist(lapply(rc$info, function(z) if (isTRUE(z$dummy)) paste0(q(z$var), "は「", z$base, "」"))))
+  res <- list(test = "ロジスティック回帰分析", p = unname(pL), n = n_info(nrow(df), n), notes = rc$notes)
+  res$grids <- list(list(kind = "grid", title = paste0("回帰係数（", q(ev), "になる確率を予測）"), corner = "", rows = A(rn), cols = A(c("B", "標準誤差", "Wald z", "p", "オッズ比", "95% 信頼区間の下限", "上限", "VIF")),
+                         fmt = A(c("num2", "num2", "num2", "p", "num2", "num2", "num2", "num2")), cells = cells,
+                         note = paste0("オッズ比は、説明変数が 1 上がる（ダミー変数では基準の選択肢と比べた）ときに、", q(ev), "と答えるオッズが何倍になるかを表します。信頼区間は Wald 法です。", reg_scorenote(rc$info),
+                                       if (length(base)) paste0("単一回答はダミー変数にし、", paste(base, collapse = "、"), "を基準にしています。") else "")),
+                    list(kind = "grid", title = "モデルの当てはまり", corner = "", rows = A("モデル"), cols = A(c("尤度比 χ²", "自由度", "p", "Cox-Snell R²", "Nagelkerke R²", "AIC", "的中率 (%)", "n", paste0(ev, "の人数"))),
+                         fmt = A(c("num2", "int", "p", "num2", "num2", "num1", "num1", "int", "int")), cells = list(list(lr, dfl, pL, cs, nk, fit$aic, acc * 100, n, nev))))
+  stat <- paste0("χ²(", dfl, ") = ", fmt_num(lr))
+  res$headline <- list(hl(paste0("尤度比 χ²(", dfl, ")"), fmt_num(lr)), hl("p", fmt_p(pL, lead0, FALSE)), hl("Nagelkerke R²", fmt_num(nk)), hl("n", as.character(n)))
+  res$row <- list(stat = stat, effect = paste0("Nagelkerke R² = ", fmt_num(nk)))
+  res$fig <- list(type = "box", cats = A(colnames(X)), box = lapply(seq_len(k), function(j) list(stats = A(rep(or[j + 1], 5)), out = A(numeric(0)), n = n, mean = unname(or[j + 1]), lo = unname(lo[j + 1]), hi = unname(hi[j + 1]))),
+                  catTitle = "説明変数", valueTitle = "オッズ比（95% 信頼区間）", coef = "オッズ比", ref = 1)
+  if (!fit$converged || any(abs(co[-1, 1]) > 10 | co[-1, 2] > 50)) res$notes <- c(res$notes, "計算が安定しませんでした。ある説明変数の値で結果が完全に分かれている（完全分離）可能性があります。選択肢をまとめるか、その説明変数を外してください。")
+  if (any(vif > 10, na.rm = TRUE)) res$notes <- c(res$notes, paste0("VIF が 10 を超える説明変数（", paste(colnames(X)[vif > 10 & !is.na(vif)], collapse = "、"), "）があります。説明変数どうしの相関が強く、係数が不安定な可能性があります。"))
+  epv <- min(nev, n - nev) / k
+  if (epv < 10) res$notes <- c(res$notes, paste0("少ない方の結果の人数を説明変数の数で割った値（EPV）が ", fmt_num(epv, 1), " です。10 以上が目安とされます。"))
+  sigx <- which(co[-1, 4] < alpha)
+  res$report <- paste0(q(sy$label), "が", q(ev), "であるかを目的変数、", paste(q(unique(vapply(rc$info, function(z) z$var, ""))), collapse = "・"), "を説明変数とするロジスティック回帰分析（強制投入法）を行った（n = ", n, "、", ev, " ", nev, " 人）。",
+                       "モデルは", if (pL < alpha) "統計的に有意であり" else "統計的に有意ではなく", "（尤度比検定 ", stat, ", ", fmt_p(pL, lead0), "）、Nagelkerke R² = ", fmt_num(nk), "、的中率は ", fmt_num(acc * 100, 1), "% であった。",
+                       if (length(sigx)) paste0("統計的に有意な説明変数は、", paste(vapply(sigx, function(j) paste0(q(colnames(X)[j]), "（オッズ比 = ", fmt_num(or[j + 1]), ", 95%CI ", fmt_ci(c(lo[j + 1], hi[j + 1])), ", ", fmt_p(co[j + 1, 4], lead0), "）"), ""), collapse = "、"), "であった。")
+                       else "統計的に有意な説明変数はなかった。")
+  finish(res, alpha)
+}
+register("logit", "ロジスティック回帰分析", "回帰分析", "2 択の回答（例：部活動に入っているか）を、複数の質問から説明・予測します。説明変数ごとのオッズ比を出します。",
+         list(S("y", "目的変数（2 択の回答）", cat_types, "例：はい・いいえ。先頭の選択肢になる確率を予測します"), S("x", "説明変数（複数選べます）", c("numeric", "ordinal", "nominal"), "例：学年、性別、通学時間", many = TRUE)),
+         list(), an_logit)

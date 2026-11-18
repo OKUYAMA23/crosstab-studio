@@ -75,7 +75,7 @@
   function analysisDialog(onPick, title) {
     // スマホでは検索欄を出さない（一覧から選ぶ方が速く、入力欄に触れると画面が拡大されるため）
     var useSearch = !window.CTS_PHONE;
-    modal(title, (useSearch ? '<input class="md-in" id="md_asearch" placeholder="解析の名前や目的で探す（例：フィッシャー、複数回答、順序）" style="margin-bottom:6px">' : '') + '<div id="md_alist"></div>');
+    modal(title, '<button class="md-btn" data-act="guide" style="margin-bottom:8px">どれを使えばよいか迷ったら：質問を選んで探す</button>' + (useSearch ? '<input class="md-in" id="md_asearch" placeholder="解析の名前や目的で探す（例：フィッシャー、複数回答、順序）" style="margin-bottom:6px">' : '') + '<div id="md_alist"></div>');
     function draw(q) {
       var groups = [], h = '';
       S.registry.forEach(function (a) { if (q && (a.name + a.desc + a.group).indexOf(q) < 0) return; var g = groups.find(function (x) { return x.name === a.group; }); if (!g) { g = { name: a.group, items: [] }; groups.push(g); } g.items.push(a); });
@@ -199,6 +199,7 @@
       }
       if (opt.excel) { A.busy(true, 'Excel ファイルを作っています'); try { var x = await excelBlob(tabs); out.push({ name: A.baseName() + '_解析.xlsx', blob: x.blob }); note = excelNote(x); } finally { A.busy(false); } }
       if (opt.pdf) out.push({ name: A.baseName() + '_報告書.pdf', blob: await A.reportPdf() });
+      if (opt.docx) out.push({ name: A.baseName() + '_報告書.docx', blob: await A.reportDocx() });
       if (opt.report) { await A.ensureHolmAsync(); out.push({ name: A.baseName() + '_報告書.txt', blob: new Blob(['﻿' + A.reportPlain()], { type: 'text/plain' }) }); }
       if (!out.length) { A.toast('書き出すものがありません。', true); return; }
       if (dir) {
@@ -268,8 +269,8 @@
   // ---------------- ボタンの動作
   var act = {
     closeModal: closeModal,
-    openCsv: async function () { var f = await A.pickFile('.csv,.tsv,.txt'); if (f) A.handleFile(f); },
-    replaceCsv: async function () { var f = await A.pickFile('.csv,.tsv,.txt'); if (!f) return; try { await A.loadCsv(new Uint8Array(await f.arrayBuffer()), f.name, true); } catch (e) { A.toast(e.message, true); } },
+    openCsv: async function () { var f = await A.pickFile('.csv,.tsv,.txt,.xlsx,.xlsm,.xls'); if (f) A.handleFile(f); },
+    replaceCsv: async function () { var f = await A.pickFile('.csv,.tsv,.txt,.xlsx,.xlsm,.xls'); if (!f) return; try { var r = await A.xlsxIn(new Uint8Array(await f.arrayBuffer()), f.name); await A.loadCsv(r.buf, r.name, true); } catch (e) { A.toast(e.message, true); } },
     openProject: projectDialog,
     openProjName: function (arg) { A.openProjectByName(arg); },
     save: async function () { if (!S.data) return; if (S.projName) { await A.saveProjectAs(S.projName); refreshProjects(); } else act.saveAs(); },
@@ -417,6 +418,7 @@
     resetTextAt: function (arg) { var tab = A.tabById(arg); if (tab) A.commit(function () { tab.reportText = null; tab.reportBase = null; }); },
     resetAllText: function () { A.commit(function () { S.P.tabs.forEach(function (t) { t.reportText = null; t.reportBase = null; }); }); A.toast('すべての文を定型文に戻しました。'); },
     repPdf: function () { A.savePdf(); },
+    repDocx: function () { A.saveDocx(); },
     tblSizeAuto: function () { var tab = A.curTab(); if (!tab) return; A.commit(function () { delete tab.tstyle.tw; delete tab.tstyle.rowH; }); },
     itemRev: function (arg) {
       var p = arg.split(':'), tab = A.tabById(p[0]); if (!tab) return; var sl = tab.slots[p[1]], c = +p[2];
@@ -440,15 +442,50 @@
         '<label class="md-check"><input type="checkbox" id="md_ex_fig" checked>図（PNG、' + nfig + ' 個）　名前は「解析の名前_図1.png」</label>' +
         '<label class="md-check"><input type="checkbox" id="md_ex_xl" checked>Excel ファイル（データと、関数で再現した解析）</label>' +
         '<label class="md-check"><input type="checkbox" id="md_ex_pdf" checked>報告書（PDF。文・表・図をすべて含む）</label>' +
+        '<label class="md-check"><input type="checkbox" id="md_ex_docx">報告書（Word。表は Word の表で、あとから直せる）</label>' +
         '<label class="md-check"><input type="checkbox" id="md_ex_rep">報告書（テキスト。文と表だけ）</label>' +
         '<p class="md-hint" style="margin-top:8px">' + (canDir ? '次の画面で書き出し先のフォルダーを選びます。同じ名前のファイルがあるときは上書きします。' : 'この環境ではフォルダーを選べないため、1 つの ZIP ファイルにまとめて保存します。') + '</p>',
         '<button class="md-btn" data-act="closeModal">やめる</button><button class="md-btn md-btn-primary" id="md_ex_go">' + (canDir ? 'フォルダーを選んで書き出す' : 'ZIP にまとめて保存') + '</button>', 520);
       $('#md_ex_go').onclick = async function () {
-        var opt = { figs: $('#md_ex_fig').checked, excel: $('#md_ex_xl').checked, report: $('#md_ex_rep').checked, pdf: $('#md_ex_pdf').checked }, dir = null;
+        var opt = { figs: $('#md_ex_fig').checked, excel: $('#md_ex_xl').checked, report: $('#md_ex_rep').checked, pdf: $('#md_ex_pdf').checked, docx: $('#md_ex_docx').checked }, dir = null;
         if (opt.pdf && A.askLocalFonts) A.askLocalFonts();                 // MS 明朝・Times New Roman を使う許可は、押した直後にしかたずねられない
         if (canDir) { try { dir = await window.showDirectoryPicker({ mode: 'readwrite' }); } catch (e) { return; } }       // フォルダーを選ぶ画面（OS 標準）
         closeModal(); exportAll(dir, opt);
       };
+    },
+    // 尺度得点：複数の項目の平均点・合計点を、新しい列として作る
+    scoreNew: function () { scoreDialog(null); },
+    guide: function () { guideDialog(); },
+    scoreEdit: function (arg) { scoreDialog(+arg); },
+    scoreDel: function (arg) {
+      var c = +arg, x = A.v(c); if (!x) return;
+      var used = S.P.tabs.filter(function (t) { return Object.keys(t.slots).some(function (k) { var sl = t.slots[k]; return sl.col === c || (sl.cols || []).indexOf(c) >= 0; }); });
+      if (used.length && !confirm('「' + x.label + '」は ' + used.length + ' 件の解析で使っています。消すと、その解析の列の選択が外れます。消しますか。')) return;
+      A.commit(function () {
+        S.P.vars = S.P.vars.filter(function (y) { return y.col !== c; });
+        S.P.tabs.forEach(function (t) { Object.keys(t.slots).forEach(function (k) { var sl = t.slots[k]; if (sl.col === c) t.slots[k] = { col: null, cats: [] }; if (sl.cols) sl.cols = sl.cols.filter(function (z) { return z !== c; }); }); });
+      });
+      A.syncResults();
+    },
+    scoreSave: function (arg) {
+      var m = document.getElementById('md_modal'); if (!m) return;
+      var name = m.querySelector('#md_sc_name').value.trim(), method = m.querySelector('input[name="md_sc_m"]:checked').value;
+      var items = [].map.call(m.querySelectorAll('[data-scitem]:checked'), function (e) { return +e.dataset.scitem; });
+      var rev = [].map.call(m.querySelectorAll('[data-screv]:checked'), function (e) { return +e.dataset.screv; }).filter(function (c) { return items.indexOf(c) >= 0; });
+      if (!name) { A.toast('名前を入れてください。', true); return; }
+      if (items.length < 2) { A.toast('項目を 2 つ以上選んでください。', true); return; }
+      if (S.P.vars.some(function (y) { return y.label === name && y.col !== +arg; })) { A.toast('同じ名前の列があります。別の名前にしてください。', true); return; }
+      closeModal();
+      A.commit(function () {
+        var x = arg ? A.v(+arg) : null;
+        if (x) { x.label = name; x.header = name; x.comp = { items: items, reverse: rev, method: method }; }
+        else {
+          var col = Math.max.apply(null, S.P.vars.map(function (y) { return y.col; })) + 1;
+          S.P.vars.push({ col: col, header: name, label: name, type: 'numeric', n: '–', nUnique: 0, cats: [], comp: { items: items, reverse: rev, method: method } });
+        }
+      });
+      A.syncResults();
+      A.toast('「' + name + '」を作りました。数値の列として、t 検定・分散分析・相関などで選べます。');
     },
     // ご意見・不具合の報告：GitHub の Issues を、版と端末を書き込んだ状態で開く
     feedback: function () {
@@ -494,6 +531,7 @@
       ['カイ二乗検定', 'chisq.test（2×2 の表でも補正なしが初期設定。イェーツの補正を選べる）。効果量は Cramér の V（2×2 では φ）。調整済み標準化残差でセルごとの多い・少ないを判定。'],
       ['フィッシャーの正確確率検定', 'fisher.test。2×2 の表では条件付き最尤推定のオッズ比と 95% 信頼区間。表が大きく正確な計算が難しいときは、モンテカルロ法（20 万回）に自動で切り替え。'],
       ['割合の傾向検定', 'prop.trend.test（コクラン・アーミテージ）。段階に等間隔の得点を与える。'],
+      ['層別のクロス集計', 'mantelhaen.test（連続性の補正なし。3×2 以上の表では一般化した CMH 検定）。層ごとの chisq.test。2×2 の表では共通オッズ比（マンテル・ヘンツェル）と 95% 信頼区間、ブレスロー・デイ検定（タロンの補正）。'],
       '順序のある回答の比較',
       ['マン・ホイットニーの U 検定', 'wilcox.test（正規近似、同順位と連続性の補正）。効果量 r = |Z| / √N。'],
       ['クラスカル・ウォリス検定', 'kruskal.test。効果量 ε² = H / (N − 1)。多重比較は pairwise.wilcox.test（ホルム法）。'],
@@ -507,6 +545,9 @@
       ['マクネマー検定', 'mcnemar.test（連続性の補正あり）。食い違った組が 25 未満のときは binom.test（正確二項検定）。'],
       '関連・相関',
       ['ピアソンの相関係数', 'cor.test(method = "pearson")。95% 信頼区間はフィッシャーの z 変換による。散布図に回帰直線（lm）を引く。'],
+      '回帰分析',
+      ['重回帰分析', 'lm（強制投入法）。偏回帰係数 B、標準誤差、標準化係数 β、95% 信頼区間、t、p、VIF。R²、調整済み R²、F 検定。単一回答は先頭の選択肢を基準にしたダミー変数、順序のある回答は段階の得点。'],
+      ['ロジスティック回帰分析', 'glm(family = binomial)。B、標準誤差、Wald 検定、オッズ比と Wald 法の 95% 信頼区間、VIF。尤度比検定、Cox-Snell と Nagelkerke の R²、AIC、的中率（予測確率 0.5 で判定）。'],
       '複数回答',
       ['複数回答のクロス集計', '選択肢ごとに chisq.test または fisher.test、p.adjust（ホルム法）で補正。'],
       '尺度・多変量',
@@ -520,6 +561,7 @@
       h('データの扱い') +
       '<ul style="margin:0;padding-left:1.4em">' +
       '<li>読み込んだデータと結果は、' + (web ? 'この端末の中' : 'このパソコンの中') + 'だけで扱い、外部に送信しません。AI のサービスにもつないでいません。</li>' +
+      '<li>Excel ファイル（.xlsx）は、1 枚目のシートを CSV と同じ形の表に直して読み込みます。日付は「年/月/日 時:分:秒」の文字にします。プロジェクトには、直した表（CSV）を保存します。</li>' +
       '<li>プロジェクトは' + (web ? 'この端末（ブラウザの中）に保存します。ブラウザのデータを消すと消えるので、大事なものは「ファイルに書き出す」で .prj ファイルにも保存してください。' : 'アプリのフォルダーの「projects」に保存します。') + '</li>' +
       '</ul>' +
       h('解析と計算の方法') + tbl(['解析', '使う R の関数と出力'], A1) +
@@ -530,6 +572,7 @@
       '<li>p 値は「関連がない（差がない）」という仮定のもとで、今回以上の偏りが出る確率です。有意でないことは、関連がないことの証明にはなりません。</li>' +
       '<li>報告書では、☑ を付けた検定をまとめてホルム法で補正した p も示します（設定で切り替えられます）。</li>' +
       '<li>「平均と信頼区間」の図の線は、t 分布による平均の 95% 信頼区間です。</li>' +
+      '<li>尺度得点（データの「尺度得点を作る」）は、選んだ項目の得点（逆転項目は反転）の平均または合計です。すべての項目に答えた人だけ得点を出します。作り方は、その得点を使った解析の「方法」に書きます。</li>' +
       '</ul>' +
       h('Excel での再現') +
       '<p style="margin:0">Excel ファイルには、データと、解析の計算を Excel の関数で書いたセルを入れます。結果の値は貼り付けず、すべて数式なので、計算の過程を確かめられます。次のものは Excel の関数では求められないため載せていません。アプリの値を使ってください。</p>' +
@@ -538,7 +581,9 @@
       '<li>分散分析のあとの多重比較の p（スチューデント化された範囲の分布の関数が Excel にないため。平均の差と t は載せます）</li>' +
       '<li>探索的因子分析（反復計算のため）</li>' +
       '<li>コレスポンデンス分析の次元と座標（特異値分解のため。関連のカイ二乗検定までは載せます）</li>' +
-      '<li>テキストマイニング（語の分割のため）</li></ul>' +
+      '<li>テキストマイニング（語の分割のため）</li>' +
+      '<li>層別のクロス集計の、一般化した CMH 検定（3×2 以上の表）と、共通オッズ比の信頼区間・ブレスロー・デイ検定（層ごとのカイ二乗検定と、2×2 の表の CMH 検定・共通オッズ比までは載せます）</li>' +
+      '<li>ロジスティック回帰分析（係数を反復計算で求めるため。重回帰分析は X\'X の逆行列で再現します）</li></ul>' +
       '<p style="margin:4px 0 0">自由度が小数になるウェルチの検定の p は、Excel の T.DIST・F.DIST が自由度の小数を切り捨てるため、BETA.DIST で求めています。</p>' +
       h('報告書（PDF）の字体') +
       '<p style="margin:0">本文と表は、和文を MS 明朝、英数字を Times New Roman で書きます（' + (web ? 'パソコンの Chrome・Edge で、字体の使用を許可したとき' : 'パソコンに入っているとき') + '）。使えないときは、形の近い BIZ UD明朝と Tinos で書きます。見出しと図は BIZ UDPゴシックです。</p>' +
@@ -571,6 +616,7 @@
   function stepRtab(d) { var ks = A.RTABS.map(function (t) { return t[0]; }), i = ks.indexOf(S.ui.rtab); setRtab(ks[(i + d + ks.length) % ks.length]); }
   function setView(v) { S.ui.view = v; if (v === 'data') S.ui.rtab = 'data'; else if (v === 'report') S.ui.rtab = 'export'; else if (S.ui.rtab === 'data') S.ui.rtab = 'home'; A.render(); }
   async function changeVar(x, type, delim) {
+    if (x.comp) { A.toast('尺度得点の列の種類は変えられません。', true); A.render(); return; }
     var needCats = ['nominal', 'ordinal', 'multi'].indexOf(type) >= 0, cats = x.cats, same = (type === 'multi') === (x.type === 'multi') && delim === x.delim && A.isCat(x);
     try {
       if (needCats && !same) { var d = await A.apiData('/api/varinfo', { col: x.col, type: type === 'multi' ? 'multi' : 'nominal', delim: delim }); if (!d.ok) throw new Error(d.message); cats = d.cats; }
@@ -875,6 +921,173 @@
     modal('CrossTab Studio', body, '<button class="md-btn md-btn-primary" id="md_chg_ok">わかりました</button>', 560);
     $('#md_chg_ok').onclick = function () { mark(); closeModal(); };
     var back = $('#md_modal'); if (back) back.addEventListener('mousedown', mark);
+  }
+  function scoreDialog(col, preset) {
+    var x = col ? A.v(col) : null, comp = x ? x.comp : { items: preset || [], reverse: [], method: 'mean' };
+    var cand = S.P.vars.filter(function (y) { return !y.comp && (y.type === 'ordinal' || y.type === 'numeric'); });
+    if (cand.length < 2) { A.toast('順序のある質問（または数値の質問）が 2 つ以上必要です。「データ」で列の種類を確かめてください。', true); return; }
+    var name = x ? x.label : '尺度得点' + (A.compVars().length + 1);
+    var rows = cand.map(function (y) {
+      var on = comp.items.indexOf(y.col) >= 0, rv = (comp.reverse || []).indexOf(y.col) >= 0;
+      var lv = y.type === 'numeric' ? '数値' : (y.cats || []).filter(function (k) { return !k.special; }).length + ' 段階';
+      return '<tr><td><input type="checkbox" data-scitem="' + y.col + '"' + (on ? ' checked' : '') + '></td><td style="text-align:left;white-space:normal;overflow-wrap:anywhere">' + esc(y.label) + '</td><td class="num">' + lv + '</td><td><label><input type="checkbox" data-screv="' + y.col + '"' + (rv ? ' checked' : '') + '> 逆転</label></td></tr>';
+    }).join('');
+    var d = modal(x ? '尺度得点を直す' : '尺度得点を作る',
+      '<div class="md-grid2"><label class="md-field">名前<input type="text" id="md_sc_name" value="' + esc(name) + '"></label>' +
+      '<div class="md-field">計算<div class="md-row" style="gap:12px;margin-top:4px"><label><input type="radio" name="md_sc_m" value="mean"' + (comp.method !== 'sum' ? ' checked' : '') + '> 平均点</label><label><input type="radio" name="md_sc_m" value="sum"' + (comp.method === 'sum' ? ' checked' : '') + '> 合計点</label></div></div></div>' +
+      '<p class="md-hint" style="margin:6px 0">尺度に含める項目に ☑ を付けます。逆の向きに聞いた項目（例：「海は好きではない」）には「逆転」を付けると、点数を反対にしてから計算します。すべての項目に答えた人だけ得点を出し、1 つでも答えていない人は欠損にします。平均点は、項目の数が違う尺度どうしでも比べやすくなります。</p>' +
+      '<div style="max-height:46vh;overflow:auto;border:1px solid #D5E3DA"><table class="md-t0" style="width:100%;table-layout:fixed"><colgroup><col style="width:44px"><col><col style="width:64px"><col style="width:70px"></colgroup><tr><th class="md-rh">使う</th><th class="md-rh">項目</th><th class="md-rh">段階</th><th class="md-rh">向き</th></tr>' + rows + '</table></div>' +
+      '<div id="md_sc_prev" class="md-hint" style="margin-top:8px"></div>',
+      '<button class="md-btn" data-act="closeModal">やめる</button><button class="md-btn md-btn-primary" data-act="scoreSave" data-arg="' + (x ? x.col : '') + '">' + (x ? '直す' : '作る') + '</button>', 640);
+    function prev() {
+      var items = [].map.call(d.querySelectorAll('[data-scitem]:checked'), function (e) { return A.v(+e.dataset.scitem); });
+      var el = d.querySelector('#md_sc_prev'); if (!items.length) { el.textContent = '項目を選ぶと、点数の付け方を表示します。'; return; }
+      var y = items.find(function (z) { return z.type === 'ordinal'; }), msg = '';
+      if (y) { var cs = (y.cats || []).filter(function (k) { return !k.special; }), L = cs.length; msg = '点数の付け方（「' + y.label + '」の例）：' + cs.map(function (k, i) { return k.v + ' = ' + (L - i); }).join('、') + '。選択肢の並びの先頭が高い点です。逆転の項目は反対になります。'; }
+      var ns = {}; items.forEach(function (z) { ns[z.type === 'numeric' ? '数値' : (z.cats || []).filter(function (k) { return !k.special; }).length + ' 段階'] = 1; });
+      if (Object.keys(ns).length > 1) msg += ' 注意：段階の数が違う項目が混ざっています（' + Object.keys(ns).join('・') + '）。そのまま足すと、段階の多い項目の重みが大きくなります。';
+      el.textContent = msg + '（選んだ項目 ' + items.length + ' 個）';
+    }
+    d.addEventListener('change', prev); prev();
+  }
+  // ---- 解析の選び方：知りたいことと質問を選ぶと、合う解析を挙げて、設問を入れた状態で作る
+  var GUIDE_GOALS = [
+    ['one', '1 つの質問の結果をまとめたい', '人数・割合、平均など'],
+    ['two', '2 つの質問の関係や、グループの違いを調べたい', '例：性別で好みが違うか、勉強時間と通学時間に関係があるか'],
+    ['pair', '同じ人が答えた 2 つの質問を比べたい', '例：事前と事後、2 つのサービスの利用頻度'],
+    ['items', '同じ内容を測る複数の質問をまとめて扱いたい', '例：「好き」を測る 4 項目（尺度）'],
+    ['model', '1 つの値を、複数の質問から説明・予測したい', '例：勉強時間を、学年・性別・通学時間から説明する']];
+  function nLev(x) { return (x.cats || []).filter(function (k) { return !k.special; }).length; }
+  function tname(x) { return A.TYPE_NAMES[x.type] || x.type; }
+  function guideRecs(goal, a, b, items, y, xs) {
+    var R = [], M = [];
+    function add(type, slots, why, main) { R.push({ type: type, slots: slots, why: why, main: !!main }); }
+    var cat = function (x) { return x && (x.type === 'nominal' || x.type === 'ordinal'); };
+    if (goal === 'one') {
+      if (!a) return { recs: R, msg: '質問を選んでください。' };
+      if (a.type === 'numeric') add('numsum', { y: a.col }, '数値の質問は、平均・標準偏差・中央値とヒストグラムでまとめます。', true);
+      else if (a.type === 'time') add('timeline', { t: a.col }, '日時の列は、日・週・月ごとの回答数の推移でまとめます。', true);
+      else if (a.type === 'text') add('textmine', { t: a.col }, '自由記述は、よく出てくる語と、一緒に使われる語の組み合わせでまとめます。', true);
+      else if (cat(a) || a.type === 'multi') add('freq', { a: a.col }, '選択肢ごとの人数と割合を出します。', true);
+      else M.push('この列は「回答なし」なので集計できません。');
+    } else if (goal === 'two' || goal === 'pair') {
+      if (!a || !b) return { recs: R, msg: '質問を 2 つ選んでください。' };
+      if (a.col === b.col) return { recs: R, msg: '別の質問を選んでください。' };
+      var ta = a.type, tb = b.type;
+      if (goal === 'pair') {
+        if (ta === 'ordinal' && tb === 'ordinal') {
+          add('wsr', { x: a.col, y: b.col }, '同じ選択肢の段階で答える 2 つの質問を、同じ人の中で比べます。', true);
+          add('pairedt', { x: a.col, y: b.col }, '段階を得点（先頭の選択肢が高い点）とみなして、平均の差を調べます。');
+          if (nLev(a) !== nLev(b)) M.push('2 つの質問の段階の数が違います（' + nLev(a) + ' と ' + nLev(b) + '）。同じ選択肢で答える質問どうしで使ってください。');
+        } else if (ta === 'numeric' && tb === 'numeric') add('pairedt', { x: a.col, y: b.col }, '同じ人の 2 つの値（事前と事後など）の平均の差を調べます。', true);
+        else if (cat(a) && cat(b) && nLev(a) === 2 && nLev(b) === 2) add('mcnemar', { x: a.col, y: b.col }, '同じ 2 択の質問を、同じ人の中で比べます（A は「はい」だが B は「いいえ」の人が多いか）。', true);
+        else if (ta === 'numeric' && tb === 'ordinal' || ta === 'ordinal' && tb === 'numeric') add('pairedt', { x: a.col, y: b.col }, '段階を得点とみなして、数値と同じ尺度なら平均の差を比べられます。単位が違う 2 つの値は比べられません。');
+        else M.push('この組み合わせ（' + tname(a) + ' と ' + tname(b) + '）に合う、同じ人の比較の解析はありません。2 択どうし、段階どうし、数値どうしで使えます。');
+        return { recs: R, msg: M.join(' ') };
+      }
+      if (ta === 'time' || tb === 'time') { M.push('日時の列は「回答日時の推移」で 1 つずつ集計してください。'); return { recs: R, msg: M.join(' ') }; }
+      if (ta === 'text' || tb === 'text') {
+        var t = ta === 'text' ? a : b, g = ta === 'text' ? b : a;
+        if (cat(g)) add('textmine', { t: t.col, g: g.col }, '自由記述の語を、もう一方の質問のグループごとに比べます。', true); else M.push('自由記述は、単一回答・順序ありの質問と組み合わせて使えます。');
+        return { recs: R, msg: M.join(' ') };
+      }
+      if (ta === 'multi' || tb === 'multi') {
+        var mm = ta === 'multi' ? a : b, gg = ta === 'multi' ? b : a;
+        if (cat(gg)) add('multi', { m: mm.col, g: gg.col }, '複数回答の選択肢ごとに、選んだ人の割合をグループ別に比べます。', true); else M.push('複数回答は、単一回答・順序ありの質問をグループにして比べられます。');
+        return { recs: R, msg: M.join(' ') };
+      }
+      if (ta === 'numeric' && tb === 'numeric') {
+        add('pearson', { x: a.col, y: b.col }, '2 つの数値の直線的な関係の強さ（相関係数 r）を調べ、散布図を描きます。', true);
+        add('spearman', { x: a.col, y: b.col }, '外れ値がある、分布が偏っているときは、順位による相関を使います。');
+      } else if (ta === 'numeric' || tb === 'numeric') {
+        var num = ta === 'numeric' ? a : b, oth = ta === 'numeric' ? b : a, k = nLev(oth);
+        if (oth.type === 'nominal') {
+          if (k === 2) { add('ttest', { g: oth.col, y: num.col }, '2 つのグループの平均の差を調べます。', true); add('mwu', { g: oth.col, y: num.col }, '外れ値がある、分布が偏っているときは、順位で比べます。'); }
+          else { add('anova', { g: oth.col, y: num.col }, k + ' つのグループの平均の差を調べ、どの組み合わせに差があるかも出します。', true); add('kw', { g: oth.col, y: num.col }, '外れ値がある、分布が偏っているときは、順位で比べます。'); if (k < 2) M.push('グループの選択肢が 1 つしかありません。'); }
+        } else {
+          add('spearman', { x: oth.col, y: num.col }, '段階が上がるほど数値も大きく（小さく）なるかを、順位による相関で調べます。', true);
+          add(k === 2 ? 'ttest' : 'anova', { g: oth.col, y: num.col }, '段階をグループとみなして、グループごとの平均を比べます。');
+        }
+        add('numsum', { y: num.col, g: oth.col }, 'グループごとの平均・中央値・ヒストグラムで、まず様子を見ます。');
+      } else {
+        var oa = ta === 'ordinal', ob = tb === 'ordinal', ka = nLev(a), kb = nLev(b);
+        if (oa && ob) {
+          add('spearman', { x: a.col, y: b.col }, '一方の段階が高いほど、もう一方も高い（低い）かを調べます。', true);
+          add('chisq', { a: a.col, b: b.col }, '段階の並びを使わず、答え方の組み合わせに関連があるかを調べます。');
+        } else if (oa || ob) {
+          var nom = oa ? b : a, ord = oa ? a : b, kn = nLev(nom);
+          if (kn === 2) { add('mwu', { g: nom.col, y: ord.col }, '2 つのグループで、段階のある回答の傾向が違うかを調べます。', true); add('trend', { b: nom.col, o: ord.col }, '段階が上がるほど一方の選択肢の割合が増える（減る）かを調べます。'); }
+          else add('kw', { g: nom.col, y: ord.col }, kn + ' つのグループで、段階のある回答の傾向が違うかを調べます。', true);
+          add('chisq', { a: nom.col, b: ord.col }, 'クロス集計表で、答え方の組み合わせに関連があるかを調べます。');
+        } else {
+          add('chisq', { a: a.col, b: b.col }, 'クロス集計表を作り、2 つの答え方に関連があるかを調べます。どのセルが多い・少ないかは残差で分かります。', true);
+          add('fisher', { a: a.col, b: b.col }, '人数の少ないセル（期待度数 5 未満）が多いときに使います。2×2 の表ではオッズ比も出します。');
+          if (ka >= 3 && kb >= 3) add('ca', { a: a.col, b: b.col }, '選択肢の多い 2 つの質問の関係を、1 枚の図（布置図）で見ます。');
+        }
+        add('strat', { a: a.col, b: b.col }, '3 つ目の質問（例：学年）で層に分けても関連があるかを確かめます。層の質問は、作ったあとで選びます。');
+      }
+    } else if (goal === 'items') {
+      if (items.length < 2) return { recs: R, msg: '質問を 2 つ以上選んでください。' };
+      var cols = items.map(function (x) { return x.col; });
+      if (items.every(function (x) { return x.type === 'ordinal'; })) {
+        add('alpha', { items: cols }, '同じ内容を測る質問のまとまりの良さ（クロンバックの α）を調べます。尺度得点を作る前に確かめます。', true);
+        R.push({ type: '_score', items: cols, why: '項目の平均点（合計点）を新しい列にして、t 検定や相関などで使えるようにします。', main: false });
+        add('freqmulti', { items: cols }, '項目ごとの回答の分布を 1 つの帯グラフに並べます。');
+        if (items.length >= 3) add('factor', { items: cols }, '多くの項目の背後にある共通の要因（因子）を探します。項目が多いときに使います。');
+      } else if (items.every(function (x) { return cat(x); })) add('freqmulti', { items: cols }, '同じ選択肢で答える質問を並べて集計します。');
+      else M.push('尺度として扱えるのは「順序あり」の質問です。「データ」で種類を確かめてください。');
+    } else if (goal === 'model') {
+      if (!y) return { recs: R, msg: '説明したい値（目的変数）を選んでください。' };
+      if (!xs.length) return { recs: R, msg: '説明に使う質問（説明変数）を 1 つ以上選んでください。' };
+      var xc = xs.map(function (x) { return x.col; }).filter(function (c) { return c !== y.col; });
+      if (y.type === 'numeric' || y.type === 'ordinal') add('reg', { y: y.col, x: xc }, '数値（または段階の得点）を、複数の質問から説明します。説明変数ごとの影響の大きさ（β）と説明力（R²）を出します。', true);
+      if (y.type === 'nominal' || y.type === 'ordinal' && nLev(y) === 2) {
+        add('logit', { y: y.col, x: xc }, '2 択の回答を、複数の質問から説明します。説明変数ごとのオッズ比を出します。', y.type === 'nominal');
+        if (nLev(y) > 2) M.push('ロジスティック回帰の目的変数は 2 択です。作ったあとで「選択肢の設定」でまとめるか、チェックを外して 2 つにしてください。');
+      }
+      if (!R.length) M.push('目的変数には、数値・順序あり・単一回答の質問を使えます。');
+    }
+    return { recs: R, msg: M.join(' ') };
+  }
+  function guideDialog() {
+    var usable = S.P.vars.filter(function (x) { return x.type !== 'empty'; });
+    function opts(f, sel) { return '<option value="">（選ぶ）</option>' + usable.filter(f || function () { return true; }).map(function (x) { return '<option value="' + x.col + '"' + (sel === x.col ? ' selected' : '') + '>' + esc(x.label) + '〔' + esc(tname(x)) + '〕</option>'; }).join(''); }
+    function checks(name, f) { return '<div style="max-height:30vh;overflow:auto;border:1px solid #D5E3DA;padding:4px 8px">' + usable.filter(f).map(function (x) { return '<label style="display:block;padding:2px 0"><input type="checkbox" data-g' + name + '="' + x.col + '"> ' + esc(x.label) + ' <span class="md-hint">〔' + esc(tname(x)) + '〕</span></label>'; }).join('') + '</div>'; }
+    var goals = GUIDE_GOALS.map(function (g, i) { return '<label style="display:block;padding:3px 0"><input type="radio" name="md_g_goal" value="' + g[0] + '"' + (i === 1 ? ' checked' : '') + '> <b>' + esc(g[1]) + '</b> <span class="md-hint">' + esc(g[2]) + '</span></label>'; }).join('');
+    var d = modal('解析の選び方', '<div class="md-sec-title">1. 知りたいこと</div>' + goals +
+      '<div class="md-sec-title" style="margin-top:10px">2. 質問</div><div id="md_g_q"></div>' +
+      '<div class="md-sec-title" style="margin-top:10px">3. 合う解析</div><div id="md_g_rec"></div>', '<button class="md-btn" data-act="closeModal">閉じる</button>', 680);
+    function goal() { return d.querySelector('input[name="md_g_goal"]:checked').value; }
+    function drawQ() {
+      var g = goal(), h = '';
+      if (g === 'one') h = '<label class="md-field">質問<select id="md_g_a">' + opts() + '</select></label>';
+      else if (g === 'two' || g === 'pair') h = '<div class="md-grid2"><label class="md-field">' + (g === 'two' ? '1 つ目（グループにする質問）' : '1 つ目') + '<select id="md_g_a">' + opts() + '</select></label><label class="md-field">2 つ目<select id="md_g_b">' + opts() + '</select></label></div>';
+      else if (g === 'items') h = checks('it', function (x) { return x.type === 'ordinal' || x.type === 'nominal'; });
+      else h = '<label class="md-field">説明したい値（目的変数）<select id="md_g_y">' + opts(function (x) { return ['numeric', 'ordinal', 'nominal'].indexOf(x.type) >= 0; }) + '</select></label><div class="md-hint" style="margin:6px 0 2px">説明に使う質問（説明変数）</div>' + checks('x', function (x) { return ['numeric', 'ordinal', 'nominal'].indexOf(x.type) >= 0; });
+      d.querySelector('#md_g_q').innerHTML = h; drawR();
+    }
+    function val(id) { var e = d.querySelector('#' + id); return e && e.value ? A.v(+e.value) : null; }
+    function checked(n) { return [].map.call(d.querySelectorAll('[data-g' + n + ']:checked'), function (e) { return A.v(+e.getAttribute('data-g' + n)); }); }
+    var cur = [];
+    function drawR() {
+      var r = guideRecs(goal(), val('md_g_a'), val('md_g_b'), checked('it'), val('md_g_y'), checked('x')); cur = r.recs;
+      var h = r.msg ? '<p class="md-hint">' + esc(r.msg) + '</p>' : '';
+      h += r.recs.map(function (x, i) {
+        var nm = x.type === '_score' ? '尺度得点を作る' : (A.def(x.type) || {}).name;
+        return '<div style="display:flex;gap:10px;align-items:center;padding:6px 0;border-top:1px solid #E6EEF6"><div style="flex:1"><b>' + (x.main ? 'おすすめ：' : '') + esc(nm) + '</b><div class="md-hint" style="margin:2px 0 0">' + esc(x.why) + '</div></div><button class="md-btn' + (x.main ? ' md-btn-primary' : '') + '" data-grec="' + i + '">' + (x.type === '_score' ? '作る' : 'この解析を作る') + '</button></div>';
+      }).join('');
+      d.querySelector('#md_g_rec').innerHTML = h || '<p class="md-hint">質問を選ぶと、合う解析をここに挙げます。</p>';
+    }
+    d.addEventListener('change', function (e) { if (e.target.name === 'md_g_goal') drawQ(); else drawR(); });
+    d.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-grec]'); if (!b) return; var x = cur[+b.dataset.grec]; if (!x) return;
+      closeModal();
+      if (x.type === '_score') { scoreDialog(null, x.items); return; }
+      if (S.P.tabs.length >= A.MAX_TABS) { A.toast('解析は ' + A.MAX_TABS + ' 個までです。使わない解析を削除してください。', true); return; }
+      var t; A.commit(function () { t = A.newTab(x.type); if (!t) return; Object.keys(x.slots).forEach(function (k) { var c = x.slots[k]; if (Array.isArray(c)) A.setItems(t, k, c); else A.setSlot(t, k, c); }); }, { quiet: true });
+      if (!t) return; S.ui.sel = t.id; S.ui.selFig = 0; S.ui.view = 'analysis'; S.ui.rtab = 'analysis'; A.schedule(t.id); A.render(); scrollToAn(t.id);
+    });
+    drawQ();
   }
   // 報告に書き込む端末の情報（アンケートのデータは含めない）
   function envText() {

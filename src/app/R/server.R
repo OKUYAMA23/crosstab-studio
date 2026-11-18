@@ -1,7 +1,7 @@
 # server.R ― 画面（ブラウザ）と R をつなぐ小さなローカルサーバー。127.0.0.1 だけで待ち受ける。
 
 APP_ID <- "CrossTabStudio"
-APP_VERSION <- "0.8.2"
+APP_VERSION <- "0.9.0"
 STORE <- new.env()          # 読み込んだデータ（id → data.frame）
 STATE <- new.env()
 STATE$last_ping <- Sys.time(); STATE$had_client <- FALSE; STATE$bye_at <- NULL
@@ -105,6 +105,7 @@ route <- function(req) {
   body <- read_json(req)
   df <- get_data(body$dataId)
   if (is.null(df)) return(json_resp(list(ok = FALSE, noData = TRUE, message = "データが読み込まれていません。")))
+  if (length(body$computed)) df <- add_computed(df, body$computed)   # 画面で作った尺度得点の列
   if (path == "/api/varinfo") {
     x <- df[[body$col]]
     info <- category_info(x, body$type, if (is.null(body$delim)) ";" else body$delim)
@@ -115,7 +116,7 @@ route <- function(req) {
     tx <- as.character(d[[body$t$col]]); g <- if (!is.null(body$g)) as.character(slot_factor(d, body$g)) else NULL
     return(json_resp(list(ok = TRUE, text = A(ifelse(is.na(tx), "", tx)), group = if (is.null(g)) NULL else A(ifelse(is.na(g), "", g)))))
   }
-  if (path == "/api/analyze") return(json_resp(run_analysis(df, body)))
+  if (path == "/api/analyze") return(json_resp(score_method(run_analysis(df, body), body)))
   if (path == "/api/excel") return(json_resp(c(list(ok = TRUE), build_excel(df, body$items))))
   if (path == "/api/padjust") {
     p <- vapply(body$p, function(v) if (is.null(v)) NA_real_ else as.numeric(v), 0)

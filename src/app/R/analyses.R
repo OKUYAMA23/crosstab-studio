@@ -483,6 +483,89 @@ an_trend <- function(df, req) {
 register("trend", "割合の傾向検定（コクラン・アーミテージ）", "2 つの質問の関連", "段階が上がるほど「はい」の割合が増える（減る）という一方向の傾向があるかを調べます。",
          list(S("b", "2 択の回答", cat_types, "例：ある・ない", TRUE), S("o", "段階（順序あり）", "ordinal", "例：学年、利用頻度", TRUE)), list(), an_trend)
 
+# ---------------------------------------------------------------- 層別のクロス集計（コクラン・マンテル・ヘンツェル検定）
+# ブレスロー・デイ検定（タロンの補正つき）：2×2 の表で、層ごとのオッズ比が等しいかを調べる
+breslow_day <- function(t3, psi) {
+  K <- dim(t3)[3]; d <- numeric(K); v <- numeric(K)
+  for (k in seq_len(K)) {
+    tk <- t3[, , k]; a <- tk[1, 1]; m1 <- sum(tk[1, ]); n1 <- sum(tk[, 1]); N <- sum(tk)
+    lo <- max(0, m1 + n1 - N); hi <- min(m1, n1)
+    A2 <- 1 - psi; B <- N - m1 - n1 + psi * (m1 + n1); C <- -psi * m1 * n1
+    E <- if (abs(A2) < 1e-12) -C / B else { r <- (-B + c(-1, 1) * sqrt(B^2 - 4 * A2 * C)) / (2 * A2); r[r >= lo - 1e-9 & r <= hi + 1e-9][1] }
+    d[k] <- a - E; v[k] <- 1 / (1 / E + 1 / (m1 - E) + 1 / (n1 - E) + 1 / (N - m1 - n1 + E))
+  }
+  st <- sum(d^2 / v) - sum(d)^2 / sum(v)
+  list(stat = st, df = K - 1, p = stats::pchisq(st, K - 1, lower.tail = FALSE))
+}
+an_strat <- function(df, req) {
+  sa <- req$slots$a; sb <- req$slots$b; sz <- req$slots$z
+  alpha <- opt(req, "alpha", 0.05); lead0 <- opt(req, "lead0", TRUE)
+  a <- slot_factor(df, sa); b <- slot_factor(df, sb); z <- slot_factor(df, sz)
+  ok <- !is.na(a) & !is.na(b) & !is.na(z)
+  if (!any(ok)) stop_user("3 つの質問すべてに答えた人がいません。列の組み合わせや絞り込みを見直してください。")
+  a <- droplevels(a[ok]); b <- droplevels(b[ok]); z <- droplevels(z[ok])
+  if (nlevels(a) < 2 || nlevels(b) < 2) stop_user("行と列のそれぞれに、回答のある選択肢が 2 つ以上必要です。選択肢の設定や絞り込みを見直してください。")
+  if (nlevels(z) < 2) stop_user("層には、回答のある選択肢が 2 つ以上必要です。層を分けない場合は、カイ二乗検定を使ってください。")
+  t3 <- table(a, b, z); n <- sum(t3)
+  # 層ごとの検定
+  lay <- levels(z); rows <- list(); dropped <- character(0); sigl <- character(0)
+  for (k in seq_along(lay)) {
+    tk <- t3[, , k, drop = TRUE]; nk <- sum(tk); tk2 <- tk[rowSums(tk) > 0, colSums(tk) > 0, drop = FALSE]
+    if (nrow(tk2) < 2 || ncol(tk2) < 2) { rows[[k]] <- list(nk, NA, NA, NA, NA, NA); dropped <- c(dropped, lay[k]); next }
+    ct <- suppressWarnings(stats::chisq.test(tk2, correct = FALSE)); V <- cramers_v(tk2); ch <- expected_check(tk2)
+    rows[[k]] <- list(nk, unname(ct$statistic), unname(ct$parameter), unname(ct$p.value), V, ch$share_lt5 * 100)
+    if (ct$p.value < alpha) sigl <- c(sigl, lay[k])
+  }
+  tt <- table(a, b); ctt <- suppressWarnings(stats::chisq.test(tt, correct = FALSE))
+  rows[[length(rows) + 1]] <- list(n, unname(ctt$statistic), unname(ctt$parameter), unname(ctt$p.value), cramers_v(tt), expected_check(tt)$share_lt5 * 100)
+  # 層の合計が 1 人以下の層は CMH 検定から除く
+  keepz <- apply(t3, 3, sum) > 1; t3c <- t3[, , keepz, drop = FALSE]
+  mh <- tryCatch(stats::mantelhaen.test(t3c, correct = FALSE), error = function(e) NULL)
+  if (is.null(mh)) stop_user("層ごとの人数が少なすぎて、コクラン・マンテル・ヘンツェル検定を計算できません。層や選択肢をまとめてください。")
+  is22 <- nlevels(a) == 2 && nlevels(b) == 2
+  stat <- paste0("CMH χ²(", mh$parameter, ") = ", fmt_num(mh$statistic))
+  res <- list(test = "コクラン・マンテル・ヘンツェル検定", p = unname(mh$p.value), n = n_info(nrow(df), n), fig = list(type = "xtab"), notes = character(0))
+  res$headline <- list(hl(paste0("CMH χ²(", mh$parameter, ")"), fmt_num(mh$statistic)), hl("p", fmt_p(res$p, lead0, FALSE)), hl("層", as.character(sum(keepz))), hl("n", as.character(n)))
+  res$row <- list(stat = stat, effect = "–")
+  # 図と表：行を「層・行の選択肢」にしたクロス集計表
+  big <- do.call(rbind, lapply(seq_along(lay), function(k) { m <- matrix(t3[, , k], nrow = nlevels(a)); rownames(m) <- paste0(lay[k], "・", levels(a)); m }))
+  colnames(big) <- levels(b); big <- big[rowSums(big) > 0, , drop = FALSE]
+  res$xtab <- xtab_obj(as.table(big), paste0(sz$label, "・", sa$label), sb$label, resid = FALSE)
+  res$grids <- list(list(kind = "grid", title = "層ごとのカイ二乗検定", corner = sz$label, rows = A(c(lay, "全体（層を分けない）")),
+                         cols = A(c("n", "χ²", "自由度", "p", "Cramér's V", "期待度数 5 未満 (%)")), fmt = A(c("int", "num2", "int", "p", "num2", "num1")),
+                         cells = lapply(rows, function(r) lapply(r, function(x) if (is.na(x)) NULL else x)),
+                         note = "層ごとの検定はイェーツの補正なしのカイ二乗検定です。層の数だけ検定を繰り返すので、層ごとの p 値は参考として扱ってください。"))
+  extra <- ""
+  if (is22) {
+    or <- unname(mh$estimate); ci <- mh$conf.int; bd <- breslow_day(t3c, or)
+    res$headline <- append(res$headline, list(hl("共通オッズ比", paste0(fmt_num(or), " [", fmt_num(ci[1]), ", ", fmt_num(ci[2]), "]"))), 2)
+    res$row$effect <- paste0("共通オッズ比 = ", fmt_num(or))
+    orl <- vapply(dimnames(t3c)[[3]], function(k) { tk <- t3c[, , k]; (tk[1, 1] + .5) * (tk[2, 2] + .5) / ((tk[1, 2] + .5) * (tk[2, 1] + .5)) }, 0)
+    res$grids <- c(res$grids, list(list(kind = "grid", title = "オッズ比", corner = "", rows = A(c(names(orl), "共通（マンテル・ヘンツェル）")),
+                                        cols = A(c("オッズ比", "95% 信頼区間の下限", "上限")), fmt = A(c("num2", "num2", "num2")),
+                                        cells = c(lapply(orl, function(x) list(x, NULL, NULL)), list(list(or, ci[1], ci[2]))),
+                                        note = paste0("オッズ比は、", q(levels(a)[1]), "が", q(levels(a)[2]), "に比べて", q(levels(b)[1]), "と答えるオッズの比です。層ごとの値は、0 のセルがあっても計算できるよう各セルに 0.5 を足した値です。")),
+                                   list(kind = "grid", title = "オッズ比の均一性（ブレスロー・デイ検定、タロンの補正）", corner = "", rows = A("層の間の違い"), cols = A(c("χ²", "自由度", "p")),
+                                        fmt = A(c("num2", "int", "p")), cells = list(list(bd$stat, bd$df, bd$p)))))
+    extra <- paste0("層の影響を調整した共通オッズ比は ", fmt_num(or), "（95%CI [", fmt_num(ci[1]), ", ", fmt_num(ci[2]), "]）であった。",
+                    "ブレスロー・デイ検定では、層の間でオッズ比が", if (bd$p < alpha) paste0("異なっていた（χ²(", bd$df, ") = ", fmt_num(bd$stat), ", ", fmt_p(bd$p, lead0), "）。層によって関連の強さが違うため、共通オッズ比より層ごとの結果を重視して解釈する必要がある。") else paste0("異なるとはいえなかった（χ²(", bd$df, ") = ", fmt_num(bd$stat), ", ", fmt_p(bd$p, lead0), "）。"))
+    res$notes <- c(res$notes, "2×2 の表の CMH 検定は、連続性の補正なしで計算しています。")
+  } else res$notes <- c(res$notes, "行または列の選択肢が 3 つ以上なので、一般化した CMH 検定（一般の関連）で計算しています。共通オッズ比は 2×2 の表のときだけ出します。")
+  if (length(dropped)) res$notes <- c(res$notes, paste0("層「", paste(dropped, collapse = "」「"), "」は、回答のある選択肢が 1 つしかないため、層ごとの検定ができませんでした。"))
+  if (any(!keepz)) res$notes <- c(res$notes, paste0("回答が 1 人以下の層（", paste(lay[!keepz], collapse = "、"), "）は CMH 検定から除きました。"))
+  sig <- res$p < alpha
+  res$report <- paste0(q(sz$label), "で層に分け（", sum(keepz), " 層）、", q(sa$label), "と", q(sb$label), "の関連を調べた（有効回答 n = ", n, "）。",
+                       "層を分けないカイ二乗検定では", if (ctt$p.value < alpha) "有意な関連が認められ" else "有意な関連は認められず",
+                       "（χ²(", ctt$parameter, ") = ", fmt_num(ctt$statistic), ", ", fmt_p(ctt$p.value, lead0), "）、層ごとの検定で有意であった層は",
+                       if (length(sigl)) paste0(paste(sigl, collapse = "、"), "であった。") else "なかった。",
+                       "コクラン・マンテル・ヘンツェル検定の結果、", q(sz$label), "の影響を調整しても両者の関連は",
+                       if (sig) "統計的に有意であった" else "統計的に有意ではなかった", "（", stat, ", ", fmt_p(res$p, lead0), "）。", extra)
+  finish(res, alpha)
+}
+register("strat", "層別のクロス集計（CMH 検定）", "2 つの質問の関連", "3 つ目の質問（例：学年）で層に分けてクロス集計し、層の影響を調整しても 2 つの質問に関連があるかを調べます（コクラン・マンテル・ヘンツェル検定）。",
+         list(S("a", "行（比べるグループ）", cat_types, "例：性別"), S("b", "列（回答）", cat_types, "例：ある・ない"), S("z", "層（分けて見る質問）", cat_types, "例：学年、部活動")),
+         list(), an_strat)
+
 registry_json <- function() {
   lapply(ANALYSES, function(a) a[c("id", "name", "group", "desc", "slots", "opts")])
 }

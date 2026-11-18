@@ -112,8 +112,8 @@ xl_freq <- function(W, X, req, res, c0) {
   xl_width(W, c0, 34); 3
 }
 
-xl_crosstab <- function(W, X, req, res, c0, method) {
-  sa <- req$slots$a; sb <- req$slots$b; flt <- xl_filter(req$filter, X$rng(req$filter$col))
+xl_crosstab <- function(W, X, req, res, c0, method, extra = character(0)) {
+  sa <- req$slots$a; sb <- req$slots$b; flt <- c(xl_filter(req$filter, X$rng(req$filter$col)), extra)
   rown <- unlist(res$xtab$rows); coln <- unlist(res$xtab$cols); R <- length(rown); C <- length(coln)
   A <- vapply(rown, function(l) xl_member(X$rng(sa$col), xl_vals(sa, l)), ""); B <- vapply(coln, function(l) xl_member(X$rng(sb$col), xl_vals(sb, l)), "")
   S_(W, 3, c0, "人数", 1L)
@@ -584,21 +584,126 @@ xl_ca <- function(W, X, req, res, c0) {
   W$notes <- c(W$notes, "コレスポンデンス分析の次元と座標（特異値分解）")
   used
 }
+# ---------------------------------------------------------------- 重回帰分析：正規方程式（X'X の逆行列）で係数を求める
+xl_reg <- function(W, X, req, res, c0, df) {
+  sy <- req$slots$y; d <- reg_design(df, req$slots$x$vars); info <- d$info; k <- length(info); p <- k + 1L
+  h <- c0; s <- c0 + k + 3L; r <- 3L; keys <- list()
+  xl_helphead(W, h, c("使う（1）", paste0("目的変数：", sy$label), paste0("説明変数：", names(info))))
+  sl <- c(list(sy), lapply(info, function(z) z$slot))
+  for (z in sl) if (identical(z$type, "ordinal") && is.null(keys[[as.character(z$col)]])) { kk <- xl_keys(W, r, s, z, paste0("得点：", z$label)); keys[[as.character(z$col)]] <- kk; r <- kk$nxt }
+  valid <- function(z) if (identical(z$type, "nominal")) xl_member(rowref(z$col), unlist(lapply(z$cats, function(c) unlist(c$values)))) else xl_valid(z, rowref(z$col), keys[[as.character(z$col)]])
+  vs <- unique(lapply(sl, function(z) z$col)); vz <- lapply(vs, function(cc) sl[[which(vapply(sl, function(z) identical(z$col, cc), TRUE))[1]]])
+  ok <- xl_and(xl_filter(req$filter, rowref(req$filter$col)), vapply(vz, function(z) { v <- valid(z); if (identical(z$type, "nominal")) paste0(v, ">0") else v }, ""))
+  xl_rows(W, X, h, paste0("IF(", ok, ",1,0)"), 0L)
+  w <- paste0("$", xl_L(h), XL_MARK)
+  xl_rows(W, X, h + 1, paste0("IF(", w, "=1,", xl_value(sy, rowref(sy$col), keys[[as.character(sy$col)]]), ",0)"))
+  for (j in seq_len(k)) {
+    z <- info[[j]]; v <- if (isTRUE(z$dummy)) paste0("IF(", xl_member(rowref(z$slot$col), xl_vals(z$slot, z$level)), ">0,1,0)") else xl_value(z$slot, rowref(z$slot$col), keys[[as.character(z$slot$col)]])
+    xl_rows(W, X, h + 1 + j, paste0("IF(", w, "=1,", v, ",0)"))
+  }
+  colR <- function(j) rg(2, h + if (j == 0) 0 else 1 + j, X$last, h + if (j == 0) 0 else 1 + j)   # 0：切片（使う＝1 の列）、1〜k：説明変数
+  yR <- rg(2, h + 1, X$last, h + 1)
+  S_(W, r, s, "X'X（説明変数どうしの積の和。先頭は切片）", 1L); m0 <- r + 1L
+  for (i in 0:k) for (j in 0:k) F_(W, m0 + i, s + j, sprintf("SUMPRODUCT(%s,%s)", colR(i), colR(j)), 4L)
+  XtX <- rg(m0, s, m0 + k, s + k); r <- m0 + p + 1L
+  S_(W, r, s, "(X'X) の逆行列", 1L); i0 <- r + 1L
+  for (i in 0:k) for (j in 0:k) F_(W, i0 + i, s + j, sprintf("INDEX(MINVERSE(%s),%d,%d)", XtX, i + 1, j + 1), 5L)
+  r <- i0 + p + 1L; S_(W, r, s, "X'y", 1L); y0 <- r + 1L
+  for (j in 0:k) F_(W, y0, s + j, sprintf("SUMPRODUCT(%s,%s)", colR(j), yR), 4L)
+  Xty <- rg(y0, s, y0, s + k); r <- y0 + 2L
+  n <- xl_stat(W, r, s, "n", sprintf("SUM(%s)", colR(0)), 0L)
+  yy <- xl_stat(W, r + 1, s, "Σy²", sprintf("SUMPRODUCT(%s,%s)", yR, yR), 4L)
+  S_(W, r + 3, s, "回帰係数", 1L); hd <- c("", "B", "標準誤差", "β", "95% 信頼区間の下限", "上限", "t", "p", "VIF"); S_(W, r + 4, s + 0:8, hd, 6L)
+  b0 <- r + 5L; Bc <- function(j) ad(b0 + j, s + 1)
+  ct <- sprintf("%s(0.05,%s-%d)", FN("T.INV.2T"), n, p)
+  rs <- b0 + p + 1L
+  sseC <- xl_stat(W, rs, s, "残差平方和", paste0(yy, "-(", paste(vapply(0:k, function(j) paste0(Bc(j), "*", ad(y0, s + j)), ""), collapse = "+"), ")"), 4L)
+  sstC <- xl_stat(W, rs + 1, s, "全体の平方和", sprintf("%s-SUM(%s)^2/%s", yy, yR, n), 4L)
+  mse <- sprintf("(%s/(%s-%d))", sseC, n, p)
+  sdy <- sprintf("SQRT(%s/(%s-1))", sstC, n)
+  rn <- c("切片", names(info)); cells <- res$grids[[1]]$cells
+  for (j in 0:k) {
+    rr <- b0 + j; S_(W, rr, s, rn[j + 1], 6L)
+    F_(W, rr, s + 1, sprintf("SUMPRODUCT(INDEX(%s,%d,0),%s)", rg(i0, s, i0 + k, s + k), j + 1, Xty), 5L); xl_check(W, paste0("reg B", j), rr, s + 1, cells[[j + 1]][[1]])
+    se <- sprintf("SQRT(%s*%s)", ad(i0 + j, s + j), mse); F_(W, rr, s + 2, se, 5L)
+    if (j > 0) {
+      ssx <- sprintf("(SUMPRODUCT(%s,%s)-SUM(%s)^2/%s)", colR(j), colR(j), colR(j), n)
+      F_(W, rr, s + 3, sprintf("%s*SQRT(%s/(%s-1))/%s", Bc(j), ssx, n, sdy), 5L); xl_check(W, paste0("reg beta", j), rr, s + 3, cells[[j + 1]][[3]])
+      if (k > 1) { F_(W, rr, s + 8, sprintf("%s*%s", ad(i0 + j, s + j), ssx), 5L); xl_check(W, paste0("reg vif", j), rr, s + 8, cells[[j + 1]][[8]]) }
+    }
+    F_(W, rr, s + 4, sprintf("%s-%s*%s", Bc(j), ct, ad(rr, s + 2)), 5L); F_(W, rr, s + 5, sprintf("%s+%s*%s", Bc(j), ct, ad(rr, s + 2)), 5L)
+    F_(W, rr, s + 6, sprintf("%s/%s", Bc(j), ad(rr, s + 2)), 5L)
+    F_(W, rr, s + 7, sprintf("%s(ABS(%s),%s-%d)", FN("T.DIST.2T"), ad(rr, s + 6), n, p), 3L); xl_check(W, paste0("reg p", j), rr, s + 7, cells[[j + 1]][[7]])
+  }
+  r2 <- xl_stat(W, rs + 2, s, "R²", sprintf("1-%s/%s", sseC, sstC), 5L); xl_check(W, "reg R2", rs + 2, s + 1, res$grids[[2]]$cells[[1]][[1]])
+  xl_stat(W, rs + 3, s, "調整済み R²", sprintf("1-(1-%s)*(%s-1)/(%s-%d)", r2, n, n, p), 5L)
+  fv <- xl_stat(W, rs + 4, s, sprintf("F（自由度 %d と n−%d）", k, p), sprintf("((%s-%s)/%d)/%s", sstC, sseC, k, mse), 5L)
+  xl_stat(W, rs + 5, s, "p", sprintf("%s(%s,%d,%s-%d)", FN("F.DIST.RT"), fv, k, n, p)); xl_check(W, "reg F p", rs + 5, s + 1, res$p)
+  xl_note(W, rs + 6, s, "係数は正規方程式 B = (X'X)⁻¹X'y で求めています。単一回答はダミー変数（基準の選択肢は 0）、順序のある回答は得点の表で点数にしています。")
+  xl_width(W, s, 34); k + 3L + 10L
+}
+xl_logit <- function(W, X, req, res, c0) { W$notes <- c(W$notes, "ロジスティック回帰分析（係数を反復計算で求めるため）"); 0L }
+
+# ---------------------------------------------------------------- 層別のクロス集計：層ごとのカイ二乗検定と、2×2 のときの CMH 検定
+xl_strat <- function(W, X, req, res, c0, df) {
+  sa <- req$slots$a; sb <- req$slots$b; sz <- req$slots$z; g <- res$grids[[1]]
+  lay <- unlist(g$rows); lay <- lay[-length(lay)]; c <- c0
+  keep <- if (is.null(req$filter)) rep(TRUE, nrow(df)) else apply_filter(df, req$filter)
+  for (k in seq_along(lay)) {
+    if (is.null(g$cells[[k]][[4]])) next
+    zt <- xl_member(X$rng(sz$col), xl_vals(sz, lay[k]))
+    req2 <- list(type = "chisq", slots = list(a = sa, b = sb), filter = list(col = sz$col, type = sz$type, values = as.list(xl_vals(sz, lay[k]))), opts = req$opts)
+    r2 <- tryCatch(run_analysis(df[keep, , drop = FALSE], req2), error = function(e) NULL); if (is.null(r2)) next
+    S_(W, 2, c, paste0("層：", sz$label, " = ", lay[k]), 2L)
+    c <- c + xl_crosstab(W, X, list(slots = list(a = sa, b = sb), filter = req$filter), r2, c, "chisq", zt) + 1L
+  }
+  rows <- unlist(res$xtab$rows); cols <- unlist(res$xtab$cols)
+  if (length(unique(sub("^.*・", "", rows))) == 2 && length(cols) == 2) {
+    alev <- xl_levels(sa); alev <- alev[alev %in% sub("^[^・]*・", "", rows)]; flt <- xl_filter(req$filter, X$rng(req$filter$col))
+    A1 <- xl_member(X$rng(sa$col), xl_vals(sa, alev[1])); A2 <- xl_member(X$rng(sa$col), xl_vals(sa, alev[2]))
+    B1 <- xl_member(X$rng(sb$col), xl_vals(sb, cols[1])); B2 <- xl_member(X$rng(sb$col), xl_vals(sb, cols[2]))
+    S_(W, 3, c, "CMH 検定（2×2 の表）", 1L)
+    hd <- c("層", "a", "b", "c", "d", "n", "E(a)", "V(a)", "ad/n", "bc/n"); S_(W, 4, c + 0:9, hd, 6L)
+    r <- 5L
+    for (k in seq_along(lay)) {
+      zt <- xl_member(X$rng(sz$col), xl_vals(sz, lay[k])); S_(W, r, c, lay[k], 6L)
+      F_(W, r, c + 1, xl_count(c(A1, B1, zt, flt)), 0L); F_(W, r, c + 2, xl_count(c(A1, B2, zt, flt)), 0L)
+      F_(W, r, c + 3, xl_count(c(A2, B1, zt, flt)), 0L); F_(W, r, c + 4, xl_count(c(A2, B2, zt, flt)), 0L)
+      a <- ad(r, c + 1); b <- ad(r, c + 2); cc <- ad(r, c + 3); d <- ad(r, c + 4); n <- ad(r, c + 5)
+      F_(W, r, c + 5, sprintf("SUM(%s:%s)", a, d), 0L)
+      F_(W, r, c + 6, sprintf("IF(%s>1,(%s+%s)*(%s+%s)/%s,0)", n, a, b, a, cc, n), 4L)
+      F_(W, r, c + 7, sprintf("IF(%s>1,(%s+%s)*(%s+%s)*(%s+%s)*(%s+%s)/(%s^2*(%s-1)),0)", n, a, b, cc, d, a, cc, b, d, n, n), 4L)
+      F_(W, r, c + 8, sprintf("IF(%s>1,%s*%s/%s,0)", n, a, d, n), 4L); F_(W, r, c + 9, sprintf("IF(%s>1,%s*%s/%s,0)", n, b, cc, n), 4L)
+      r <- r + 1L
+    }
+    col <- function(j) rg(5, c + j, r - 1L, c + j)
+    st <- xl_stat(W, r + 1L, c, "CMH χ²（補正なし）", sprintf("(SUM(%s)-SUM(%s))^2/SUM(%s)", col(1), col(6), col(7)), 5L)
+    xl_stat(W, r + 2L, c, "自由度", "1", 0L)
+    xl_stat(W, r + 3L, c, "p", sprintf("%s(%s,1)", FN("CHISQ.DIST.RT"), st)); xl_check(W, "cmh p", r + 3L, c + 1, res$p)
+    xl_stat(W, r + 4L, c, "共通オッズ比（マンテル・ヘンツェル）", sprintf("SUM(%s)/SUM(%s)", col(8), col(9)), 5L)
+    or <- res$grids[[2]]$cells; xl_check(W, "cmh or", r + 4L, c + 1, or[[length(or)]][[1]])
+    xl_note(W, r + 5L, c, "a〜d は 2×2 の表の左上・右上・左下・右下の人数です。共通オッズ比の信頼区間とブレスロー・デイ検定は Excel では再現していません。")
+    W$notes <- c(W$notes, "共通オッズ比の信頼区間とブレスロー・デイ検定")
+    xl_width(W, c, 30); c <- c + 11L
+  } else W$notes <- c(W$notes, "一般化したコクラン・マンテル・ヘンツェル検定（3×2 以上の表）")
+  c - c0
+}
 XL_WRITERS <- list(freq = xl_freq, freqmulti = xl_freqmulti, chisq = function(W, X, req, res, c0) xl_crosstab(W, X, req, res, c0, "chisq"), fisher = function(W, X, req, res, c0) xl_crosstab(W, X, req, res, c0, "fisher"),
                    mwu = function(W, X, req, res, c0) xl_rank(W, X, req, res, c0, FALSE), kw = function(W, X, req, res, c0) xl_rank(W, X, req, res, c0, TRUE),
                    spearman = xl_spearman, wsr = xl_wsr, mcnemar = xl_mcnemar, trend = xl_trend, multi = xl_multi,
-                   numsum = xl_numsum, ttest = xl_ttest, anova = xl_anova, pairedt = xl_pairedt, pearson = xl_pearson, alpha = xl_alpha, timeline = xl_timeline, ca = xl_ca)
+                   numsum = xl_numsum, ttest = xl_ttest, anova = xl_anova, pairedt = xl_pairedt, pearson = xl_pearson, alpha = xl_alpha, timeline = xl_timeline, ca = xl_ca, strat = xl_strat, reg = xl_reg, logit = xl_logit)
 
 # items：list(list(name = 解析の名前, req = 解析の設定), …)
 build_excel <- function(df, items) {
   n <- nrow(df); nc <- ncol(df); W <- xl_new()
   X <- list(n = n, last = n + 1L, nc = nc, rng = function(col) if (is.null(col)) "" else rg(2, col, n + 1L, col))
   numeric_cols <- integer(0); fixes <- list()
-  for (it in items) for (s in it$req$slots) if (identical(s$type, "numeric")) { numeric_cols <- c(numeric_cols, s$col); fixes[[as.character(s$col)]] <- list(fix = s$fix, unit = s$unit) }
+  for (it in items) for (s in it$req$slots) for (s2 in c(list(s), s$vars)) if (identical(s2$type, "numeric") && !is.null(s2$col)) { numeric_cols <- c(numeric_cols, s2$col); fixes[[as.character(s2$col)]] <- list(fix = s2$fix, unit = s2$unit) }
   S_(W, 1, seq_len(nc), gsub("[\r\n]+", " ", names(df)), 6L)
   for (j in seq_len(nc)) {
     v <- df[[j]]; ok <- which(!is.na(v)); if (!length(ok)) next
-    if (j %in% numeric_cols) {                                      # 数値の列は、直した値を書く（数値にできない回答は空欄）
+    if (is.numeric(v)) N_(W, ok + 1L, j, v[ok])                       # 尺度得点など、アプリで作った数値の列
+    else if (j %in% numeric_cols) {                                 # 数値の列は、直した値を書く（数値にできない回答は空欄）
       fx <- fixes[[as.character(j)]]; num <- numeric_values(v[ok], fx$fix, fx$unit); g <- !is.na(num)
       if (any(g)) N_(W, ok[g] + 1L, j, num[g])
     } else S_(W, ok + 1L, j, v[ok])
@@ -610,7 +715,7 @@ build_excel <- function(df, items) {
     res <- tryCatch(run_analysis(df, it$req), error = function(e) NULL)
     if (is.null(fn) || is.null(res)) { skipped <- c(skipped, it$name); next }
     hcols <- switch(it$req$type, mwu = 3L, kw = 3L, spearman = 4L, wsr = 3L, 0L)
-    used <- fn(W, X, it$req, res, c0)
+    used <- if ("df" %in% names(formals(fn))) fn(W, X, it$req, res, c0, df) else fn(W, X, it$req, res, c0)
     S_(W, 1, c0 + hcols, paste0("【", k, "】", it$name, "（", res$test, "）"), 2L)
     if (!is.null(res$filterText)) xl_note(W, 2, c0 + hcols, paste0("絞り込み：", res$filterText))
     if (hcols > 0) for (j in seq_len(hcols)) xl_width(W, c0 + j - 1L, 12)

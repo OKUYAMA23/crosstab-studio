@@ -61,6 +61,43 @@ slot_score <- function(df, slot) {
   nlevels(f) + 1L - as.integer(f)
 }
 
+# 解析で尺度得点を使ったとき、その作り方を「方法」に書く
+score_method <- function(res, body) {
+  if (!isTRUE(res$ok) || !length(body$computed)) return(res)
+  used <- unlist(lapply(body$slots, function(s) c(s$col, unlist(s$cols))))
+  txt <- character(0)
+  for (d in body$computed) if (as.integer(d$col) %in% used) {
+    rev <- unlist(d$reverse); its <- vapply(d$items, function(s) paste0("「", s$label, "」", if (s$col %in% rev) "（逆転）" else ""), "")
+    ks <- unique(vapply(Filter(function(s) identical(s$type, "ordinal"), d$items), function(s) length(s$cats), 1L))
+    sc <- if (length(ks)) sprintf("順序のある項目は選択肢の並びの先頭を高い点とし（%s）、", paste(sprintf("%d 段階の項目は %d〜1 点", ks, ks), collapse = "、")) else ""
+    txt <- c(txt, sprintf("「%s」は、%sの %d 項目の%s点とした。%s%sすべての項目に回答した人だけを対象とした。",
+      d$name, paste(its, collapse = "・"), length(its), if (identical(d$method, "sum")) "合計" else "平均", sc,
+      if (length(rev)) "逆転項目は点数を反対にしてから計算した。" else ""))
+  }
+  if (length(txt)) res$method <- paste(c(txt, res$method), collapse = "\n")
+  res
+}
+# 尺度得点の列を、元のデータの右に足す（画面で作った定義を、依頼のたびに受け取って計算する）
+#   def：col（足す列の番号）、name、method（"mean" か "sum"）、items（各項目の slot）、reverse（逆転する項目の列番号）
+#   すべての項目に答えた人だけ得点を出し、ほかは欠損にする。逆転項目は（段階の数 + 1 − 得点）にする
+add_computed <- function(df, defs) {
+  for (d in defs) {
+    items <- d$items; rev <- unlist(d$reverse)
+    M <- vapply(items, function(s) {
+      x <- slot_score(df, s)
+      if (s$col %in% rev) x <- length(s$cats) + 1L - x
+      as.numeric(x)
+    }, numeric(nrow(df)))
+    if (!is.matrix(M)) M <- matrix(M, ncol = length(items))
+    ok <- stats::complete.cases(M)
+    v <- rep(NA_real_, nrow(df)); v[ok] <- if (identical(d$method, "sum")) rowSums(M[ok, , drop = FALSE]) else rowMeans(M[ok, , drop = FALSE])
+    col <- as.integer(d$col)
+    while (ncol(df) < col - 1L) df[[paste0(".pad", ncol(df) + 1L)]] <- NA_character_
+    df[[col]] <- v; names(df)[col] <- if (is.null(d$name)) paste0("score", col) else d$name
+  }
+  df
+}
+
 apply_filter <- function(df, flt) {
   if (is.null(flt) || is.null(flt$col) || length(flt$values) == 0) return(rep(TRUE, nrow(df)))
   x <- df[[flt$col]]; vals <- unlist(flt$values)

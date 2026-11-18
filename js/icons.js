@@ -48,6 +48,7 @@
     copy: '<rect x="10" y="4" width="16" height="19" fill="' + W + '"/><rect x="5" y="9" width="16" height="19" fill="' + G + '"/>',
     report: paper + '<path d="M12 14h10M12 18h10M12 22h6"/>',
     txt: paper + '<path d="M12 15h8M16 15v8"/>',
+    docx: paper + '<path d="M11 13l2 9 3-7 3 7 2-9"/>',
     html: paper + '<rect x="11" y="13" width="6" height="5" fill="' + G + '"/><path d="M19 14h4M19 17h4M11 22h12"/>',
     refresh: '<path d="M26 16a10 10 0 11-3-7"/><path d="M26 4v6h-6"/>',
     table: sheet,

@@ -272,9 +272,9 @@
   }
   function renderRibbon() {
     var tab = A.curTab(), res = tab ? S.results[tab.id] : null, ok = !!(res && res.ok), has = !!S.data, noTab = !tab, m = ok ? Chart.model(res) : null, fig = A.curFig(), noFig = !m || !fig;
-    var kindNow = !noFig ? Chart.kindOf(m, fig) : null, isBar = kindNow && ['stack100', 'stack', 'group', 'bar', 'box', 'mean'].indexOf(kindNow) >= 0, noVal = noFig || ['stack100', 'stack', 'box', 'mean', 'scatter'].indexOf(kindNow) >= 0;
+    var kindNow = !noFig ? Chart.kindOf(m, fig) : null, isBar = kindNow && ['stack100', 'stack', 'group', 'bar', 'box', 'mean', 'coef'].indexOf(kindNow) >= 0, noVal = noFig || ['stack100', 'stack', 'box', 'mean', 'coef', 'scatter'].indexOf(kindNow) >= 0;
     var idx = tab ? S.P.tabs.indexOf(tab) : -1, canSwap = tab && ((tab.slots.a && tab.slots.b) || (tab.slots.x && tab.slots.y)), xt = !!(res && res.ok && res.xtab), h = {};
-    var gFile = rbGroup('ファイル', rbLarge({ act: 'openCsv', name: 'CSV を開く', ic: 'csv', tip: '回答の CSV ファイルを選んで読み込みます（Ctrl+O）。' }),
+    var gFile = rbGroup('ファイル', rbLarge({ act: 'openCsv', name: 'CSV を開く', ic: 'csv', tip: '回答の CSV ファイル、または Excel ファイル（.xlsx。1 枚目のシート）を選んで読み込みます（Ctrl+O）。' }),
       rbStack(rbSmall({ act: 'openProject', name: 'プロジェクトを開く', ic: 'open', tip: '保存したプロジェクトの一覧から開きます。CSV は要りません。' }),
         rbSmall({ act: 'save', name: '上書き保存', ic: 'save', tip: 'データ・解析・図と表の設定をまとめて保存します（Ctrl+S）。', off: !has }),
         rbSmall({ act: 'saveAs', name: '名前を付けて保存', ic: 'saveas', tip: '別の名前でプロジェクトを保存します。', off: !has })));
@@ -290,8 +290,9 @@
     var bExport = rbLarge({ act: 'exportAll', name: 'まとめて書き出す', ic: 'exportall', tip: '☑ を付けた解析の図・Excel ファイル・報告書を、選んだフォルダーに書き出します。', off: !has || !S.P.tabs.length });
     h.home = gFile + gEdit + rbGroup('解析', bNew, sEditAn, sOrder, sFold) + rbGroup('書き出し', bExport);
     var sv = S.ui.selVar !== null ? A.v(S.ui.selVar) : null;
-    h.data = rbGroup('取り込み', rbLarge({ act: 'openCsv', name: 'CSV を開く', ic: 'csv', tip: '回答の CSV ファイルを選んで読み込みます（Ctrl+O）。' }),
-      rbLarge({ act: 'replaceCsv', name: '差し替え', ic: 'refresh', tip: '回答が増えた新しい CSV に差し替えます。同じ質問の列には、解析の設定を引き継ぎます。', off: !has })) +
+    h.data = rbGroup('取り込み', rbLarge({ act: 'openCsv', name: 'CSV を開く', ic: 'csv', tip: '回答の CSV ファイル、または Excel ファイル（.xlsx。1 枚目のシート）を選んで読み込みます（Ctrl+O）。' }),
+      rbLarge({ act: 'replaceCsv', name: '差し替え', ic: 'refresh', tip: '回答が増えた新しい CSV（または Excel ファイル）に差し替えます。同じ質問の列には、解析の設定を引き継ぎます。', off: !has })) +
+      rbGroup('尺度', rbLarge({ act: 'scoreNew', name: '尺度得点を作る', ic: 'add', tip: '複数の項目（順序のある質問）の平均点・合計点を、新しい列として作ります。t 検定や相関などで使えます。', off: !has })) +
       rbGroup('表示', rbRadio('ui.dataView', 'vars', '質問の一覧', 'vars', '列（質問）ごとの種類と回答数を表示します。', !has, true), rbRadio('ui.dataView', 'raw', '回答の一覧', 'data', '回答そのものを表で表示します。', !has, true)) +
       rbGroup('選んだ列', rbStack('<label class="md-rfield" data-tip="選んだ列の種類を変えます。自動の判定が合わないときに直します。">種類<select data-var="type"' + (sv ? '' : ' disabled') + '>' + options([['nominal', '単一回答'], ['ordinal', '順序あり'], ['multi', '複数回答'], ['numeric', '数値'], ['text', '使わない（自由記述など）']], sv ? (sv.type === 'time' || sv.type === 'empty' ? 'text' : sv.type) : '') + '</select></label>',
         rbSmall({ act: 'freqOfVar', name: 'この列を集計', ic: 'add', tip: '選んだ列の単純集計を作ります。', off: !sv || !A.isCat(sv) })));
@@ -329,6 +330,7 @@
       rbGroup('選んだ図', rbLarge({ act: 'figPng', name: '画像で保存', ic: 'png', tip: '選んだ図を、画面に出ている形と大きさのまま PNG 画像で保存します。', off: noFig }),
         rbStack(rbSmall({ act: 'figSvg', name: 'SVG で保存', ic: 'svg', tip: '選んだ図を SVG（拡大しても粗くならない形式）で保存します。', off: noFig }), rbSmall({ act: 'figCopy', name: '図をコピー', ic: 'copy', tip: '選んだ図を画像としてコピーします。', off: noFig }))) +
       rbGroup('報告書', rbLarge({ act: 'goReport', name: '報告書を見る', ic: 'report', tip: '☑ を付けた解析の文と表を 1 つにまとめた報告書を表示します。', off: !has }),
+        rbLarge({ act: 'repDocx', name: 'Word で保存', ic: 'docx', tip: '報告書を Word ファイル（.docx）で保存します。文は MS 明朝・Times New Roman、表は Word の表（あとから直せる）、図は画像で入ります。', off: !has }),
         rbLarge({ act: 'repTxt', name: 'テキストで保存', ic: 'txt', tip: '報告書を 1 つのテキストファイル（.txt）で保存します。', off: !has }),
         rbStack(rbToggle('rep.tables', '表を入れる', 'table', '報告書に各解析の表を入れます。', !has), rbToggle('rep.holm', '補正後の p', 'holm', '検定を繰り返したことを考えて、ホルム法で補正した p を一覧に入れます。', !has),
           rbSmall({ act: 'resetAllText', name: '定型文に戻す', ic: 'refresh', tip: '書き換えた文をすべて、結果から作った定型文に戻します。', off: !anyEdited }))) +
@@ -420,7 +422,7 @@
       return '<button class="md-projitem" data-act="openProjName" data-arg="' + esc(p.name) + '" data-tip="このプロジェクトを開きます。CSV は要りません。"><b>' + esc(p.name) + '</b><span>' + esc(p.saved) + '</span></button>';
     }).join('') + (S.projList.items.length > 8 ? '<button class="md-link" data-act="openProject">ほかのプロジェクトを見る</button>' : '') + '</div>' : '';
     return '<div class="md-drop" id="md_drop">' + window.icon('csv', 56) + '<h1>CSV ファイルを選ぶ</h1>' +
-      '<p>Google フォームの回答（スプレッドシートの「ファイル → ダウンロード → カンマ区切り形式（.csv）」）をそのまま入れられます。1 行目が質問、2 行目以降が回答の表です。</p>' +
+      '<p>Google フォームの回答（スプレッドシートの「ファイル → ダウンロード → カンマ区切り形式（.csv）」）をそのまま入れられます。Excel ファイル（.xlsx）も、1 枚目のシートを読み込めます。1 行目が質問、2 行目以降が回答の表です。</p>' +
       '<div class="md-row"><button class="md-btn md-btn-primary" data-act="openCsv">ファイルを選ぶ</button></div>' + list +
       '<p>データはこの端末の中だけで処理され、外部には送信されません。</p></div>';
   }
@@ -436,13 +438,20 @@
   function varsHtml() {
     var h = '<div class="md-page md-wide"><table class="md-vars"><thead><tr><th>列</th><th style="min-width:300px">表示名（図・表・報告書に使う名前）</th><th>質問文</th><th style="min-width:150px">種類</th><th>回答数</th><th>選択肢</th></tr></thead><tbody>';
     S.P.vars.forEach(function (x) {
+      if (x.comp) { h += compRow(x); return; }
       h += '<tr class="' + (S.ui.selVar === x.col ? 'sel' : '') + '" data-varrow="' + x.col + '"><td class="num">' + x.col + '</td><td><input type="text" data-varlabel="' + x.col + '" value="' + esc(x.label) + '"></td><td class="q" data-tip="' + esc(x.header) + '">' + esc(x.header.replace(/\s+/g, ' ')) + '</td><td>' + esc(A.TYPE_NAMES[x.type] || x.type) + '</td><td class="num">' + x.n + '</td><td class="num">' + (A.isCat(x) ? x.cats.length : '–') + numCell(x) + '</td></tr>';
     });
     return h + '</tbody></table></div>';
   }
+  // 尺度得点の行：作り方（項目・逆転・平均か合計か）と、直す・消すボタン
+  function compRow(x) {
+    var names = x.comp.items.map(function (c) { var y = A.v(c); return y ? (y.label + ((x.comp.reverse || []).indexOf(c) >= 0 ? '（逆転）' : '')) : '?'; }).join('、');
+    return '<tr class="md-comprow" data-varrow="' + x.col + '"><td class="num">' + x.col + '</td><td><input type="text" data-varlabel="' + x.col + '" value="' + esc(x.label) + '"></td><td class="q">' + esc((x.comp.method === 'sum' ? '合計：' : '平均：') + names) + '</td>' +
+      '<td>尺度得点（' + (x.comp.method === 'sum' ? '合計' : '平均') + '）<br><button class="md-btn md-btn-sm" data-act="scoreEdit" data-arg="' + x.col + '">直す</button> <button class="md-btn md-btn-sm" data-act="scoreDel" data-arg="' + x.col + '">消す</button></td><td class="num">–</td><td class="num">–</td></tr>';
+  }
   function rawHtml() {
     var rows = S.data.rows, lim = Math.min(rows.length, S.ui.rawRows);
-    var h = '<div class="md-page md-wide"><table class="md-vars md-raw"><thead><tr><th>#</th>' + S.P.vars.map(function (x) { return '<th data-tip="' + esc(x.header) + '">' + esc(x.label) + '</th>'; }).join('') + '</tr></thead><tbody>';
+    var h = '<div class="md-page md-wide"><table class="md-vars md-raw"><thead><tr><th>#</th>' + S.P.vars.filter(function (x) { return !x.comp; }).map(function (x) { return '<th data-tip="' + esc(x.header) + '">' + esc(x.label) + '</th>'; }).join('') + '</tr></thead><tbody>';
     for (var i = 0; i < lim; i++) h += '<tr><td class="num">' + (i + 1) + '</td>' + rows[i].map(function (c) { return '<td>' + esc(c === null ? '' : c) + '</td>'; }).join('') + '</tr>';
     h += '</tbody></table>';
     if (lim < S.data.nrow) h += '<div class="md-empty">' + lim + ' 件まで表示しています（全 ' + S.data.nrow + ' 件）。' + (lim < rows.length ? '<button class="md-btn" data-act="moreRows">さらに 500 件表示</button>' : '画面に出せるのは ' + rows.length + ' 件までです。解析はすべての回答で行います。') + '</div>';
@@ -616,7 +625,7 @@
     var n = repItems().length;
     return '<div class="md-page"><div class="md-doc"><input class="md-doctitle" type="text" data-set="proj.title" value="' + esc(S.P.title) + '" data-tip="報告書の題名です。">' +
       '<div class="md-meta">☑ を付けた ' + n + ' 件の解析を、上から順にまとめています。PDF には図と表も入ります。文は各解析の「報告書の文」で書き換えられます。' +
-      '<span class="md-row" style="margin-top:6px"><button class="md-btn md-btn-primary" data-act="repPdf">PDF で保存（図・表を含む）</button><button class="md-btn" data-act="repTxt">テキストで保存</button><button class="md-btn" data-act="repCopy">全文をコピー</button><button class="md-btn" data-view="analysis">解析に戻る</button></span></div>' +
+      '<span class="md-row" style="margin-top:6px"><button class="md-btn md-btn-primary" data-act="repPdf">PDF で保存（図・表を含む）</button><button class="md-btn" data-act="repDocx">Word で保存</button><button class="md-btn" data-act="repTxt">テキストで保存</button><button class="md-btn" data-act="repCopy">全文をコピー</button><button class="md-btn" data-view="analysis">解析に戻る</button></span></div>' +
       '<pre class="md-reportpre">' + esc(reportPlain()) + '</pre></div></div>';
   }
 
