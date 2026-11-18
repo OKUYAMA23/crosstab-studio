@@ -54,6 +54,7 @@
     pct: '<circle cx="9" cy="9" r="3.500" fill="' + G + '"/><circle cx="23" cy="23" r="3.500" fill="' + G + '"/><path d="M25 5L7 27"/>',
     resid: '<rect x="4" y="6" width="24" height="20" fill="' + W + '"/><path d="M4 16h24M16 6v20"/><path d="M7 13l3-4 3 4z" fill="' + ADD + '" stroke="' + ADD + '"/><path d="M19 19l3 4 3-4z" fill="' + W + '"/>',
     zoom: '<circle cx="14" cy="14" r="8" fill="' + W + '"/><path d="M20 20l8 8M10 14h8M14 10v8"/>',
+    report: '<path d="M6 7h20v13H14l-6 5v-5H6z" fill="' + W + '"/><path d="M16 10v5"/><circle cx="16" cy="17.8" r="1" fill="#1E5C3A"/>',
     info: '<circle cx="16" cy="16" r="11" fill="' + W + '"/><path d="M16 14v9"/><circle cx="16" cy="9.500" r="1" fill="#1E5C3A"/>',
     rename: '<path d="M5 24h22" /><path d="M9 19l2-6 10-9 4 4-10 9z" fill="' + W + '"/>',
     holm: '<rect x="4" y="5" width="24" height="22" fill="' + W + '"/><path d="M4 12h24M4 19h24M18 5v22"/><path d="M21 15.500h4M21 22.500h4M21 8.500h4"/>',

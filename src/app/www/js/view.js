@@ -339,7 +339,7 @@
       rbGroup('図', rbStack(rbSelect('自動の文字', 'set.figLang', [['ja', '日本語'], ['en', '英語']], '軸の名前など、図に自動で入る文字の言語です。', false),
         rbSelect('画像の細かさ', 'set.pngScale', [[1, '標準'], [2, '2 倍（資料向け）'], [4, '4 倍（印刷向け）']], '画像で保存するときの細かさです。貼り付けたときの大きさは、画面と同じになります。', false, 'num'))) +
       rbGroup('画面', rbStack(rbSelect('拡大', 'set.zoom', [[90, '90%'], [100, '100%'], [115, '115%'], [130, '130%']], '画面全体の大きさを変えます。', false, 'num'))) +
-      rbGroup('情報', rbLarge({ act: 'about', name: 'このアプリ', ic: 'info', tip: '使っている統計手法と、計算をしている R の情報を表示します。' }));
+      rbGroup('情報', rbLarge({ act: 'about', name: 'このアプリ', ic: 'info', tip: '使っている統計手法と、計算をしている R の情報を表示します。' }) + rbLarge({ act: 'feedback', name: 'ご意見・不具合', ic: 'report', tip: '不具合の報告や、ご意見・要望を送る方法を表示します（GitHub を使います）。' }));
     $('#md_ribbon').innerHTML = RTABS.map(function (t) { return '<div class="md-ribbon-body' + (S.ui.rtab === t[0] ? ' active' : '') + '" data-tab="' + t[0] + '">' + h[t[0]] + '</div>'; }).join('');
   }
 
@@ -807,7 +807,8 @@
       sec('図', grid2(fSelect('自動で入る文字', 'set.figLang', [['ja', '日本語'], ['en', '英語']]), fSelect('画像の細かさ', 'set.pngScale', [[1, '標準'], [2, '2 倍（資料向け）'], [4, '4 倍（印刷向け）']], 'num')),
         hint('画像の細かさを上げても、Word や PowerPoint に貼ったときの大きさは画面と同じです（解像度の情報を画像に書き込みます）。回答の選択肢の名前はデータのまま表示します。')) +
       sec('画面', grid2(fSelect('画面の拡大', 'set.zoom', [[90, '90%'], [100, '100%'], [115, '115%'], [130, '130%']], 'num'), '<span></span>')) +
-      sec('計算について', hint('集計と検定はすべて、このパソコンの中の R' + (S.r ? '（バージョン ' + S.r + '）' : '') + ' で計算しています。データが外部に送られることはありません。'), '<button class="md-btn" data-act="about">使っている手法を見る</button>');
+      sec('計算について', hint('集計と検定はすべて、このパソコンの中の R' + (S.r ? '（バージョン ' + S.r + '）' : '') + ' で計算しています。データが外部に送られることはありません。'), '<button class="md-btn" data-act="about">使っている手法を見る</button>') +
+      sec('ご意見・不具合の報告', hint('不具合の報告や、ご意見・要望は GitHub で受け付けています。'), '<button class="md-btn" data-act="feedback">報告のしかたを見る</button>');
   }
   function renderStatus() {
     var tab = A.curTab(), res = tab ? S.results[tab.id] : null, mode = !S.data ? '' : S.ui.view === 'data' ? 'データ' : S.ui.view === 'report' ? '報告書' : tab ? '解析 ' + (S.P.tabs.indexOf(tab) + 1) + '：' + A.def(tab.type).name : '解析';

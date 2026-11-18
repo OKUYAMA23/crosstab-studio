@@ -450,6 +450,28 @@
         closeModal(); exportAll(dir, opt);
       };
     },
+    // ご意見・不具合の報告：GitHub の Issues を、版と端末を書き込んだ状態で開く
+    feedback: function () {
+      var n = A.errLog().length;
+      modal('ご意見・不具合の報告',
+        '<p style="margin:0 0 8px">不具合の報告やご意見・要望は、GitHub の「Issues」で受け付けています。送るには GitHub のアカウント（無料）が必要です。</p>' +
+        '<p style="margin:0 0 8px"><b>書いた内容は誰でも読めます。</b>アンケートの回答データ、名前や学校名などの個人情報は書かないでください。画面の写真を貼るときも、回答が写っていないか確かめてください。</p>' +
+        '<p style="margin:0 0 4px">ボタンを押すと、アプリの版と端末の種類を書き込んだ状態で報告の画面が開きます。</p>' +
+        '<div class="md-row" style="gap:8px;margin:8px 0"><button class="md-btn md-btn-primary" data-act="fbOpen" data-arg="bug">不具合を報告する</button><button class="md-btn" data-act="fbOpen" data-arg="idea">ご意見・要望を送る</button></div>' +
+        '<div class="md-sub">エラーの記録</div><p class="md-hint" style="margin:0 0 6px">アプリの中で起きたエラーを、この端末の中だけに記録しています（今 ' + n + ' 件）。外には送りません。報告するときに写して、報告の「エラーの記録」の欄に貼ると、原因を調べやすくなります。</p>' +
+        '<div class="md-row" style="gap:8px"><button class="md-btn" data-act="fbCopyLog"' + (n ? '' : ' disabled') + '>エラーの記録を写す</button><button class="md-btn" data-act="fbClearLog"' + (n ? '' : ' disabled') + '>記録を消す</button></div>',
+        '<button class="md-btn md-btn-primary" data-act="closeModal">閉じる</button>', 560);
+    },
+    fbOpen: function (arg) {
+      var env = envText(), base = 'https://github.com/OKUYAMA23/crosstab-studio/issues/new';
+      var url = base + '?template=' + (arg === 'bug' ? 'bug_report.yml' : 'feedback.yml') + '&version=' + encodeURIComponent(window.CTS_APP_VERSION || '') + '&env=' + encodeURIComponent(env);
+      window.open(url, '_blank', 'noopener');
+    },
+    fbCopyLog: async function () {
+      var a = A.errLog(), t = a.map(function (e) { return e.t + ' [' + e.v + '] ' + e.k + ': ' + e.m + (e.s ? '\n    ' + e.s : ''); }).join('\n');
+      if (await copyText(t)) A.toast('エラーの記録を写しました。報告の「エラーの記録」の欄に貼り付けてください。');
+    },
+    fbClearLog: function () { A.clearErrLog(); A.toast('エラーの記録を消しました。'); act.feedback(); },
     about: function () { modal('このアプリについて', aboutHtml(), '<button class="md-btn md-btn-primary" data-act="closeModal">閉じる</button>', 760); }
   };
   // 「このアプリについて」の中身：概要、データの扱い、解析ごとの計算方法、共通の決まり、Excel での再現、使っている部品
@@ -853,6 +875,13 @@
     modal('CrossTab Studio', body, '<button class="md-btn md-btn-primary" id="md_chg_ok">わかりました</button>', 560);
     $('#md_chg_ok').onclick = function () { mark(); closeModal(); };
     var back = $('#md_modal'); if (back) back.addEventListener('mousedown', mark);
+  }
+  // 報告に書き込む端末の情報（アンケートのデータは含めない）
+  function envText() {
+    var ua = navigator.userAgent, os = /iPhone/.test(ua) ? 'iPhone' : /iPad|Macintosh.*Mobile/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) ? 'iPad' : /Android/.test(ua) ? 'Android' : /Windows/.test(ua) ? 'Windows' : /Mac OS X/.test(ua) ? 'Mac' : /CrOS/.test(ua) ? 'Chromebook' : 'その他';
+    var br = /Edg\//.test(ua) ? 'Edge' : /CriOS|Chrome\//.test(ua) ? 'Chrome' : /FxiOS|Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'その他';
+    var standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone;
+    return os + ' / ' + br + (standalone ? '（ホーム画面のアプリ）' : '') + ' / 画面 ' + screen.width + '×' + screen.height + ' / ' + (window.CTS_WEB ? 'Web 版' : 'パソコン版') + ' / R ' + (S.r || '?');
   }
   function vcmp(a, b) { a = String(a).split('.').map(Number); b = String(b).split('.').map(Number); for (var i = 0; i < 3; i++) { var d = (a[i] || 0) - (b[i] || 0); if (d) return d; } return 0; }
   A.showChanges = showChanges;

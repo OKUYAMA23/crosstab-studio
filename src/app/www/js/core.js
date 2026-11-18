@@ -21,7 +21,20 @@
   function $(sel, root) { return (root || document).querySelector(sel); }
   function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  // ---------------- エラーの記録：この端末の中だけに最近の 30 件を残す。外には送らない（報告するときに本人が写して貼る）
+  var ERRKEY = 'cts-errlog';
+  function errLog() { try { return JSON.parse(localStorage.getItem(ERRKEY) || '[]'); } catch (e) { return []; } }
+  function logErr(kind, msg, stack) {
+    try {
+      var a = errLog(); a.push({ t: new Date().toISOString(), v: window.CTS_APP_VERSION || '', k: kind, m: String(msg || '').slice(0, 400), s: String(stack || '').split('\n').slice(0, 4).join(' | ').slice(0, 600) });
+      localStorage.setItem(ERRKEY, JSON.stringify(a.slice(-30)));
+    } catch (e) {}
+  }
+  function clearErrLog() { try { localStorage.removeItem(ERRKEY); } catch (e) {} }
+  window.addEventListener('error', function (e) { logErr('script', e.message, (e.error && e.error.stack) || (e.filename + ':' + e.lineno)); });
+  window.addEventListener('unhandledrejection', function (e) { var r = e.reason || {}; logErr('promise', r.message || r, r.stack); });
   function toast(msg, err) {
+    if (err) logErr('message', msg);
     var box = $('#md_toasts'), d = document.createElement('div');
     d.className = 'md-toast' + (err ? ' err' : ''); d.textContent = msg; box.appendChild(d);
     setTimeout(function () { d.remove(); }, err ? 9000 : 4000);
@@ -357,7 +370,7 @@
   }
 
   window.App = window.App || {};
-  Object.assign(window.App, { S: S, MAX_TABS: MAX_TABS, TYPE_NAMES: TYPE_NAMES, $: $, esc: esc, clone: clone, toast: toast, busy: busy, api: api, apiData: apiData, zip: zip, safeName: safeName,
+  Object.assign(window.App, { errLog: errLog, clearErrLog: clearErrLog, logErr: logErr, S: S, MAX_TABS: MAX_TABS, TYPE_NAMES: TYPE_NAMES, $: $, esc: esc, clone: clone, toast: toast, busy: busy, api: api, apiData: apiData, zip: zip, safeName: safeName,
     v: v, def: def, tabById: tabById, slotCols: slotCols, sameChoices: sameChoices, setItems: setItems, defaultCatsMany: defaultCatsMany, curTab: curTab, curFig: curFig, isCat: isCat, defaultCats: defaultCats, setSlot: setSlot, autoName: autoName, newTab: newTab, newFig: newFig, tabReady: tabReady,
     buildReq: buildReq, markDirty: markDirty, schedule: schedule, scheduleAll: scheduleAll, syncResults: syncResults, commit: commit, undo: undo, redo: redo, fixSel: fixSel, tableDefaults: tableDefaults,
     pickFile: pickFile, saveBlob: saveBlob, baseName: baseName, loadCsv: loadCsv, handleFile: handleFile, newProject: newProject,
