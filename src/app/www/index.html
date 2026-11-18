@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>CrossTab Studio</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='5' fill='%23217346'/%3E%3Cpath d='M7 9h18M7 16h18M7 23h18M13 6v20M20 6v20' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="md-app">
+  <div class="md-titlebar" id="md_title"></div>
+  <div class="md-tabs" id="md_tabs"></div>
+  <div class="md-ribbon" id="md_ribbon"></div>
+  <div class="md-main">
+    <div class="md-center">
+      <div class="md-view" id="md_view"></div>
+      <div class="md-sheets" id="md_sheets"></div>
+    </div>
+    <div class="md-pane" id="md_pane">
+      <div class="md-pane-head">
+        <select id="md_pane_sel" data-tip="作業ウィンドウに出す内容を選びます。上のタブと連動します。"></select>
+        <button data-act="panePrev" data-tip="前のタブへ">‹</button>
+        <button data-act="paneNext" data-tip="次のタブへ">›</button>
+        <button data-act="togglePane" data-tip="作業ウィンドウを閉じます。">×</button>
+      </div>
+      <div class="md-pane-body" id="md_pane_body"></div>
+    </div>
+  </div>
+  <div class="md-status" id="md_status"></div>
+</div>
+<div class="md-dropveil">ここにドロップして読み込む</div>
+<div class="md-toasts" id="md_toasts"></div>
+<div class="md-busy" id="md_busy"><div class="md-busy-row"><span class="md-busy-spin"></span><span class="md-busy-text">計算しています</span><span class="md-busy-sec"></span></div><div class="md-busy-long">処理は続いています。止まってはいません。そのままお待ちください。</div><div class="md-busy-bar"><i></i></div></div>
+<div id="md_tip"></div>
+<datalist id="dl_fs"><option value="8"><option value="9"><option value="10"><option value="10.5"><option value="11"><option value="12"><option value="14"><option value="16"><option value="18"><option value="20"><option value="24"><option value="28"></datalist>
+<datalist id="dl_lw"><option value="0"><option value="0.25"><option value="0.5"><option value="0.75"><option value="1"><option value="1.5"><option value="2"><option value="3"></datalist>
+<script src="js/changelog.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/chart.js"></script>
+<script src="js/core.js"></script>
+<script src="js/view.js"></script>
+<script src="js/events.js"></script>
+<script src="js/textmine.js"></script>
+<script src="js/pdfreport.js"></script>
+</body>
+</html>

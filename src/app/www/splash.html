@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8"><title>CrossTab Studio（起動中）</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='5' fill='%23217346'/%3E%3Cpath d='M7 9h18M7 16h18M7 23h18M13 6v20M20 6v20' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E">
+<style>
+html,body{height:100%;margin:0;background:#F4F9F6;font-family:Arial,'Yu Gothic Medium','Yu Gothic',Meiryo,sans-serif;color:#1F4030}
+.box{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+h1{font-size:26px;margin:6px 0 0;color:#1E2F26} p{margin:0;font-size:13px;color:#567565}
+.bar{width:340px;height:4px;background:#DDEFE3;margin-top:16px;overflow:hidden;position:relative}
+.bar i{display:block;height:100%;width:0;background:#217346;transition:width .4s}
+.bar b{position:absolute;top:0;bottom:0;width:30%;background:rgba(255,255,255,.55);animation:sweep 1.2s linear infinite}
+@keyframes sweep{from{left:-30%}to{left:100%}}
+.row{display:flex;align-items:center;gap:10px;font-size:13px;color:#1F4030;min-height:20px}
+.spin{width:14px;height:14px;border:2px solid #C6E0CF;border-top-color:#217346;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sec{font-family:Consolas,monospace;color:#567565}
+.steps{margin-top:6px;font-size:13px;color:#567565;line-height:1.9;min-width:340px}
+.steps div::before{content:'○ ';color:#9DB3A7}.steps div.done{color:#1F4030}.steps div.done::before{content:'● ';color:#217346}
+.steps div.now{color:#1F4030;font-weight:700}.steps div.now::before{content:'◐ ';color:#217346}
+.note{max-width:460px;text-align:center;line-height:1.6;color:#1F4030;display:none;margin-top:8px}
+.note.err{color:#C00000}
+</style></head><body><div class="box">
+<svg viewBox="0 0 32 32" width="76" height="76"><rect width="32" height="32" rx="5" fill="#217346"/><path d="M7 9h18M7 16h18M7 23h18M13 6v20M20 6v20" stroke="#fff" stroke-width="2"/></svg>
+<h1>CrossTab Studio</h1><p>アンケートの集計と検定</p>
+<div class="bar"><i id="b"></i><b></b></div>
+<div class="row"><span class="spin" id="spin"></span><span id="msg">起動しています</span><span class="sec" id="sec"></span></div>
+<div class="steps">
+  <div id="s1" class="done">起動画面を開きました</div>
+  <div id="s2" class="now">計算に使う R を起動しています</div>
+  <div id="s3">集計と検定の部品を読み込んでいます</div>
+  <div id="s4">画面を用意しています</div>
+</div>
+<div class="note" id="note"></div>
+</div>
+<script>
+(function () {
+  // R の準備ができたか（127.0.0.1 の 47815〜47824 番）を 0.4 秒ごとに確かめる。
+  // 段階と経過秒数を出して、止まっていないことが分かるようにする（段階は経過時間からの目安）。
+  var t0 = Date.now(), done = false, ports = [], i, key = (/[?&]k=([0-9A-Za-z]+)/.exec(location.search) || [])[1] || '';
+  for (i = 47815; i <= 47824; i++) ports.push(i);
+  function $(id) { return document.getElementById(id); }
+  function step(n) { for (var k = 2; k <= 4; k++) $('s' + k).className = k < n ? 'done' : k === n ? 'now' : ''; }
+  function show(p, m) { $('b').style.width = p + '%'; if (m) $('msg').textContent = m; }
+  function go(p) {
+    if (done) return;
+    done = true; step(5); show(100, '準備ができました'); $('spin').style.display = 'none'; $('note').style.display = 'none';
+    setTimeout(function () { location.replace('http://127.0.0.1:' + p + '/'); }, 300);
+  }
+  function tick() {
+    if (done) return;
+    var s = (Date.now() - t0) / 1000;
+    $('sec').textContent = Math.floor(s) + ' 秒';
+    show(Math.min(92, 8 + 84 * (1 - Math.exp(-s / 7))), s < 3 ? 'R を起動しています' : s < 7 ? '部品を読み込んでいます' : 'もう少しで準備ができます');
+    step(s < 3 ? 2 : s < 7 ? 3 : 4);
+    if (s > 30) { $('note').style.display = 'block'; $('note').className = 'note'; $('note').textContent = '時間がかかっています。初めての起動では、R や部品の準備に数分かかることがあります。そのままお待ちください。'; }
+    if (s > 180) { $('note').className = 'note err'; $('note').textContent = '起動できていない可能性があります。この窓を閉じて、フォルダーの中の CrossTabStudio_debug.bat を実行すると、原因が表示されます。'; }
+    // 1) R が同じフォルダーに書く ready.js を読む（ブラウザの設定に左右されない）
+    var sc = document.createElement('script');
+    sc.src = 'ready.js?t=' + Date.now();
+    sc.onload = function () { var c = window.CTS; if (c && c.port > 0 && (key ? String(c.k) === key : c.t >= t0 - 60000)) go(c.port); sc.remove(); };
+    sc.onerror = function () { sc.remove(); };
+    document.head.appendChild(sc);
+    // 2) R に直接問い合わせる
+    ports.forEach(function (p) {
+      fetch('http://127.0.0.1:' + p + '/api/ping', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
+        if (d && d.app === 'CrossTabStudio') go(p);
+      }).catch(function () {});
+    });
+    setTimeout(tick, 500);
+  }
+  tick();
+})();
+</script></body></html>

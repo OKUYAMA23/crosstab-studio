@@ -1,1 +1,420 @@
-!function(){"use strict";var t=window.App,e=t.S,r="CTSReportFont",a=null,n=595.28,i=841.89,o=56,s=483.28,l=null;function c(t,e,r){if(l){var a=r.font.key,n=l[a]||(l[a]=new Set);Array.from(e).forEach(function(t){n.add(t)})}else{if(r.fakeBold)return t.pushOperators(PDFLib.pushGraphicsState(),PDFLib.setTextRenderingMode(PDFLib.TextRenderingMode.FillAndOutline),PDFLib.setLineWidth(.035*r.size),PDFLib.setStrokingColor(r.color||PDFLib.rgb(0,0,0))),t.drawText(e,r),void t.pushOperators(PDFLib.popGraphicsState());t.drawText(e,r)}}var f=null;async function u(t,e,r){if(!f){var a=await WebAssembly.instantiate(await d("vendor/harfbuzz-subset.wasm"),{});f=a.instance.exports}var n=f,i=new Uint8Array(t),o=n.malloc(i.byteLength);new Uint8Array(n.memory.buffer).set(i,o);var s=n.hb_blob_create(o,i.byteLength,2,0,0),l=n.hb_face_create(s,r||0);n.hb_blob_destroy(s);var c=n.hb_subset_input_create_or_fail(),u=n.hb_subset_input_unicode_set(c);e.forEach(function(t){n.hb_set_add(u,t.codePointAt(0))});var h=n.hb_subset_or_fail(l,c);if(n.hb_subset_input_destroy(c),!h)throw n.hb_face_destroy(l),n.free(o),new Error("字体を小さくできませんでした。");var b=n.hb_face_reference_blob(h),g=n.hb_blob_get_data(b,0),w=n.hb_blob_get_length(b),p=new Uint8Array(n.memory.buffer).slice(g,g+w);return n.hb_blob_destroy(b),n.hb_face_destroy(h),n.hb_face_destroy(l),n.free(o),p}function h(t){return new Promise(function(e,r){var a=document.createElement("script");a.src=t,a.onload=e,a.onerror=function(){r(new Error(t+" を読み込めませんでした。"))},document.head.appendChild(a)})}async function d(t){var e=await fetch(t);if(!e.ok)throw new Error(t+" を読み込めませんでした（"+e.status+"）。");return e.arrayBuffer()}function b(t,e){var r=new DataView(t.buffer,t.byteOffset,t.byteLength);if(t.length<12||"ttcf"!==String.fromCharCode(t[0],t[1],t[2],t[3]))return 0;for(var a=r.getUint32(8),n=0;n<a;n++)for(var i=r.getUint32(12+4*n),o=r.getUint16(i+4),s=0;s<o;s++){var l=i+12+16*s;if("name"===String.fromCharCode(t[l],t[l+1],t[l+2],t[l+3]))for(var c=r.getUint32(l+8),f=r.getUint16(c+2),u=c+r.getUint16(c+4),h=0;h<f;h++){var d=c+6+12*h,b=r.getUint16(d),g=r.getUint16(d+6),w=r.getUint16(d+8),p=u+r.getUint16(d+10),v="";if(6===g){if(3===b||0===b)for(var y=0;y<w;y+=2)v+=String.fromCharCode(r.getUint16(p+y));else for(var m=0;m<w;m++)v+=String.fromCharCode(t[p+m]);if(v===e)return n}}}return 0}var g={mj:"MS-Mincho",tr:"TimesNewRomanPSMT",tb:"TimesNewRomanPS-BoldMT"},w=null;function p(){return w||((w=async function(){if(!window.queryLocalFonts)return null;try{var t=await window.queryLocalFonts({postscriptNames:[g.mj,g.tr,g.tb]}),e={};if(t.forEach(function(t){e[t.postscriptName]=t}),!e[g.mj]||!e[g.tr])return null;var r={};for(var a in g)if(e[g[a]]){var n=new Uint8Array(await(await e[g[a]].blob()).arrayBuffer());r[a]={buf:n,index:b(n,g[a]),ps:g[a]}}return r}catch(t){return null}}()).then(function(t){t||(w=null)}),w)}async function v(t,e,r){var a=new FontFace(t,e,{weight:r});await a.load(),document.fonts.add(a)}async function y(){window.PDFLib||await h("vendor/pdf-lib.min.js"),window.fontkit||await h("vendor/fontkit.umd.min.js");var t=await p(),e=t?"local":"free";if(a&&a.key===e)return a;var n={key:e,local:!!t,src:{}};if(a&&a.src.g)n.src.g=a.src.g,n.src.gb=a.src.gb;else{var i=new Uint8Array(await d("fonts/BIZUDPGothic-Regular.ttf")),o=new Uint8Array(await d("fonts/BIZUDPGothic-Bold.ttf"));await v(r,i.slice(0).buffer,"400"),await v(r,o.slice(0).buffer,"700"),n.src.g={buf:i,index:0},n.src.gb={buf:o,index:0}}if(t){async function f(t,e,r,a){try{await v(t,e,a)}catch(e){await v(t,r.buf.slice(0).buffer,a)}}n.src.mj=t.mj,n.src.tr=t.tr,n.src.tb=t.tb||t.tr,await f("CTSMincho","local('MS Mincho'), local('MS-Mincho')",t.mj,"400"),await f("CTSTimes","local('Times New Roman'), local('TimesNewRomanPSMT')",t.tr,"400"),await f("CTSTimes",t.tb?"local('Times New Roman Bold'), local('TimesNewRomanPS-BoldMT')":"local('Times New Roman'), local('TimesNewRomanPSMT')",t.tb||t.tr,"700")}else{var s=new Uint8Array(await d("fonts/BIZUDMincho-Regular.ttf")),l=new Uint8Array(await d("fonts/Tinos-Regular.ttf")),c=new Uint8Array(await d("fonts/Tinos-Bold.ttf"));n.src.mj={buf:s,index:0},n.src.tr={buf:l,index:0},n.src.tb={buf:c,index:0},await v("CTSMincho",s.slice(0).buffer,"400"),await v("CTSTimes",l.slice(0).buffer,"400"),await v("CTSTimes",c.slice(0).buffer,"700")}return n.full={},Object.keys(n.src).forEach(function(t){var e=n.src[t];n.full[t]=function(t,e,r){var a=null;try{a=e?window.fontkit.create(t,e):null}catch(t){}return a||(a=window.fontkit.create(t)),a.fonts?a.fonts[r||0]:a}(e.buf,e.ps,e.index)}),a=n}function m(t,e,r,a){function n(t){var e=[],a="",n=null;return Array.from(String(t)).forEach(function(t){var i=function(t){var e=t.codePointAt(0);return e<12288&&!(e>=65280&&e<=65519)&&r(e)}(t);a&&i!==n&&(e.push([a,n]),a=""),a+=t,n=i}),a&&e.push([a,n]),e}return{mixed:!0,widthOfTextAtSize:function(r,a){return n(r).reduce(function(r,n){return r+(n[1]?e:t).widthOfTextAtSize(n[0],a)},0)},draw:function(r,i,o){var s=o.rotate?o.rotate.angle*Math.PI/180:0,l=Math.cos(s),f=Math.sin(s),u=o.x,h=o.y;n(i).forEach(function(n){var i=n[1]?e:t;c(r,n[0],Object.assign({},o,{x:u,y:h,font:i,fakeBold:!n[1]&&a}));var s=i.widthOfTextAtSize(n[0],o.size);u+=s*l,h+=s*f})}}}function x(t,e){return{widthOfTextAtSize:function(e,r){return t.widthOfTextAtSize(e,r)},draw:function(r,a,n){c(r,a,Object.assign({},n,{font:t,fakeBold:e}))}}}function S(t,e){return{G:x(t.g),GB:x(t.gb),S:m(t.mj,t.tr,e),SB:m(t.mj,t.tb,e,!0)}}var A={white:"#FFFFFF",black:"#000000",gray:"#808080",grey:"#808080",red:"#FF0000"};function P(t){if(!t||"none"===t||"transparent"===t)return null;t=String(t).trim(),A[t.toLowerCase()]&&(t=A[t.toLowerCase()]);var e=/^rgba?\(([^)]+)\)$/i.exec(t);if(e){var r=e[1].split(",").map(parseFloat);return PDFLib.rgb(r[0]/255,r[1]/255,r[2]/255)}return/^#[0-9a-f]{3}$/i.test(t)&&(t="#"+t[1]+t[1]+t[2]+t[2]+t[3]+t[3]),/^#[0-9a-f]{6}$/i.test(t)?PDFLib.rgb(parseInt(t.substr(1,2),16)/255,parseInt(t.substr(3,2),16)/255,parseInt(t.substr(5,2),16)/255):PDFLib.rgb(0,0,0)}function F(t){return A[String(t).toLowerCase()]?A[String(t).toLowerCase()]:/^#[0-9a-f]{3}$/i.test(t)?"#"+t[1]+t[1]+t[2]+t[2]+t[3]+t[3]:t}function T(t,e){return[t[0]*e[0]+t[2]*e[1],t[1]*e[0]+t[3]*e[1],t[0]*e[2]+t[2]*e[3],t[1]*e[2]+t[3]*e[3],t[0]*e[4]+t[2]*e[5]+t[4],t[1]*e[4]+t[3]*e[5]+t[5]]}function M(t,e){var r=this,a=null,c=0;function f(t,e,r,a){var n=[];return String(t).split(/\r?\n/).forEach(function(t){for(var i="",o=function(t){return t.match(/[A-Za-z0-9.,=<>≦≧±+\-−×/%'()\[\]_:]+|\s+|[\s\S]/gu)||[]}(t),s=0;s<o.length;s++){var l=o[s];if(e.widthOfTextAtSize(i+l,r)<=a||!i)!i&&e.widthOfTextAtSize(l,r)>a?Array.from(l).forEach(function(t){i&&e.widthOfTextAtSize(i+t,r)>a?(n.push(i),i=t):i+=t}):i+=l;else if("、。，．・：；？！）」』】〕〉》’”ーぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮ…％,.:;?!)]}".indexOf(l[0])>=0&&1===l.length)n.push(i+l),i="";else{for(var c="";i.length>1&&"（「『【〔〈《([{“‘".indexOf(i[i.length-1])>=0;)c=i[i.length-1]+c,i=i.slice(0,-1);n.push(i.replace(/\s+$/,"")),i=c+(/^\s+$/.test(l)?"":l)}}n.push(i)}),n}r.pages=[],r.newPage=function(){a=t.addPage([n,i]),r.pages.push(a),c=o},r.room=function(){return 777.89-c},r.need=function(t){(!a||c+t>777.89)&&r.newPage()},r.gap=function(t){c+=t},r.wrap=f,r.text=function(t,n){var l=(n=n||{}).bold?e.GB:e.S,u=n.size||10.5,h=n.lh||1.75*u,d=o+(n.indent||0),b=(n.width||s)-(n.indent||0),g=f(t,l,u,b);n.keep&&r.need(h*Math.min(g.length,n.keep)),g.forEach(function(t){r.need(h);var e=d;"center"===n.align&&(e=o+(s-l.widthOfTextAtSize(t,u))/2),t&&l.draw(a,t,{x:e,y:i-(c+1.08*u),size:u,color:P(n.color||"#000000")}),c+=h})},r.rule=function(t,e){r.need(4),a.drawLine({start:{x:o,y:i-c},end:{x:o+s,y:i-c},thickness:t||.6,color:P(e||"#808080")}),c+=4},r.svg=async function(n,f){f=f||{};var u=(new DOMParser).parseFromString(n,"image/svg+xml").documentElement;if(u&&"svg"===u.nodeName){var h=(u.getAttribute("viewBox")||"").split(/[\s,]+/).map(Number),d=+u.getAttribute("width")||h[2],b=+u.getAttribute("height")||h[3],g=Math.min(f.maxScale||.75,s/d),w=721.89;b*g>w&&(g=w/b);var p=b*g;r.need(p+(f.below||0));var v=o+(s-d*g)/2,y=c,m={};if([].forEach.call(u.querySelectorAll("pattern, linearGradient"),function(t){m[t.getAttribute("id")]=t}),[].some.call(u.querySelectorAll("path, circle, polygon"),function(t){return/^url\(/.test(t.getAttribute("fill")||"")&&!t.closest("pattern")})){if(l)return void(c+=p);var x=await Chart.toPng(n,3),S=await t.embedPng(await x.arrayBuffer());return a.drawImage(S,{x:v,y:i-y-p,width:d*g,height:p}),void(c+=p)}D(u,[1,0,0,1,0,0]),c+=p}function A(t,e,r){var a=function(t,e,r){return[t[0]*e+t[2]*r+t[4],t[1]*e+t[3]*r+t[5]]}(t,e,r);return{x:v+a[0]*g,y:i-(y+a[1]*g)}}function M(t,e,r){var a=t.getAttribute(e);return null===a||""===a?r:/%$/.test(a)?parseFloat(a)/100*("width"===e||"x"===e?d:b):parseFloat(a)}function _(t,e){for(;t&&t.getAttribute;){var r=t.getAttribute(e);if(null!==r)return r;t=t.parentNode}return null}function C(t){for(var e=1,r=t;r&&r.getAttribute;r=r.parentNode){var a=r.getAttribute("opacity");null!==a&&(e*=parseFloat(a))}var n=t.getAttribute("fill-opacity");return e*(null!==n?parseFloat(n):1)}function k(t){var e=_(t,"stroke-dasharray");return e&&"none"!==e?e.split(/[\s,]+/).map(function(t){return parseFloat(t)*g}):void 0}function D(t,r){if(1===t.nodeType){var n=t.nodeName.toLowerCase();if("defs"!==n&&"pattern"!==n&&"lineargradient"!==n&&"title"!==n&&"style"!==n&&"none"!==t.getAttribute("display")&&"hidden"!==t.getAttribute("visibility")){t.getAttribute("transform")&&(r=T(r,function(t){for(var e,r=[1,0,0,1,0,0],a=/(translate|rotate|scale|matrix)\s*\(([^)]*)\)/g;e=a.exec(t||"");){var n,i=e[2].split(/[\s,]+/).filter(Boolean).map(Number);if("translate"===e[1])n=[1,0,0,1,i[0]||0,i[1]||0];else if("scale"===e[1])n=[i[0],0,0,i.length>1?i[1]:i[0],0,0];else if("matrix"===e[1])n=i;else{var o=(i[0]||0)*Math.PI/180,s=Math.cos(o),l=Math.sin(o),c=i[1]||0,f=i[2]||0;n=T(T([1,0,0,1,c,f],[s,l,-l,s,0,0]),[1,0,0,1,-c,-f])}r=T(r,n)}return r}(t.getAttribute("transform"))));var i=_(t,"fill"),o=null===i?"#000000":i,s=C(t),l=function(t){var e=_(t,"stroke");if(!e||"none"===e)return null;var r=parseFloat(_(t,"stroke-width")||"1");return r>0?{color:P(e),width:r*g}:null}(t),c=/^url\(#([^)]+)\)/.exec(o),f=c?m[c[1]]:null;if("svg"!==n&&"g"!==n)if("rect"!==n)if("line"!==n)if("circle"!==n&&"ellipse"!==n)if("path"!==n&&"polygon"!==n&&"polyline"!==n){if("text"===n){var u=(t.textContent||"").replace(/\s+/g," ");if(!u.trim())return;var h=parseFloat(_(t,"font-size")||"12")*g,d=/bold|[6-9]00/.test(_(t,"font-weight")||""),b=/CTSMincho|CTSTimes/.test(_(t,"font-family")||"")?d?e.SB:e.S:d?e.GB:e.G,w=_(t,"text-anchor")||"start",p=b.widthOfTextAtSize(u,h),v="middle"===w?-p/2:"end"===w?-p:0,y=A(r,M(t,"x",0),M(t,"y",0)),x=Math.atan2(-r[1],r[0]),S=Math.cos(x),z=Math.sin(x),L=y.x+v*S,O=y.y+v*z,E=180*x/Math.PI,B=P(o)||PDFLib.rgb(0,0,0),U=t.getAttribute("stroke"),j=parseFloat(t.getAttribute("stroke-width")||"0")*g/2;U&&"none"!==U&&j>0&&[[1,0],[-1,0],[0,1],[0,-1],[.7,.7],[-.7,.7],[.7,-.7],[-.7,-.7]].forEach(function(t){b.draw(a,u,{x:L+t[0]*j,y:O+t[1]*j,size:h,color:P(U),rotate:PDFLib.degrees(E)})}),b.draw(a,u,{x:L,y:O,size:h,color:B,opacity:s,rotate:PDFLib.degrees(E)})}}else{var N="path"===n?t.getAttribute("d"):"M"+(t.getAttribute("points")||"").trim().replace(/\s+/g," ")+("polygon"===n?"Z":"");if(!N)return;var R=A(r,0,0),G=P(o);if(!G&&!l)return;a.drawSvgPath(N,{x:R.x,y:R.y,scale:g*Math.sqrt(Math.abs(r[0]*r[3]-r[1]*r[2]))||g,color:G||void 0,opacity:s,borderColor:l?l.color:void 0,borderWidth:l?l.width/g:0,borderDashArray:k(t)})}else{var I=A(r,M(t,"cx",0),M(t,"cy",0)),$=M(t,"circle"===n?"r":"rx",0)*g,q=P(o);if(!($>0)||!q&&!l)return;a.drawEllipse({x:I.x,y:I.y,xScale:$,yScale:"circle"===n?$:M(t,"ry",0)*g,color:q||void 0,opacity:s,borderColor:l?l.color:void 0,borderWidth:l?l.width:0,borderOpacity:1})}else{if(!l)return;var W=A(r,M(t,"x1",0),M(t,"y1",0)),Z=A(r,M(t,"x2",0),M(t,"y2",0));a.drawLine({start:W,end:Z,thickness:l.width,color:l.color,dashArray:k(t),opacity:C(t)})}else{var J=M(t,"x",0),V=M(t,"y",0),H=M(t,"width",0),K=M(t,"height",0);if(!(H>0&&K>0))return;var Q=s<=.001;!Q&&f&&"pattern"===f.nodeName?function(t,e,r,n,i,o){var s=A(t,e,r+i),l=+o.getAttribute("width")||8,c=+o.getAttribute("height")||8;a.pushOperators(PDFLib.pushGraphicsState(),PDFLib.rectangle(s.x,s.y,n*g,i*g),PDFLib.clip(),PDFLib.endPath());for(var f=Math.floor(r/c)*c;f<r+i;f+=c)for(var u=Math.floor(e/l)*l;u<e+n;u+=l)[].forEach.call(o.children,function(e){D(e,T(t,[1,0,0,1,u,f]))});a.pushOperators(PDFLib.popGraphicsState())}(r,J,V,H,K,f):!Q&&f&&function(t,e,r,n,i,o){for(var s=[].map.call(o.querySelectorAll("stop"),function(t){return{o:parseFloat(t.getAttribute("offset"))/(/%/.test(t.getAttribute("offset"))?100:1),c:F(t.getAttribute("stop-color")||"#000")}}),l=parseFloat(o.getAttribute("y2")||"0")!==parseFloat(o.getAttribute("y1")||"0")&&parseFloat(o.getAttribute("x2")||"0")===parseFloat(o.getAttribute("x1")||"0"),c=64,f=0;f<c;f++){for(var u=(f+.5)/c,h=0;h<s.length-2&&u>s[h+1].o;)h++;var d=s[h],b=s[Math.min(h+1,s.length-1)],w=b.o>d.o?Math.max(0,Math.min(1,(u-d.o)/(b.o-d.o))):0,p=Chart.lerp(d.c,b.c,w),v=l?n:n/c+.3,y=l?i/c+.3:i,m=A(t,l?e:e+n*f/c,(l?r+i*f/c:r)+y);a.drawRectangle({x:m.x,y:m.y,width:v*g,height:y*g,color:P(p)})}}(r,J,V,H,K,f);var X=A(r,J,V+K),Y=f?null:P(o);(Y&&!Q||l)&&a.drawRectangle({x:X.x,y:X.y,width:H*g,height:K*g,color:Q?void 0:Y||void 0,opacity:s,borderColor:l?l.color:void 0,borderWidth:l?l.width:0,borderDashArray:k(t)})}else[].forEach.call(t.children,function(t){D(t,r)})}}}}}async function _(e,r,a){var n=t.tableSvgDoc(r,a),i=/width="([0-9.]+)" height="([0-9.]+)"/.exec(n),o=+i[1],l=+i[2],c=Math.min(.72,s/o),f=721.89;if(l*c<=f)await e.svg(n,{maxScale:.72});else for(var u=r.rows.slice(1),h=Math.max(3,Math.floor(r.rows.length*f/(l*c))-3),d=0,b=0;b<u.length;b+=h,d++){var g=Object.assign({},r,{caption:r.caption+(d?"（続き）":""),rows:[r.rows[0]].concat(u.slice(b,b+h)),note:b+h>=u.length?r.note:""});r.bold&&(g.bold=[r.bold[0]].concat(r.bold.slice(1+b,1+b+h))),r.total&&(g.total={row:!!(r.total.row&&b+h>=u.length)}),await e.svg(t.tableSvgDoc(g,a),{maxScale:.72}),e.gap(6)}}async function C(){var e=await y();await t.ensureHolmAsync();var r=function(t){return e.full.tr.hasGlyphForCodePoint(t)};l={tr:new Set(Array.from("0123456789 /"))};var a={};Object.keys(e.full).forEach(function(t){var r,n;a[t]=(r=t,n=e.full[t],{key:r,fk:n,widthOfTextAtSize:function(t,e){return n.layout(String(t)).advanceWidth/n.unitsPerEm*e}})});var n=await PDFLib.PDFDocument.create();await k(n,S(a,r),!1);var i=l;l=null;var o=await PDFLib.PDFDocument.create(),s={};for(var c in o.registerFontkit(window.fontkit),e.src){var f=i[c]&&i[c].size?i[c]:new Set([" "]),h=e.src[c];s[c]=await o.embedFont(await u(h.buf,f,h.index),{subset:!1}),s[c].key=c}return k(o,S(s,r),!0)}async function k(a,i,o){a.setTitle(e.P.title||"CrossTab Studio 報告書"),a.setCreator("CrossTab Studio"),a.setProducer("CrossTab Studio");try{a.setLanguage("ja-JP")}catch(t){}var s=new M(a,i),l=t.repItems(),c=e.P.settings.figLang,f=0,u={fontJa:r,fontEn:r},h={fontJa:"CTSMincho",fontEn:"CTSTimes"};s.newPage(),s.text(e.P.title||"報告書",{size:17,bold:!0,lh:26}),s.text(t.repMeta(),{size:9,color:"#404040",lh:15}),s.gap(4),s.rule(.8,"#000000"),s.gap(8),l.length||s.text("☑ を付けた解析がありません。",{size:10.5});var d=Object.assign({},e.P.tabs[0]&&e.P.tabs[0].tstyle||{},h);if(l.some(function(t){return t.ok})){var b=t.summaryTable();b=Object.assign({},b,{rows:b.rows.map(function(t){return t.filter(function(t,e){return 1!==e})}),textCols:[!0]});var g=t.tableSvgDoc(b,d);g&&(await s.svg(g,{maxScale:.72}),s.gap(14))}for(var w=0;w<l.length;w++){var p=l[w];if(s.need(60),s.text(p.no+". "+p.tab.name,{size:12.5,bold:!0,lh:20,keep:1}),s.text(p.ok?p.res.test:t.def(p.tab.type).name,{size:9,color:"#404040",lh:15}),s.gap(3),p.ok){if(p.res.method&&(s.text("方法",{size:10.5,bold:!0,lh:17,keep:2}),s.text(p.res.method,{size:10.5,lh:18.5,keep:3}),s.gap(4),s.text("結果",{size:10.5,bold:!0,lh:17,keep:2})),p.text&&s.text(p.text,{size:10.5,lh:18.5,keep:3}),s.gap(8),e.P.report.tables)for(var v=Object.assign({},p.tab.tstyle||{},h),y=t.tablesOf(p.tab,p.res),m=0;m<y.length;m++)await _(s,y[m],v),s.gap(10);if(!1!==e.P.report.figs)for(var x=Chart.model(p.res),S=0;x&&S<p.tab.figs.length;S++){var A=Object.assign({},p.tab.figs[S],u),F=Chart.render(x,A,c);f++,await s.svg(F.svg,{below:22}),s.gap(4),s.text("図 "+f+"　"+p.tab.name+(p.tab.figs.length>1?"（"+(S+1)+"）":""),{size:9,align:"center",lh:15}),s.gap(10)}s.gap(10)}else s.text(p.res?p.res.message||"計算できませんでした。":"列がまだ選ばれていません。",{size:10.5}),s.gap(12)}var T=t.citeReport();s.need(90),s.rule(.5,"#000000"),s.gap(6),s.text(T.title,{size:11,bold:!0,lh:18,keep:2}),s.text(T.text,{size:9.5,lh:16}),T.refs.forEach(function(t){s.text(t,{size:9.5,lh:16,indent:14})});var C=s.pages.length;return s.pages.forEach(function(t,e){var r=e+1+" / "+C,a=i.S.widthOfTextAtSize(r,9);i.S.draw(t,r,{x:(n-a)/2,y:22,size:9,color:P("#606060")})}),o?new Blob([await a.save()],{type:"application/pdf"}):null}async function D(){t.busy(!0,"PDF を作っています（初回は字体を読み込みます）");try{return await C()}finally{t.busy(!1)}}t.reportPdf=D,t.savePdf=async function(){if(e.data){p();try{var r=await D();await t.saveBlob(r,t.baseName()+"_報告書.pdf","PDF",".pdf")&&t.toast("報告書を PDF で保存しました。")}catch(e){t.toast(e&&"AbortError"===e.name?"保存をやめました。":"PDF を作れませんでした（"+(e&&e.message||e)+"）。",!0)}}else t.toast("先に CSV ファイルを入れてください。",!0)},t.askLocalFonts=p}();
+// pdfreport.js ― 報告書を PDF にする（図・表・報告書の文をすべて含める）。
+//   ・本文と表は、和文を MS 明朝、欧文・数字を Times New Roman で書く。見出しと図はゴシック（BIZ UDPゴシック）
+//     MS 明朝と Times New Roman は配布できない字体なので、端末に入っているものを使う（パソコンの Chrome・Edge で、字体の使用を許可したとき）。
+//     使えないとき（スマートフォンなど）は、形と幅の近い BIZ UD明朝・Tinos（どちらも SIL Open Font License）で代わりに書く
+//   ・使った文字だけを PDF に埋め込むので、ファイルは小さい
+//   ・図と表は、画面と同じ SVG を線と文字のまま PDF に描く（拡大しても粗くならない）。PDF 用に、図と表の字形を埋め込む字体にそろえて組み直す
+//   ・使うときに初めて部品（pdf-lib・fontkit・字体）を読み込む
+(function () {
+  'use strict';
+  var A = window.App, S = A.S;
+  var FAMILY = 'CTSReportFont', loaded = null;
+  var PW = 595.28, PH = 841.89, M = 56, CW = PW - M * 2, FOOT = 36;          // A4 縦、余白 約 20 mm
+  var NOEND = '（「『【〔〈《([{“‘';
+  var NOSTART = '、。，．・：；？！）」』】〕〉》’”ーぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮ…％,.:;?!)]}';
+
+  // 使った文字を集める（1 回目の組版）。2 回目は、集めた文字だけの字体（harfbuzz で作る）を埋め込む
+  //   used：字体ごとの「使った文字」（1 回目だけ集める。1 回目は文字を描かない）
+  var used = null;
+  function dt(pg, str, o) {
+    if (used) { var k = o.font.key, u = used[k] || (used[k] = new Set()); Array.from(str).forEach(function (c) { u.add(c); }); return; }
+    if (o.fakeBold) {                                              // 明朝には太字がないので、輪郭を少し太らせて太字に見せる（Word と同じ方法）
+      pg.pushOperators(PDFLib.pushGraphicsState(), PDFLib.setTextRenderingMode(PDFLib.TextRenderingMode.FillAndOutline), PDFLib.setLineWidth(o.size * 0.035), PDFLib.setStrokingColor(o.color || PDFLib.rgb(0, 0, 0)));
+      pg.drawText(str, o); pg.pushOperators(PDFLib.popGraphicsState()); return;
+    }
+    pg.drawText(str, o);
+  }
+  var hb = null;
+  async function hbSubset(fontBuf, chars, index) {
+    if (!hb) { var mod = await WebAssembly.instantiate(await getBuf('vendor/harfbuzz-subset.wasm'), {}); hb = mod.instance.exports; }
+    var X = hb, f = new Uint8Array(fontBuf), p = X.malloc(f.byteLength);
+    new Uint8Array(X.memory.buffer).set(f, p);
+    var blob = X.hb_blob_create(p, f.byteLength, 2, 0, 0), face = X.hb_face_create(blob, index || 0); X.hb_blob_destroy(blob);
+    var inp = X.hb_subset_input_create_or_fail(), us = X.hb_subset_input_unicode_set(inp);
+    chars.forEach(function (c) { X.hb_set_add(us, c.codePointAt(0)); });
+    var sub = X.hb_subset_or_fail(face, inp); X.hb_subset_input_destroy(inp);
+    if (!sub) { X.hb_face_destroy(face); X.free(p); throw new Error('字体を小さくできませんでした。'); }
+    var rb = X.hb_face_reference_blob(sub), off = X.hb_blob_get_data(rb, 0), len = X.hb_blob_get_length(rb);
+    var out = new Uint8Array(X.memory.buffer).slice(off, off + len);
+    X.hb_blob_destroy(rb); X.hb_face_destroy(sub); X.hb_face_destroy(face); X.free(p);
+    return out;
+  }
+  function loadScript(src) {
+    return new Promise(function (res, rej) { var s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = function () { rej(new Error(src + ' を読み込めませんでした。')); }; document.head.appendChild(s); });
+  }
+  async function getBuf(url) { var r = await fetch(url); if (!r.ok) throw new Error(url + ' を読み込めませんでした（' + r.status + '）。'); return r.arrayBuffer(); }
+  // TTC（複数の字体をまとめたファイル。MS 明朝など）から、PostScript 名の合う字体の番号を探す
+  function ttcIndex(b, ps) {
+    var dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
+    if (b.length < 12 || String.fromCharCode(b[0], b[1], b[2], b[3]) !== 'ttcf') return 0;
+    var n = dv.getUint32(8);
+    for (var i = 0; i < n; i++) {
+      var off = dv.getUint32(12 + i * 4), nt = dv.getUint16(off + 4);
+      for (var t = 0; t < nt; t++) {
+        var r = off + 12 + t * 16; if (String.fromCharCode(b[r], b[r + 1], b[r + 2], b[r + 3]) !== 'name') continue;
+        var no = dv.getUint32(r + 8), cnt = dv.getUint16(no + 2), so = no + dv.getUint16(no + 4);
+        for (var k = 0; k < cnt; k++) {
+          var q = no + 6 + k * 12, pid = dv.getUint16(q), nid = dv.getUint16(q + 6), len = dv.getUint16(q + 8), o = so + dv.getUint16(q + 10), str = '';
+          if (nid !== 6) continue;
+          if (pid === 3 || pid === 0) for (var j = 0; j < len; j += 2) str += String.fromCharCode(dv.getUint16(o + j)); else for (var j2 = 0; j2 < len; j2++) str += String.fromCharCode(b[o + j2]);
+          if (str === ps) return i;
+        }
+      }
+    }
+    return 0;
+  }
+  // 端末に入っている MS 明朝・Times New Roman を読む（ボタンを押した直後に呼ぶ。許可を求める画面が出ることがある）
+  var PS = { mj: 'MS-Mincho', tr: 'TimesNewRomanPSMT', tb: 'TimesNewRomanPS-BoldMT' }, localP = null;
+  function askLocalFonts() {
+    if (localP) return localP;
+    localP = (async function () {
+      if (!window.queryLocalFonts) return null;
+      try {
+        var list = await window.queryLocalFonts({ postscriptNames: [PS.mj, PS.tr, PS.tb] }), by = {};
+        list.forEach(function (f) { by[f.postscriptName] = f; });
+        if (!by[PS.mj] || !by[PS.tr]) return null;
+        var out = {};
+        for (var k in PS) if (by[PS[k]]) { var b = new Uint8Array(await (await by[PS[k]].blob()).arrayBuffer()); out[k] = { buf: b, index: ttcIndex(b, PS[k]), ps: PS[k] }; }
+        return out;
+      } catch (e) { return null; }
+    })();
+    localP.then(function (r) { if (!r) localP = null; });   // 断られたときは、次に押したときにもう一度たずねる
+    return localP;
+  }
+  function fk(bytes, ps, index) {
+    var f = null; try { f = ps ? window.fontkit.create(bytes, ps) : null; } catch (e) {}
+    if (!f) f = window.fontkit.create(bytes);
+    return f.fonts ? f.fonts[index || 0] : f;
+  }
+  async function addFace(name, src, weight) { var f = new FontFace(name, src, { weight: weight }); await f.load(); document.fonts.add(f); }
+  async function ensureLibs() {
+    if (!window.PDFLib) await loadScript('vendor/pdf-lib.min.js');
+    if (!window.fontkit) await loadScript('vendor/fontkit.umd.min.js');
+    var loc = await askLocalFonts();
+    var key = loc ? 'local' : 'free';
+    if (loaded && loaded.key === key) return loaded;
+    var L = { key: key, local: !!loc, src: {} };
+    if (!loaded || !loaded.src.g) {
+      var reg = new Uint8Array(await getBuf('fonts/BIZUDPGothic-Regular.ttf')), bold = new Uint8Array(await getBuf('fonts/BIZUDPGothic-Bold.ttf'));
+      // 図と表の文字の幅を、PDF に入れる字体で測るため、画面にも同じ字体を登録する
+      await addFace(FAMILY, reg.slice(0).buffer, '400'); await addFace(FAMILY, bold.slice(0).buffer, '700');
+      L.src.g = { buf: reg, index: 0 }; L.src.gb = { buf: bold, index: 0 };
+    } else { L.src.g = loaded.src.g; L.src.gb = loaded.src.gb; }
+    if (loc) {
+      L.src.mj = loc.mj; L.src.tr = loc.tr; L.src.tb = loc.tb || loc.tr;
+      // 画面で幅を測るための登録。名前で見つからないときは、読んだファイルの中身で登録する
+      async function addLocal(name, src, x, w) { try { await addFace(name, src, w); } catch (e) { await addFace(name, x.buf.slice(0).buffer, w); } }
+      await addLocal('CTSMincho', "local('MS Mincho'), local('MS-Mincho')", loc.mj, '400');
+      await addLocal('CTSTimes', "local('Times New Roman'), local('TimesNewRomanPSMT')", loc.tr, '400');
+      await addLocal('CTSTimes', loc.tb ? "local('Times New Roman Bold'), local('TimesNewRomanPS-BoldMT')" : "local('Times New Roman'), local('TimesNewRomanPSMT')", loc.tb || loc.tr, '700');
+    } else {
+      var mj = new Uint8Array(await getBuf('fonts/BIZUDMincho-Regular.ttf')), tr = new Uint8Array(await getBuf('fonts/Tinos-Regular.ttf')), tb = new Uint8Array(await getBuf('fonts/Tinos-Bold.ttf'));
+      L.src.mj = { buf: mj, index: 0 }; L.src.tr = { buf: tr, index: 0 }; L.src.tb = { buf: tb, index: 0 };
+      await addFace('CTSMincho', mj.slice(0).buffer, '400'); await addFace('CTSTimes', tr.slice(0).buffer, '400'); await addFace('CTSTimes', tb.slice(0).buffer, '700');
+    }
+    // 1 回目（文字を集めるだけ）は、元の字体で幅を測る
+    L.full = {};
+    Object.keys(L.src).forEach(function (k) { var x = L.src[k]; L.full[k] = fk(x.buf, x.ps, x.index); });
+    loaded = L; return loaded;
+  }
+  // 字体の幅を測る部品（1 回目用）。pdf-lib の字体と同じ形（widthOfTextAtSize）にそろえる
+  function measureFont(key, f) { return { key: key, fk: f, widthOfTextAtSize: function (str, size) { return f.layout(String(str)).advanceWidth / f.unitsPerEm * size; } }; }
+  // 和文と欧文で字体を分けて書く。欧文の字体にある文字（全角の記号と和文を除く）は欧文の字体で書く
+  function Mixed(J, Lf, latinHas, fakeBold) {
+    function isLat(ch) { var cp = ch.codePointAt(0); return cp < 0x3000 && !(cp >= 0xFF00 && cp <= 0xFFEF) && latinHas(cp); }
+    function runs(str) { var out = [], cur = '', lat = null; Array.from(String(str)).forEach(function (ch) { var l = isLat(ch); if (cur && l !== lat) { out.push([cur, lat]); cur = ''; } cur += ch; lat = l; }); if (cur) out.push([cur, lat]); return out; }
+    return {
+      mixed: true,
+      widthOfTextAtSize: function (str, size) { return runs(str).reduce(function (a, r) { return a + (r[1] ? Lf : J).widthOfTextAtSize(r[0], size); }, 0); },
+      draw: function (pg, str, o) {
+        var ang = o.rotate ? o.rotate.angle * Math.PI / 180 : 0, ca = Math.cos(ang), sa = Math.sin(ang), x = o.x, y = o.y;
+        runs(str).forEach(function (r) {
+          var f = r[1] ? Lf : J; dt(pg, r[0], Object.assign({}, o, { x: x, y: y, font: f, fakeBold: !r[1] && fakeBold }));
+          var w = f.widthOfTextAtSize(r[0], o.size); x += w * ca; y += w * sa;
+        });
+      }
+    };
+  }
+  function Single(f, fakeBold) { return { widthOfTextAtSize: function (str, size) { return f.widthOfTextAtSize(str, size); }, draw: function (pg, str, o) { dt(pg, str, Object.assign({}, o, { font: f, fakeBold: fakeBold })); } }; }
+  // 書体の組（G：ゴシック、GB：ゴシックの太字、S：本文の明朝＋Times、SB：その太字）
+  function fontSet(F, latinHas) { return { G: Single(F.g), GB: Single(F.gb), S: Mixed(F.mj, F.tr, latinHas), SB: Mixed(F.mj, F.tb, latinHas, true) }; }
+
+  // ---------------- 色
+  var NAMED = { white: '#FFFFFF', black: '#000000', gray: '#808080', grey: '#808080', red: '#FF0000' };
+  function col(c) {
+    if (!c || c === 'none' || c === 'transparent') return null;
+    c = String(c).trim(); if (NAMED[c.toLowerCase()]) c = NAMED[c.toLowerCase()];
+    var m = /^rgba?\(([^)]+)\)$/i.exec(c);
+    if (m) { var v = m[1].split(',').map(parseFloat); return PDFLib.rgb(v[0] / 255, v[1] / 255, v[2] / 255); }
+    if (/^#[0-9a-f]{3}$/i.test(c)) c = '#' + c[1] + c[1] + c[2] + c[2] + c[3] + c[3];
+    if (!/^#[0-9a-f]{6}$/i.test(c)) return PDFLib.rgb(0, 0, 0);
+    return PDFLib.rgb(parseInt(c.substr(1, 2), 16) / 255, parseInt(c.substr(3, 2), 16) / 255, parseInt(c.substr(5, 2), 16) / 255);
+  }
+  function hexOf(c) { if (NAMED[String(c).toLowerCase()]) return NAMED[String(c).toLowerCase()]; if (/^#[0-9a-f]{3}$/i.test(c)) return '#' + c[1] + c[1] + c[2] + c[2] + c[3] + c[3]; return c; }
+
+  // ---------------- 変換行列（SVG の座標 → SVG の座標）
+  function mul(a, b) { return [a[0] * b[0] + a[2] * b[1], a[1] * b[0] + a[3] * b[1], a[0] * b[2] + a[2] * b[3], a[1] * b[2] + a[3] * b[3], a[0] * b[4] + a[2] * b[5] + a[4], a[1] * b[4] + a[3] * b[5] + a[5]]; }
+  function parseTf(s) {
+    var m = [1, 0, 0, 1, 0, 0], re = /(translate|rotate|scale|matrix)\s*\(([^)]*)\)/g, r;
+    while ((r = re.exec(s || ''))) {
+      var v = r[2].split(/[\s,]+/).filter(Boolean).map(Number), t;
+      if (r[1] === 'translate') t = [1, 0, 0, 1, v[0] || 0, v[1] || 0];
+      else if (r[1] === 'scale') t = [v[0], 0, 0, v.length > 1 ? v[1] : v[0], 0, 0];
+      else if (r[1] === 'matrix') t = v;
+      else { var a = (v[0] || 0) * Math.PI / 180, c = Math.cos(a), sn = Math.sin(a), cx = v[1] || 0, cy = v[2] || 0; t = mul(mul([1, 0, 0, 1, cx, cy], [c, sn, -sn, c, 0, 0]), [1, 0, 0, 1, -cx, -cy]); }
+      m = mul(m, t);
+    }
+    return m;
+  }
+  function ap(m, x, y) { return [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]]; }
+
+  // ---------------- 文書を組む
+  function Builder(doc, FS) {
+    var B = this, page = null, y = 0;
+    B.pages = [];
+    B.newPage = function () { page = doc.addPage([PW, PH]); B.pages.push(page); y = M; };
+    B.room = function () { return PH - FOOT - M * 0.5 - y; };
+    B.need = function (h) { if (!page || y + h > PH - FOOT - M * 0.5) B.newPage(); };
+    B.gap = function (h) { y += h; };
+    // 文を幅で折り返す。英数字の続き（p = 0.012 など）は途中で切らない
+    function units(str) { return str.match(/[A-Za-z0-9.,=<>≦≧±+\-−×/%'()\[\]_:]+|\s+|[\s\S]/gu) || []; }
+    function wrap(str, font, size, maxW) {
+      var out = [];
+      String(str).split(/\r?\n/).forEach(function (para) {
+        var cur = '', us = units(para);
+        for (var i = 0; i < us.length; i++) {
+          var u = us[i];
+          if (font.widthOfTextAtSize(cur + u, size) <= maxW || !cur) {
+            if (!cur && font.widthOfTextAtSize(u, size) > maxW) {           // 1 つの塊が幅を超えるときは文字で切る
+              Array.from(u).forEach(function (ch) { if (cur && font.widthOfTextAtSize(cur + ch, size) > maxW) { out.push(cur); cur = ch; } else cur += ch; });
+            } else cur += u;
+            continue;
+          }
+          if (NOSTART.indexOf(u[0]) >= 0 && u.length === 1) { out.push(cur + u); cur = ''; continue; }   // 句読点は前の行に付ける
+          var carry = '';
+          while (cur.length > 1 && NOEND.indexOf(cur[cur.length - 1]) >= 0) { carry = cur[cur.length - 1] + carry; cur = cur.slice(0, -1); }   // 開きかっこで行を終えない
+          out.push(cur.replace(/\s+$/, '')); cur = carry + (/^\s+$/.test(u) ? '' : u);
+        }
+        out.push(cur);
+      });
+      return out;
+    }
+    B.wrap = wrap;
+    B.text = function (str, o) {
+      o = o || {}; var font = o.bold ? FS.GB : FS.S, size = o.size || 10.5, lh = o.lh || size * 1.75, x0 = M + (o.indent || 0), maxW = (o.width || CW) - (o.indent || 0);
+      var lines = wrap(str, font, size, maxW);
+      if (o.keep) B.need(lh * Math.min(lines.length, o.keep));
+      lines.forEach(function (l) {
+        B.need(lh);
+        var x = x0; if (o.align === 'center') x = M + (CW - font.widthOfTextAtSize(l, size)) / 2;
+        if (l) font.draw(page, l, { x: x, y: PH - (y + size * 1.08), size: size, color: col(o.color || '#000000') });
+        y += lh;
+      });
+    };
+    B.rule = function (w, color) { B.need(4); page.drawLine({ start: { x: M, y: PH - y }, end: { x: M + CW, y: PH - y }, thickness: w || 0.6, color: col(color || '#808080') }); y += 4; };
+
+    // ---------- SVG を PDF に描く
+    B.svg = async function (svgStr, o) {
+      o = o || {};
+      var dom = new DOMParser().parseFromString(svgStr, 'image/svg+xml'), root = dom.documentElement;
+      if (!root || root.nodeName !== 'svg') return;
+      var vb = (root.getAttribute('viewBox') || '').split(/[\s,]+/).map(Number), W = +root.getAttribute('width') || vb[2], H = +root.getAttribute('height') || vb[3];
+      var s = Math.min(o.maxScale || 0.75, CW / W), avail = PH - FOOT - M * 1.5;
+      if (H * s > avail) s = avail / H;
+      var h = H * s; B.need(h + (o.below || 0));
+      var ox = M + (CW - W * s) / 2, oy = y, defs = {};
+      [].forEach.call(root.querySelectorAll('pattern, linearGradient'), function (d) { defs[d.getAttribute('id')] = d; });
+      // 模様で塗る図形が四角形以外にあるときは、画像にして入れる（PDF の切り抜きを使わずに済ませる）
+      var rasterize = [].some.call(root.querySelectorAll('path, circle, polygon'), function (e) { return /^url\(/.test(e.getAttribute('fill') || '') && !e.closest('pattern'); });
+      if (rasterize) {
+        if (used) { y += h; return; }                                // 1 回目は文字を集めるだけなので、画像は作らない
+        var png = await Chart.toPng(svgStr, 3), img = await doc.embedPng(await png.arrayBuffer());
+        page.drawImage(img, { x: ox, y: PH - oy - h, width: W * s, height: h }); y += h; return;
+      }
+      function P(m, x, yy) { var q = ap(m, x, yy); return { x: ox + q[0] * s, y: PH - (oy + q[1] * s) }; }
+      function num(e, a, d) { var v = e.getAttribute(a); if (v === null || v === '') return d; if (/%$/.test(v)) return (parseFloat(v) / 100) * (a === 'width' || a === 'x' ? W : H); return parseFloat(v); }
+      function inh(e, a) { while (e && e.getAttribute) { var v = e.getAttribute(a); if (v !== null) return v; e = e.parentNode; } return null; }
+      function op(e) { var v = 1; for (var n = e; n && n.getAttribute; n = n.parentNode) { var o1 = n.getAttribute('opacity'); if (o1 !== null) v *= parseFloat(o1); } var fo = e.getAttribute('fill-opacity'); return v * (fo !== null ? parseFloat(fo) : 1); }
+      function dash(e) { var d = inh(e, 'stroke-dasharray'); return d && d !== 'none' ? d.split(/[\s,]+/).map(function (v) { return parseFloat(v) * s; }) : undefined; }
+      function strokeOf(e) { var c = inh(e, 'stroke'); if (!c || c === 'none') return null; var w = parseFloat(inh(e, 'stroke-width') || '1'); return w > 0 ? { color: col(c), width: w * s } : null; }
+      function patternRect(m, x, yy, w, hh, pat) {
+        var a = P(m, x, yy + hh), pw = +pat.getAttribute('width') || 8, ph = +pat.getAttribute('height') || 8;
+        page.pushOperators(PDFLib.pushGraphicsState(), PDFLib.rectangle(a.x, a.y, w * s, hh * s), PDFLib.clip(), PDFLib.endPath());
+        for (var ty = Math.floor(yy / ph) * ph; ty < yy + hh; ty += ph)
+          for (var tx = Math.floor(x / pw) * pw; tx < x + w; tx += pw)
+            [].forEach.call(pat.children, function (c) { draw(c, mul(m, [1, 0, 0, 1, tx, ty])); });
+        page.pushOperators(PDFLib.popGraphicsState());
+      }
+      function gradRect(m, x, yy, w, hh, g) {
+        var stops = [].map.call(g.querySelectorAll('stop'), function (st) { return { o: parseFloat(st.getAttribute('offset')) / (/%/.test(st.getAttribute('offset')) ? 100 : 1), c: hexOf(st.getAttribute('stop-color') || '#000') }; });
+        var vert = (parseFloat(g.getAttribute('y2') || '0') !== parseFloat(g.getAttribute('y1') || '0')) && (parseFloat(g.getAttribute('x2') || '0') === parseFloat(g.getAttribute('x1') || '0'));
+        var N = 64;
+        for (var k = 0; k < N; k++) {
+          var t = (k + 0.5) / N, i = 0; while (i < stops.length - 2 && t > stops[i + 1].o) i++;
+          var a0 = stops[i], a1 = stops[Math.min(i + 1, stops.length - 1)], u = a1.o > a0.o ? Math.max(0, Math.min(1, (t - a0.o) / (a1.o - a0.o))) : 0;
+          var c = Chart.lerp(a0.c, a1.c, u), rx = vert ? x : x + w * k / N, ry = vert ? yy + hh * k / N : yy, rw = vert ? w : w / N + 0.3, rh = vert ? hh / N + 0.3 : hh, q = P(m, rx, ry + rh);
+          page.drawRectangle({ x: q.x, y: q.y, width: rw * s, height: rh * s, color: col(c) });
+        }
+      }
+      function draw(e, m) {
+        if (e.nodeType !== 1) return;
+        var tag = e.nodeName.toLowerCase();
+        if (tag === 'defs' || tag === 'pattern' || tag === 'lineargradient' || tag === 'title' || tag === 'style') return;
+        if (e.getAttribute('display') === 'none' || e.getAttribute('visibility') === 'hidden') return;
+        if (e.getAttribute('transform')) m = mul(m, parseTf(e.getAttribute('transform')));
+        var fillA = inh(e, 'fill'), fill = fillA === null ? '#000000' : fillA, o1 = op(e), stk = strokeOf(e);
+        var ref = /^url\(#([^)]+)\)/.exec(fill), refEl = ref ? defs[ref[1]] : null;
+        if (tag === 'svg' || tag === 'g') { [].forEach.call(e.children, function (c) { draw(c, m); }); return; }
+        if (tag === 'rect') {
+          var x = num(e, 'x', 0), yy = num(e, 'y', 0), w = num(e, 'width', 0), hh = num(e, 'height', 0);
+          if (!(w > 0 && hh > 0)) return;
+          var invisible = o1 <= 0.001;
+          if (!invisible && refEl && refEl.nodeName === 'pattern') patternRect(m, x, yy, w, hh, refEl);
+          else if (!invisible && refEl) gradRect(m, x, yy, w, hh, refEl);
+          var q = P(m, x, yy + hh), fc = refEl ? null : col(fill);
+          if ((fc && !invisible) || stk) page.drawRectangle({ x: q.x, y: q.y, width: w * s, height: hh * s, color: invisible ? undefined : fc || undefined, opacity: o1, borderColor: stk ? stk.color : undefined, borderWidth: stk ? stk.width : 0, borderDashArray: dash(e) });
+          return;
+        }
+        if (tag === 'line') {
+          if (!stk) return;
+          var a = P(m, num(e, 'x1', 0), num(e, 'y1', 0)), b = P(m, num(e, 'x2', 0), num(e, 'y2', 0));
+          page.drawLine({ start: a, end: b, thickness: stk.width, color: stk.color, dashArray: dash(e), opacity: op(e) });
+          return;
+        }
+        if (tag === 'circle' || tag === 'ellipse') {
+          var c0 = P(m, num(e, 'cx', 0), num(e, 'cy', 0)), rr = (tag === 'circle' ? num(e, 'r', 0) : num(e, 'rx', 0)) * s, fc2 = col(fill);
+          if (!(rr > 0) || (!fc2 && !stk)) return;
+          page.drawEllipse({ x: c0.x, y: c0.y, xScale: rr, yScale: tag === 'circle' ? rr : num(e, 'ry', 0) * s, color: fc2 || undefined, opacity: o1, borderColor: stk ? stk.color : undefined, borderWidth: stk ? stk.width : 0, borderOpacity: 1 });
+          return;
+        }
+        if (tag === 'path' || tag === 'polygon' || tag === 'polyline') {
+          var d = tag === 'path' ? e.getAttribute('d') : 'M' + (e.getAttribute('points') || '').trim().replace(/\s+/g, ' ') + (tag === 'polygon' ? 'Z' : '');
+          if (!d) return;
+          var org = P(m, 0, 0), fc3 = col(fill);
+          if (!fc3 && !stk) return;
+          page.drawSvgPath(d, { x: org.x, y: org.y, scale: s * Math.sqrt(Math.abs(m[0] * m[3] - m[1] * m[2])) || s, color: fc3 || undefined, opacity: o1, borderColor: stk ? stk.color : undefined, borderWidth: stk ? stk.width / s : 0, borderDashArray: dash(e) });
+          return;
+        }
+        if (tag === 'text') {
+          var str = (e.textContent || '').replace(/\s+/g, ' ');
+          if (!str.trim()) return;
+          var size = parseFloat(inh(e, 'font-size') || '12') * s, bold = /bold|[6-9]00/.test(inh(e, 'font-weight') || ''), serif = /CTSMincho|CTSTimes/.test(inh(e, 'font-family') || '');
+          var font = serif ? (bold ? FS.SB : FS.S) : (bold ? FS.GB : FS.G);
+          var anchor = inh(e, 'text-anchor') || 'start', tw = font.widthOfTextAtSize(str, size), dx = anchor === 'middle' ? -tw / 2 : anchor === 'end' ? -tw : 0;
+          var p0 = P(m, num(e, 'x', 0), num(e, 'y', 0)), ang = Math.atan2(-m[1], m[0]), ca = Math.cos(ang), sa = Math.sin(ang);
+          var tx0 = p0.x + dx * ca, ty0 = p0.y + dx * sa, deg = ang * 180 / Math.PI, fcol = col(fill) || PDFLib.rgb(0, 0, 0);
+          var halo = e.getAttribute('stroke'), hw = parseFloat(e.getAttribute('stroke-width') || '0') * s / 2;
+          if (halo && halo !== 'none' && hw > 0) [[1, 0], [-1, 0], [0, 1], [0, -1], [0.7, 0.7], [-0.7, 0.7], [0.7, -0.7], [-0.7, -0.7]].forEach(function (v) {
+            font.draw(page, str, { x: tx0 + v[0] * hw, y: ty0 + v[1] * hw, size: size, color: col(halo), rotate: PDFLib.degrees(deg) });
+          });
+          font.draw(page, str, { x: tx0, y: ty0, size: size, color: fcol, opacity: o1, rotate: PDFLib.degrees(deg) });
+        }
+      }
+      draw(root, [1, 0, 0, 1, 0, 0]);
+      y += h;
+    };
+  }
+
+  // 表を描く。1 ページに収まらない長い表は、見出しの行を付けて分けて描く（縮めすぎて読めなくならないように）
+  async function tableBlock(B, t, ts) {
+    var svg = A.tableSvgDoc(t, ts), m = /width="([0-9.]+)" height="([0-9.]+)"/.exec(svg), W = +m[1], H = +m[2];
+    var s = Math.min(0.72, CW / W), avail = PH - FOOT - M * 1.5;
+    if (H * s <= avail) { await B.svg(svg, { maxScale: 0.72 }); return; }
+    var body = t.rows.slice(1), per = Math.max(3, Math.floor((t.rows.length) * avail / (H * s)) - 3), k = 0;
+    for (var i = 0; i < body.length; i += per, k++) {
+      var part = Object.assign({}, t, { caption: t.caption + (k ? '（続き）' : ''), rows: [t.rows[0]].concat(body.slice(i, i + per)), note: i + per >= body.length ? t.note : '' });
+      if (t.bold) part.bold = [t.bold[0]].concat(t.bold.slice(1 + i, 1 + i + per));
+      if (t.total) part.total = { row: !!(t.total.row && i + per >= body.length) };
+      await B.svg(A.tableSvgDoc(part, ts), { maxScale: 0.72 }); B.gap(6);
+    }
+  }
+  // ---------------- 報告書の中身
+  async function buildPdf() {
+    var lib = await ensureLibs();
+    await A.ensureHolmAsync();
+    var latinHas = function (cp) { return lib.full.tr.hasGlyphForCodePoint(cp); };
+    // 1 回目：使う文字を集める（保存しない）。幅は元の字体で測る
+    used = { tr: new Set(Array.from('0123456789 /')) };
+    var F1 = {}; Object.keys(lib.full).forEach(function (k) { F1[k] = measureFont(k, lib.full[k]); });
+    var d1 = await PDFLib.PDFDocument.create();
+    await compose(d1, fontSet(F1, latinHas), false);
+    var chars = used; used = null;
+    // 2 回目：字体ごとに、使う文字だけの字体（harfbuzz で作る）を埋め込んで作る
+    var doc = await PDFLib.PDFDocument.create(), F2 = {};
+    doc.registerFontkit(window.fontkit);
+    for (var k in lib.src) {
+      var cs = chars[k] && chars[k].size ? chars[k] : new Set([' ']), x = lib.src[k];
+      F2[k] = await doc.embedFont(await hbSubset(x.buf, cs, x.index), { subset: false }); F2[k].key = k;
+    }
+    return compose(doc, fontSet(F2, latinHas), true);
+  }
+  async function compose(doc, FS, final) {
+    doc.setTitle(S.P.title || 'CrossTab Studio 報告書'); doc.setCreator('CrossTab Studio'); doc.setProducer('CrossTab Studio'); try { doc.setLanguage('ja-JP'); } catch (e) {}
+    var B = new Builder(doc, FS), items = A.repItems(), lang = S.P.settings.figLang, figNo = 0;
+    var fontOver = { fontJa: FAMILY, fontEn: FAMILY }, serifOver = { fontJa: 'CTSMincho', fontEn: 'CTSTimes' };   // 図はゴシック、表は明朝＋Times
+    B.newPage();
+    B.text(S.P.title || '報告書', { size: 17, bold: true, lh: 26 });
+    B.text(A.repMeta(), { size: 9, color: '#404040', lh: 15 });
+    B.gap(4); B.rule(0.8, '#000000'); B.gap(8);
+    if (!items.length) { B.text('☑ を付けた解析がありません。', { size: 10.5 }); }
+    var tsBase = Object.assign({}, (S.P.tabs[0] && S.P.tabs[0].tstyle) || {}, serifOver);
+    if (items.some(function (x) { return x.ok; })) {
+      var sum = A.summaryTable();            // 解析の名前は各節の見出しにあるので、一覧では番号だけにして読める大きさを保つ
+      sum = Object.assign({}, sum, { rows: sum.rows.map(function (r) { return r.filter(function (c, j) { return j !== 1; }); }), textCols: [true] });
+      var sumSvg = A.tableSvgDoc(sum, tsBase);
+      if (sumSvg) { await B.svg(sumSvg, { maxScale: 0.72 }); B.gap(14); }
+    }
+    for (var i = 0; i < items.length; i++) {
+      var x = items[i];
+      B.need(60);
+      B.text(x.no + '. ' + x.tab.name, { size: 12.5, bold: true, lh: 20, keep: 1 });
+      B.text(x.ok ? x.res.test : A.def(x.tab.type).name, { size: 9, color: '#404040', lh: 15 });
+      B.gap(3);
+      if (!x.ok) { B.text(x.res ? (x.res.message || '計算できませんでした。') : '列がまだ選ばれていません。', { size: 10.5 }); B.gap(12); continue; }
+      if (x.res.method) {                                            // 方法を書く解析（テキストマイニング）は、方法と結果を分ける
+        B.text('方法', { size: 10.5, bold: true, lh: 17, keep: 2 }); B.text(x.res.method, { size: 10.5, lh: 18.5, keep: 3 }); B.gap(4);
+        B.text('結果', { size: 10.5, bold: true, lh: 17, keep: 2 });
+      }
+      if (x.text) B.text(x.text, { size: 10.5, lh: 18.5, keep: 3 });
+      B.gap(8);
+      if (S.P.report.tables) {
+        var ts = Object.assign({}, x.tab.tstyle || {}, serifOver), tlist = A.tablesOf(x.tab, x.res);
+        for (var ti = 0; ti < tlist.length; ti++) { await tableBlock(B, tlist[ti], ts); B.gap(10); }
+      }
+      if (S.P.report.figs !== false) {
+        var m = Chart.model(x.res);
+        for (var k = 0; m && k < x.tab.figs.length; k++) {
+          var st = Object.assign({}, x.tab.figs[k], fontOver), r = Chart.render(m, st, lang);
+          figNo++;
+          await B.svg(r.svg, { below: 22 });
+          B.gap(4);
+          B.text('図 ' + figNo + '　' + x.tab.name + (x.tab.figs.length > 1 ? '（' + (k + 1) + '）' : ''), { size: 9, align: 'center', lh: 15 });
+          B.gap(10);
+        }
+      }
+      B.gap(10);
+    }
+    // 使用したソフトウェアと引用の例
+    var cr = A.citeReport();
+    B.need(90); B.rule(0.5, '#000000'); B.gap(6);
+    B.text(cr.title, { size: 11, bold: true, lh: 18, keep: 2 }); B.text(cr.text, { size: 9.5, lh: 16 });
+    cr.refs.forEach(function (r) { B.text(r, { size: 9.5, lh: 16, indent: 14 }); });
+    // ページ番号
+    var n = B.pages.length;
+    B.pages.forEach(function (pg, i2) { var t = (i2 + 1) + ' / ' + n, w = FS.S.widthOfTextAtSize(t, 9); FS.S.draw(pg, t, { x: (PW - w) / 2, y: FOOT - 14, size: 9, color: col('#606060') }); });
+    return final ? new Blob([await doc.save()], { type: 'application/pdf' }) : null;
+  }
+  async function reportPdf() {
+    A.busy(true, 'PDF を作っています（初回は字体を読み込みます）');
+    try { return await buildPdf(); } finally { A.busy(false); }
+  }
+  async function savePdf() {
+    if (!S.data) { A.toast('先に CSV ファイルを入れてください。', true); return; }
+    askLocalFonts();
+    try {
+      var blob = await reportPdf();
+      if (await A.saveBlob(blob, A.baseName() + '_報告書.pdf', 'PDF', '.pdf')) A.toast('報告書を PDF で保存しました。');
+    } catch (e) { A.toast(e && e.name === 'AbortError' ? '保存をやめました。' : 'PDF を作れませんでした（' + (e && e.message || e) + '）。', true); }
+  }
+  A.reportPdf = reportPdf; A.savePdf = savePdf; A.askLocalFonts = askLocalFonts;
+})();

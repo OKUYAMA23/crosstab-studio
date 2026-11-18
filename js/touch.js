@@ -1,1 +1,68 @@
-!function(){"use strict";var e=!(!window.matchMedia||!matchMedia("(pointer: coarse)").matches);if(window.CTS_TOUCH=e,e&&document.documentElement.classList.add("md-touch"),"ontouchstart"in window||navigator.maxTouchPoints>0){var t=null,n=!1,c={t:0,x:0,y:0},a=0,o=null;document.addEventListener("touchstart",function(e){if(1!==e.touches.length)return clearTimeout(t),void(o=null);var a=e.touches[0],i=e.target;n=!1,i.closest&&i.closest(".md-figwrap [data-legend], .md-figwrap [data-cbar], .md-fh, .md-th")&&(e.preventDefault(),o={el:i,x:a.clientX,y:a.clientY,moved:!1,start:Date.now()},u("mousedown",i,a));var s=/^(INPUT|TEXTAREA|SELECT)$/.test(i.tagName);clearTimeout(t),s||(t=setTimeout(function(){o&&o.moved||(n=!0,o&&(u("mouseup",document,a),o=null),u("contextmenu",i,a))},550)),c.start={x:a.clientX,y:a.clientY}},{passive:!1,capture:!0}),document.addEventListener("touchmove",function(e){var n=e.touches[0];n&&(c.start&&Math.abs(n.clientX-c.start.x)+Math.abs(n.clientY-c.start.y)>10&&clearTimeout(t),o&&(e.preventDefault(),Math.abs(n.clientX-o.x)+Math.abs(n.clientY-o.y)>4&&(o.moved=!0),u("mousemove",document,n)))},{passive:!1,capture:!0}),document.addEventListener("touchend",function(e){clearTimeout(t);var i=e.changedTouches[0];if(n)return e.preventDefault(),n=!1,void(o=null);o&&(e.preventDefault(),u("mouseup",document,i),o.moved||u("click",o.el,i),o=null);var s=Date.now();if(s-c.t<380&&Math.abs(i.clientX-c.x)+Math.abs(i.clientY-c.y)<24){a=s,c.t=0;var l=document.elementFromPoint(i.clientX,i.clientY)||e.target;setTimeout(function(){u("dblclick",l,i,{detail:2})},0)}else c.t=s,c.x=i.clientX,c.y=i.clientY},{passive:!1,capture:!0}),document.addEventListener("touchcancel",function(){clearTimeout(t),o&&(u("mouseup",document,{clientX:o.x,clientY:o.y}),o=null)},!0),document.addEventListener("dblclick",function(e){e.isTrusted&&Date.now()-a<700&&(e.stopImmediatePropagation(),e.preventDefault())},!0),document.addEventListener("contextmenu",function(e){e.isTrusted&&e.preventDefault()},!0)}function u(e,t,n,c){var a=new MouseEvent(e,Object.assign({bubbles:!0,cancelable:!0,view:window,clientX:n.clientX,clientY:n.clientY,screenX:n.screenX,screenY:n.screenY,button:"contextmenu"===e?2:0,buttons:"mouseup"===e?0:1},c||{}));return t.dispatchEvent(a),a}}();
+// touch.js ― iPad 版：指で操作するための置き換え（events.js より前に読み込む）。
+//   長押し → 右クリックのメニュー、2 回続けてタップ → ダブルクリック、
+//   凡例・カラーバー・図の端を指でドラッグ → マウスのドラッグと同じ処理
+(function () {
+  'use strict';
+  // 指が主な入力の端末（iPad・スマホ）だけ、指向けの見た目にする。タッチ画面付きのパソコンでも、指で触ったときの置き換えは働く
+  var coarse = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
+  window.CTS_TOUCH = coarse;
+  if (coarse) document.documentElement.classList.add('md-touch');
+  if (!('ontouchstart' in window) && !(navigator.maxTouchPoints > 0)) return;
+  var DRAG = '.md-figwrap [data-legend], .md-figwrap [data-cbar], .md-fh, .md-th';
+  var lp = null, lpFired = false, lastTap = { t: 0, x: 0, y: 0 }, lastSynthDbl = 0, drag = null;
+  function mouse(type, target, t, extra) {
+    var ev = new MouseEvent(type, Object.assign({ bubbles: true, cancelable: true, view: window, clientX: t.clientX, clientY: t.clientY, screenX: t.screenX, screenY: t.screenY, button: type === 'contextmenu' ? 2 : 0, buttons: type === 'mouseup' ? 0 : 1 }, extra || {}));
+    target.dispatchEvent(ev); return ev;
+  }
+  document.addEventListener('touchstart', function (e) {
+    if (e.touches.length !== 1) { clearTimeout(lp); drag = null; return; }
+    var t = e.touches[0], tg = e.target;
+    lpFired = false;
+    var d = tg.closest && tg.closest(DRAG);
+    if (d) {                                         // 図の部品は、指を置いた所からドラッグできるようにする
+      e.preventDefault();
+      drag = { el: tg, x: t.clientX, y: t.clientY, moved: false, start: Date.now() };
+      mouse('mousedown', tg, t);
+    }
+    var inField = /^(INPUT|TEXTAREA|SELECT)$/.test(tg.tagName);
+    clearTimeout(lp);
+    if (!inField) lp = setTimeout(function () {
+      if (drag && drag.moved) return;
+      lpFired = true;
+      if (drag) { mouse('mouseup', document, t); drag = null; }
+      mouse('contextmenu', tg, t);
+    }, 550);
+    lastTap.start = { x: t.clientX, y: t.clientY };
+  }, { passive: false, capture: true });
+  document.addEventListener('touchmove', function (e) {
+    var t = e.touches[0]; if (!t) return;
+    if (lastTap.start && Math.abs(t.clientX - lastTap.start.x) + Math.abs(t.clientY - lastTap.start.y) > 10) clearTimeout(lp);
+    if (!drag) return;
+    e.preventDefault();
+    if (Math.abs(t.clientX - drag.x) + Math.abs(t.clientY - drag.y) > 4) drag.moved = true;
+    mouse('mousemove', document, t);
+  }, { passive: false, capture: true });
+  document.addEventListener('touchend', function (e) {
+    clearTimeout(lp);
+    var t = e.changedTouches[0];
+    if (lpFired) { e.preventDefault(); lpFired = false; drag = null; return; }      // 長押しのあとのタップは送らない
+    if (drag) {
+      e.preventDefault();
+      mouse('mouseup', document, t);
+      if (!drag.moved) mouse('click', drag.el, t);   // 動かさなかったときは、ふつうのタップ（色見本を押すなど）
+      drag = null;
+    }
+    // 2 回続けてタップ → ダブルクリック
+    var now = Date.now();
+    if (now - lastTap.t < 380 && Math.abs(t.clientX - lastTap.x) + Math.abs(t.clientY - lastTap.y) < 24) {
+      lastSynthDbl = now; lastTap.t = 0;
+      var tg = document.elementFromPoint(t.clientX, t.clientY) || e.target;
+      setTimeout(function () { mouse('dblclick', tg, t, { detail: 2 }); }, 0);
+    } else { lastTap.t = now; lastTap.x = t.clientX; lastTap.y = t.clientY; }
+  }, { passive: false, capture: true });
+  document.addEventListener('touchcancel', function () { clearTimeout(lp); if (drag) { mouse('mouseup', document, { clientX: drag.x, clientY: drag.y }); drag = null; } }, true);
+  // Safari が自分で出すダブルクリックとの二重を防ぐ
+  document.addEventListener('dblclick', function (e) { if (e.isTrusted && Date.now() - lastSynthDbl < 700) { e.stopImmediatePropagation(); e.preventDefault(); } }, true);
+  // 長押しで Safari の文字選択・コピーのメニューが出ないようにする（入力欄は除く）
+  document.addEventListener('contextmenu', function (e) { if (e.isTrusted) e.preventDefault(); }, true);
+})();

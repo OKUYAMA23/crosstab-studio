@@ -1,1 +1,861 @@
-!function(){"use strict";var t=window.App,e=t.S,a=t.esc,n=t.$;function i(t){return t?e.results[t.id]:null}function o(t,e,a){return Math.max(e,Math.min(a,t))}function r(t){var a=(e.P.settings.zoom||100)/100,n=t&&t.closest&&t.closest(".md-figwrap");return n&&n.dataset.fit&&(a*=+n.dataset.fit),a}var s={fsAxis:[6,60],fsTick:[6,60],fsLegend:[6,60],fsLabel:[6,60],lwAxis:[0,8],lwBar:[0,8],lwGrid:[0,8],w:[160,2400],h:[120,2400],barW:[10,100],tickLen:[0,20],labelDec:[0,2],fs:[6,40],lw:[0,6]},l=[8,9,10,10.5,11,12,14,16,18,20,24,28,32],c=["fontJa","fontEn","fsAxis","fsTick","fsLegend","fsLabel","lwAxis","lwBar","lwGrid","labels","labelDec","showN","legend","legFrame","legShape","legTitle","tickDir","tickLen","grid","gridColor","frame","transparent","palette","colorMode","barW","bar","barShape","legBg","labelWhat"],d={grid:{headFill:"#F2F2F2",headInk:"#000000",lc:"#7F7F7F"},three:{headFill:null,headInk:"#000000",lc:"#000000"},stripe:{headFill:null,headInk:"#000000",lc:"#000000",stripe:"#F3F3F3"},plain:{headFill:null,headInk:"#000000",lc:"#000000"},head:{headFill:"#217346",headInk:"#FFFFFF",lc:"#BFBFBF"}};function u(a,n,i){if(void 0!==n){var r,l=a.indexOf("."),c=a.slice(0,l),d=a.slice(l+1),u=t.curTab(),f=null;if("ui"===c)return e.ui[d]=n,void t.render();if("fig"!==c&&"tbl"!==c&&"tst"!==c&&"opt"!==c&&"tab"!==c||u){if(s[d]&&"number"==typeof n&&(n=o(n,s[d][0],s[d][1])),"fig"===c){if(!(r=t.curFig()))return}else if("tbl"===c)r=u.table;else if("tst"===c)r=u.tstyle;else if("opt"===c)r=u.opts,f=u.id;else if("tab"===c)r=u;else if("set"===c)r=e.P.settings,"alpha"!==d&&"lead0"!==d||(f="all");else if("rep"===c)r=e.P.report;else{if("proj"!==c)return;r=e.P}t.commit(function(){"fig.fsAll"===a?(n=o(n,6,60),r.fsTick=n,r.fsAxis=n,r.fsLegend=n,r.fsLabel=Math.max(6,n-1)):r[d]=n,"tab.name"===a&&(u.nameAuto=!1),"fig.value"!==a||"pct"!==r.labelWhat&&"n"!==r.labelWhat||(r.labelWhat="value"),"fig"!==c||"w"!==d&&"h"!==d||(r.fit=!1)},Object.assign({run:f,key:a},i||{})),"set.zoom"===a&&t.applyZoom()}}else t.render()}function f(a,n,i){var o=e.ui.sel!==a||null!=n&&e.ui.selFig!==n||i&&e.ui.rtab!==i;e.ui.sel!==a&&(e.ui.selFig=0),e.ui.sel=a,null!=n&&(e.ui.selFig=n),i&&(e.ui.rtab=i),o&&(document.querySelectorAll(".md-an").forEach(function(t){t.classList.toggle("sel",t.dataset.an===a)}),document.querySelectorAll(".md-figwrap").forEach(function(n){var i=t.tabById(a);n.classList.toggle("sel",n.dataset.fig===a+":"+e.ui.selFig&&("figure"===e.ui.rtab||i&&i.figs.length>1))}),t.render("chrome"),t.renderPane())}function m(e){setTimeout(function(){t.stopKeep&&t.stopKeep();var a=document.querySelector('.md-an[data-an="'+e+'"]');a&&a.scrollIntoView({block:"nearest",behavior:"smooth"})},30)}function p(){document.querySelectorAll(".md-menu, .md-colorpop, .md-palpop").forEach(function(t){t.remove()})}function v(t,e,a){var n=t.getBoundingClientRect();t.style.left=Math.max(4,Math.min(e,window.innerWidth-n.width-6))+"px",t.style.top=Math.max(4,Math.min(a,window.innerHeight-n.height-6))+"px"}function g(t,e,n){p();var i=document.createElement("div");i.className="md-menu",i.innerHTML=n.map(function(t,e){return"-"===t?"<hr>":'<button data-i="'+e+'" class="'+(t.danger?"danger":"")+'"'+(t.off?" disabled":"")+">"+a(t.name)+(t.key?"<kbd>"+t.key+"</kbd>":"")+"</button>"}).join(""),document.body.appendChild(i),v(i,t,e),i.addEventListener("click",function(t){var e=t.target.closest("button");if(e){t.stopPropagation();var a=n[+e.dataset.i];p(),a.run()}})}function b(t,e,n,i){h();var o=document.createElement("div");return o.className="md-modal-back",o.id="md_modal",o.innerHTML='<div class="md-modal"'+(i?' style="width:'+i+'px"':"")+'><div class="md-modal-head">'+a(t)+'<button data-act="closeModal" data-tip="閉じる（Esc）">×</button></div><div class="md-modal-body">'+e+"</div>"+(n?'<div class="md-modal-foot">'+n+"</div>":"")+"</div>",document.body.appendChild(o),o.addEventListener("mousedown",function(t){t.target===o&&h()}),o}function h(){var t=n("#md_modal");t&&t.remove()}function y(t,i){var o=!window.CTS_PHONE;function r(t){var i=[],o="";e.registry.forEach(function(e){if(!(t&&(e.name+e.desc+e.group).indexOf(t)<0)){var a=i.find(function(t){return t.name===e.group});a||(a={name:e.group,items:[]},i.push(a)),a.items.push(e)}}),i.forEach(function(t){o+='<div class="md-alist-group">'+a(t.name)+"</div>"+t.items.map(function(t){return'<button class="md-aitem" data-aid="'+t.id+'"><b>'+a(t.name)+"</b><span>"+a(t.desc)+"</span></button>"}).join("")}),n("#md_alist").innerHTML=o||'<div class="md-empty">当てはまる解析がありません。別のことばで探してください。</div>'}b(i,(o?'<input class="md-in" id="md_asearch" placeholder="解析の名前や目的で探す（例：フィッシャー、複数回答、順序）" style="margin-bottom:6px">':"")+'<div id="md_alist"></div>'),r(""),o&&n("#md_asearch").addEventListener("input",function(t){r(t.target.value.trim())}),n("#md_alist").addEventListener("click",function(e){var a=e.target.closest("[data-aid]");a&&(h(),t(a.dataset.aid))}),o&&!window.CTS_TOUCH&&n("#md_asearch").focus()}function w(t,e,i){b(t,'<label class="md-field"><span>プロジェクトの名前</span><input type="text" id="md_pname" value="'+a(e)+'"></label><p class="md-hint">データ（CSV の中身）・解析・図と表の設定をまとめて、この端末（ブラウザの中）に保存します。同じ名前があるときは上書きします。</p>','<button class="md-btn" data-act="closeModal">やめる</button><button class="md-btn md-btn-primary" id="md_pname_ok">保存</button>',480);var o=n("#md_pname");function r(){var t=o.value.trim();t&&(h(),i(t))}o.focus(),o.select(),n("#md_pname_ok").onclick=r,o.addEventListener("keydown",function(t){"Enter"===t.key&&(t.stopPropagation(),r())})}async function x(){e.projList=await t.listProjects(),e.data||t.renderCenter()}function E(t,e){return e>=0?Chart.lerp(t,"#FFFFFF",e):Chart.lerp(t,"#000000",-e)}function C(t,e,i,o,r){p();var s=["#FFFFFF","#000000","#E7E6E6","#3E4A5B","#4E79A7","#F28E2B","#E15759","#76B7B2","#59A14F","#B07AA1"],l=[0,1,2,3,4,5].map(function(t){return s.map(function(e){return 0===t?e:E(e,"#FFFFFF"===e?-[0,.05,.15,.25,.35,.5][t]:"#000000"===e?[0,.5,.35,.25,.15,.05][t]:[0,.8,.6,.4,-.25,-.5][t])})}),c=[0,1,2,3,4,5,6,7,8,9].map(function(t){return Chart.lerp("#F2F2F2","#0D0D0D",t/9)});function d(t){return'<div class="md-cp-g">'+t.map(function(t){return'<button style="background:'+t+'" data-c="'+t+'" data-tip="'+t+'"></button>'}).join("")+"</div>"}var u=document.createElement("div");u.className="md-colorpop",u.innerHTML=(o?'<button class="md-btn md-btn-sm" data-c="" style="width:100%">'+a(o)+"</button>":"")+(r||[]).map(function(t){return'<button class="md-btn md-btn-sm" data-c="'+a(t[0])+'" data-raw="1" style="width:100%;margin-bottom:3px">'+a(t[1])+"</button>"}).join("")+'<div class="md-cp-t">テーマの色</div>'+d([].concat.apply([],l))+'<div class="md-cp-t">白〜黒</div>'+d(c)+'<div class="md-cp-t">論文誌風の色</div>'+d(["#E64B35","#4DBBD5","#00A087","#3C5488","#F39B7F","#8491B4","#91D1C2","#DC0000","#7E6148","#B09C85"])+'<div class="md-cp-t">色覚に配慮した色</div>'+d(["#0072B2","#E69F00","#009E73","#CC79A7","#56B4E9","#D55E00","#F0E442","#999999"])+'<label class="md-check" style="margin-top:6px">その他の色… <input type="color" id="md_cp_other" style="width:44px;height:24px;padding:0;border:1px solid #C6E0CF"></label>',document.body.appendChild(u),v(u,t,e),u.addEventListener("click",function(t){var e=t.target.closest("[data-c]");e&&(t.stopPropagation(),p(),i(e.dataset.c||null))}),n("#md_cp_other").addEventListener("change",function(t){p(),i(t.target.value.toUpperCase())})}function F(e,a){var n=t.curTab(),o=t.curFig(),r=Chart.model(i(n));if(n&&o&&r){var s=Chart.seriesFor(r,o)[e];if(void 0!==s){a=String(a||"").trim();var l=(o.legNames||{})[s]||s;(a||s)!==l?t.commit(function(){o.legNames=Object.assign({},o.legNames),a&&a!==s?o.legNames[s]=a:delete o.legNames[s]}):t.render()}}}function k(e,a,n){var o=t.curTab(),r=t.curFig(),s=Chart.model(i(o));if(o&&r&&s){var l=Chart.colorKeys(s,r);if(l[e]){var c=l[e];C(a,n,function(e){t.commit(function(){r.colors=Object.assign({},r.colors),r.colorMode="series",e?r.colors[c]=e:delete r.colors[c]})},"配色の色に戻す")}}}async function P(t,e){try{return e&&window.ClipboardItem?await navigator.clipboard.write([new ClipboardItem({"text/plain":new Blob([t],{type:"text/plain"}),"text/html":new Blob([e],{type:"text/html"})})]):await navigator.clipboard.writeText(t),!0}catch(e){var a=document.createElement("textarea");a.value=t,document.body.appendChild(a),a.select();var n=!1;try{n=document.execCommand("copy")}catch(t){}return a.remove(),n}}function T(e,a){return t.figsOf(e,i(e))[a]||null}function _(t){return Chart.toPng(t.r.svg,e.P.settings.pngScale||2)}async function A(e,a){var n=T(e,a);if(n)try{await t.saveBlob(await _(n),t.safeName(e.name)+"_図"+(a+1)+".png","PNG 画像",".png")&&t.toast("図を画像で保存しました（画面と同じ "+n.r.w+" × "+n.r.h+" の形"+(n.st.transparent?"、背景は透明":"")+"）。")}catch(e){t.toast(e.message,!0)}}async function B(e,a){var n=T(e,a);if(n)try{await navigator.clipboard.write([new ClipboardItem({"image/png":await _(n)})]),t.toast("図をコピーしました。Word や PowerPoint に貼り付けられます。")}catch(e){t.toast("図をコピーできませんでした。「画像で保存」を使ってください。",!0)}}async function L(e){var a=t.tablesOf(e,i(e));a.length&&(await P(a.map(t.tableTsv).join("\n\n"),a.map(function(a){return t.tableHtml(a,e.tstyle)}).join("<br>"))?t.toast("表をコピーしました。Excel や Word に貼り付けられます。"):t.toast("コピーできませんでした。「CSV で保存」を使ってください。",!0))}async function S(e){var a,n=t.tablesOf(e,i(e));n.length&&(await t.saveBlob(new Blob([(a=n,"\ufeff"+a.map(function(t){return[[t.caption]].concat(t.rows,t.note?[[t.note]]:[]).map(function(t){return t.map(function(t){return t=String(t),/[",\n]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t}).join(",")}).join("\r\n")}).join("\r\n\r\n"))],{type:"text/csv"}),t.safeName(e.name)+"_表.csv","CSV",".csv")&&t.toast("表を CSV で保存しました。"))}async function M(e){var a=e.map(function(e){return{name:e.name,req:t.buildReq(e)}}),n=await t.apiData("/api/excel",{items:a});if(!n.ok)throw new Error(n.message||"Excel ファイルを作れませんでした。");var i=new TextEncoder,o=Object.keys(n.files).map(function(t){return{name:t,data:i.encode(n.files[t])}});return{blob:await t.zip(o,"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),notes:n.notReproduced||[],skipped:n.skipped||[]}}function I(){return e.P.tabs.filter(function(t){return t.checked&&i(t)&&i(t).ok})}function N(t){return(t.notes.length?"Excel の関数で再現していないもの："+t.notes.join("、")+"。":"")+(t.skipped.length?"書けなかった解析："+t.skipped.join("、")+"。":"")}function j(a){e.P.tabs.forEach(function(e){var n=t.def(e.type);n&&(n.slots.some(function(t){var n=e.slots[t.id];return n&&(n.col===a||(n.cols||[]).indexOf(a)>=0)})&&t.schedule(e.id))}),t.render()}function O(e){var i=t.v(e);if(i&&i.clean){var o=i.clean,r=i.fix||{},s="";(o.fixed||[]).forEach(function(t){s+=c(t,"fixed")});var l="";(o.fail||[]).forEach(function(t){l+=c(t,"fail")}),b("数値の回答を確かめる","<p>「"+a(i.label)+"」の回答のうち、そのままでは数値として読めなかったものです。値を直すと、その回答をした人すべてに当てはめます。<b>空欄にした回答は解析から除外します。</b></p>"+(s?'<div class="md-sub">自動で直した回答（'+o.nFixed+' 件）</div><p class="md-hint">全角数字・単位（歳・時間など）・「約」「くらい」を外し、「3～4」のような範囲は中央の値にしました。</p><table class="md-numclean"><thead><tr><th>回答</th><th>件数</th><th>使う値</th></tr></thead><tbody>'+s+"</tbody></table>":"")+(l?'<div class="md-sub">数値として読めなかった回答（'+o.nFail+' 件）</div><p class="md-hint">値を入れると、その値として使います。空欄のままなら除外します。</p><table class="md-numclean"><thead><tr><th>回答</th><th>件数</th><th>使う値</th></tr></thead><tbody>'+l+"</tbody></table>":""),'<button class="md-btn" data-act="closeModal">やめる</button><button class="md-btn" id="md_nc_reset">最初の状態に戻す</button><button class="md-btn md-btn-primary" id="md_nc_ok">この値で使う</button>',560),n("#md_nc_reset").onclick=function(){h(),t.commit(function(){delete i.fix}),j(e)},n("#md_nc_ok").onclick=function(){var a={},n=[];document.querySelectorAll("#md_modal tr[data-raw]").forEach(function(t){var e=t.dataset.raw,i=t.dataset.kind,r=t.querySelector(".md-nc-val").value.trim().replace(/[０-９．－]/g,function(t){return String.fromCharCode(t.charCodeAt(0)-65248)}),s="fixed"===i?((o.fixed||[]).find(function(t){return t.raw===e})||{}).val:null;""!==r?isFinite(+r)?"fail"!==i&&+r===s||(a[e]=+r):n.push(e):"fixed"===i&&(a[e]=null)}),n.length?t.toast("数値でない値があります（"+n.slice(0,3).join("、")+"）。数字を入れるか空欄にしてください。",!0):(h(),t.commit(function(){Object.keys(a).length?i.fix=a:delete i.fix}),j(e),t.toast("数値の回答を直しました。この列を使う解析を計算し直します。"))}}function c(t,e){var n=function(t){return Object.prototype.hasOwnProperty.call(r,t.raw)?r[t.raw]:void 0===t.val?null:t.val}(t),i=null===n;return'<tr data-raw="'+a(t.raw)+'" data-kind="'+e+'"><td class="md-nc-raw">'+a(t.raw)+'</td><td class="num">'+t.n+'</td><td><input type="text" inputmode="decimal" class="md-in md-nc-val" value="'+(i?"":a(String(n)))+'" placeholder="（除外）"></td></tr>'}}function D(a){var n=t.tabById(a||e.ui.sel);if(n){"analysis"!==e.ui.view&&(e.ui.view="analysis",t.render());var i=document.querySelector('[data-anname="'+n.id+'"]');if(i){var o=document.createElement("input");o.type="text",o.className="md-an-rename",o.value=n.name,i.replaceWith(o),o.focus(),o.select(),o.addEventListener("mousedown",function(t){t.stopPropagation()}),o.addEventListener("blur",function(){var e=o.value.trim();!o.dataset.cancel&&e&&e!==n.name?t.commit(function(){n.name=e,n.nameAuto=!1}):t.render()})}}}function R(a,n){var i=e.P.tabs.findIndex(function(t){return t.id===a}),o=i+n;i<0||o<0||o>=e.P.tabs.length||(t.commit(function(){var t=e.P.tabs.splice(i,1)[0];e.P.tabs.splice(o,0,t)}),m(a))}function q(a){var n=Chart.model(i(a));if(n){var o=Chart.kinds(n),r=a.figs.map(function(t){return Chart.kindOf(n,t)}),s=o.find(function(t){return r.indexOf(t)<0})||o[0];t.commit(function(){var e=a.figs.length?t.clone(a.figs[a.figs.length-1]):t.newFig();e.kind=s,e.colors={},e.vTitle=null,e.cTitle=null,e.min=e.max=e.step=null,e.w=560,e.h=340,e.fit=!0,a.figs.push(e)},{quiet:!0}),e.ui.sel=a.id,e.ui.selFig=a.figs.length-1,e.ui.rtab="figure",t.render()}}function V(a,n){a.figs[n]&&(t.commit(function(){a.figs.splice(n,1)},{quiet:!0}),e.ui.selFig=Math.max(0,Math.min(e.ui.selFig,a.figs.length-1)),t.render(),t.toast("図を削除しました。Ctrl+Z で元に戻せます。"))}t.askReplace=function(i,o){b("新しいデータの読み込み","<p>解析が "+e.P.tabs.length+" 個あります。「"+a(o)+'」をどのように読み込みますか。</p><p class="md-hint">回答が増えた同じアンケートなら「解析を残して差し替える」を選ぶと、同じ質問の列に解析の設定を引き継いで、すべて計算し直します。</p>','<button class="md-btn" data-act="closeModal">やめる</button><button class="md-btn" id="md_rep_new">新しく始める</button><button class="md-btn md-btn-primary" id="md_rep_keep">解析を残して差し替える</button>'),n("#md_rep_new").onclick=function(){h(),t.loadCsv(i,o,!1).catch(function(e){t.toast(e.message,!0)})},n("#md_rep_keep").onclick=function(){h(),t.loadCsv(i,o,!0).catch(function(e){t.toast(e.message,!0)})}};var H={closeModal:h,openCsv:async function(){var e=await t.pickFile(".csv,.tsv,.txt");e&&t.handleFile(e)},replaceCsv:async function(){var e=await t.pickFile(".csv,.tsv,.txt");if(e)try{await t.loadCsv(new Uint8Array(await e.arrayBuffer()),e.name,!0)}catch(e){t.toast(e.message,!0)}},openProject:async function i(){var o=await t.listProjects();e.projList=o,b("プロジェクトを開く",(o.items.length?o.items.map(function(t){return'<div class="md-projrow"><button class="md-aitem" data-pname="'+a(t.name)+'"><b>'+a(t.name)+"</b><span>保存："+a(t.saved)+"　"+Math.max(1,Math.round(t.size/1024))+' KB</span></button><button class="md-btn md-btn-sm md-danger" data-pdel="'+a(t.name)+'" data-tip="このプロジェクトを削除します。">削除</button></div>'}).join(""):'<div class="md-empty">保存したプロジェクトはまだありません。「上書き保存」で保存すると、ここに並びます。</div>')+(o.folder?'<p class="md-hint" style="margin-top:10px">保存先：'+a(o.folder)+"</p>":""),'<button class="md-btn" id="md_pfile">ファイルから開く…</button><button class="md-btn" data-act="closeModal">閉じる</button>',560).addEventListener("click",async function(e){var a=e.target.closest("[data-pname]"),n=e.target.closest("[data-pdel]");a?(h(),t.openProjectByName(a.dataset.pname)):n&&(n.dataset.sure?(await t.api("/api/proj/delete",{name:n.dataset.pdel}),t.toast("プロジェクト「"+n.dataset.pdel+"」を削除しました。"),i()):(n.dataset.sure="1",n.textContent="本当に削除"))}),n("#md_pfile").onclick=async function(){var e=await t.pickFile(window.CTS_TOUCH?"":".prj,.ctsproj,.json");e&&(h(),t.handleFile(e))}},openProjName:function(e){t.openProjectByName(e)},save:async function(){e.data&&(e.projName?(await t.saveProjectAs(e.projName),x()):H.saveAs())},saveAs:function(){e.data?w("プロジェクトを保存",e.projName||t.baseName(),async function(e){await t.saveProjectAs(e),x()}):t.toast("保存するデータがありません。先に CSV を入れてください。",!0)},projFile:t.exportProjectFile,undo:t.undo,redo:t.redo,togglePane:function(){e.ui.pane=!e.ui.pane,t.render()},panePrev:function(){W(-1)},paneNext:function(){W(1)},fileMenu:function(t,a){var n=a.getBoundingClientRect();g(n.left,n.bottom,[{name:"CSV を開く",key:"Ctrl+O",run:H.openCsv},{name:"プロジェクトを開く",run:H.openProject},"-",{name:"上書き保存",key:"Ctrl+S",run:H.save,off:!e.data},{name:"名前を付けて保存",run:H.saveAs,off:!e.data},{name:"プロジェクトをファイルに書き出す",run:H.projFile,off:!e.data},"-",{name:"まとめて書き出す",run:H.exportAll,off:!e.P.tabs.length},{name:"このアプリについて",run:H.about}])},newAnalysis:function(){e.data?e.P.tabs.length>=t.MAX_TABS?t.toast("解析は "+t.MAX_TABS+" 個までです。使わない解析を削除してください。",!0):y(function(a){var n;t.commit(function(){n=t.newTab(a)},{quiet:!0}),n&&(e.ui.sel=n.id,e.ui.selFig=0,e.ui.view="analysis",e.ui.rtab="analysis"),t.render(),n&&(m(n.id),window.CTS_TOUCH||setTimeout(function(){var t=document.querySelector('.md-an[data-an="'+n.id+'"] select[data-slot]');t&&t.focus()},60))},!e.P.tabs.length?"解析を始める：解析の種類を選ぶ":"新しい解析：解析の種類を選ぶ"):t.toast("先に CSV ファイルを入れてください。",!0)},changeType:function(){var e=t.curTab();e&&y(function(a){a!==e.type&&t.commit(function(){var n=[];Object.keys(e.slots).forEach(function(a){t.slotCols(e.slots[a]).forEach(function(t){n.push({col:t,cats:e.slots[a].cols?null:e.slots[a].cats})})});var i=t.def(a);e.type=a,e.slots={},e.opts={},(i.opts||[]).forEach(function(t){e.opts[t.id]=t.default}),i.slots.forEach(function(a){if(a.many){var i=n.filter(function(e){var n=t.v(e.col);return n&&a.types.indexOf(n.type)>=0}).map(function(t){return t.col});return n=n.filter(function(t){return i.indexOf(t.col)<0}),e.slots[a.id]={cols:[],cats:[]},void t.setItems(e,a.id,i)}var o=n.findIndex(function(e){var n=t.v(e.col);return n&&a.types.indexOf(n.type)>=0});if(o>=0){var r=n.splice(o,1)[0];e.slots[a.id]=a.excludeSpecial||!r.cats?{col:r.col,cats:t.defaultCats(t.v(r.col),a)}:{col:r.col,cats:r.cats}}else e.slots[a.id]={col:null,cats:[]}}),e.figs.forEach(function(t){t.kind=null}),t.autoName(e)},{run:e.id})},"解析の種類を変える")},toFisher:function(e){var a=t.tabById(e)||t.curTab();a&&t.commit(function(){a.type="fisher";var t=a.opts.residMode;a.opts={residMode:t||"z"}},{run:a.id})},dupTab:function(){var a,n=t.curTab();n&&(e.P.tabs.length>=t.MAX_TABS?t.toast("解析は "+t.MAX_TABS+" 個までです。",!0):(t.commit(function(){(a=t.clone(n)).id="t"+ ++e.P.seq,a.name=n.name+"（コピー）",a.nameAuto=!1,a.collapsed=!1,e.P.tabs.splice(e.P.tabs.indexOf(n)+1,0,a)},{quiet:!0}),e.ui.sel=a.id,e.ui.selFig=0,t.schedule(a.id),t.render(),m(a.id)))},delTab:function(){var a=t.curTab();if(a){var n=e.P.tabs.indexOf(a);t.commit(function(){e.P.tabs.splice(n,1)},{quiet:!0}),delete e.results[a.id],e.ui.sel=e.P.tabs.length?e.P.tabs[Math.min(n,e.P.tabs.length-1)].id:null,e.ui.selFig=0,t.render(),t.toast("「"+a.name+"」を削除しました。Ctrl+Z で元に戻せます。")}},swap:function(){var e=t.curTab();if(e){var a=e.slots.a&&e.slots.b?["a","b"]:e.slots.x&&e.slots.y?["x","y"]:null;if(a){var n=t.def(e.type);a.every(function(i,o){var r=e.slots[a[1-o]],s=n.slots.find(function(t){return t.id===i}),l=null!==r.col?t.v(r.col):null;return!l||s.types.indexOf(l.type)>=0})?t.commit(function(){var n=e.slots[a[0]];e.slots[a[0]]=e.slots[a[1]],e.slots[a[1]]=n,t.autoName(e)},{run:e.id}):t.toast("この 2 つの列は種類が違うため、入れ替えられません。",!0)}}},swapAt:function(a){t.tabById(a)&&(e.ui.sel=a,H.swap())},itemRemove:function(a){var n=a.split(":"),i=t.tabById(n[0]);if(i){var o=i.slots[n[1]].cols.slice();o.splice(+n[2],1),e.ui.sel=i.id,t.commit(function(){t.setItems(i,n[1],o)},{run:i.id})}},itemMove:function(a){var n=a.split(":"),i=t.tabById(n[0]);if(i){var o=i.slots[n[1]].cols.slice(),r=+n[2],s=r+ +n[3];if(!(s<0||s>=o.length)){var l=o.splice(r,1)[0];o.splice(s,0,l),e.ui.sel=i.id,t.commit(function(){i.slots[n[1]].cols=o,t.autoName(i)},{run:i.id})}}},itemAddSame:function(a){var n=a.split(":"),i=t.tabById(n[0]);if(i){var o=t.def(i.type).slots.find(function(t){return t.id===n[1]}),r=i.slots[n[1]].cols.slice(),s=t.v(r[0]);e.P.vars.forEach(function(e){r.indexOf(e.col)<0&&o.types.indexOf(e.type)>=0&&t.sameChoices(s,e)&&r.push(e.col)}),e.ui.sel=i.id,t.commit(function(){t.setItems(i,n[1],r)},{run:i.id})}},rerun:function(){var a=t.curTab();a&&(delete e.results[a.id],t.schedule(a.id),t.render())},toggleAn:function(e){var a=t.tabById(e);a&&t.commit(function(){a.collapsed=!a.collapsed},{key:"fold"})},foldAll:function(a){t.commit(function(){e.P.tabs.forEach(function(t){t.collapsed="1"===a})})},moveAn:function(t){e.ui.sel&&R(e.ui.sel,+t)},moveAnId:function(t){var e=t.split(":");R(e[0],+e[1])},renameAn:function(t){D(t)},anMenu:function(t,e){var a=e.getBoundingClientRect();z(t,a.left,a.bottom)},checkAll:function(a){t.commit(function(){e.P.tabs.forEach(function(t){t.checked="1"===a})})},goReport:function(){e.ui.view="report",e.ui.rtab="export",t.render()},goTab:function(t){U(t)},moreRows:function(){e.ui.rawRows+=500,t.renderCenter()},freqOfVar:function(){var a,n=null!==e.ui.selVar?t.v(e.ui.selVar):null;n&&t.isCat(n)&&(t.commit(function(){(a=t.newTab("freq"))&&t.setSlot(a,"a",n.col)},{quiet:!0}),a&&(e.ui.sel=a.id,e.ui.selFig=0,e.ui.view="analysis",e.ui.rtab="analysis",t.schedule(a.id)),t.render(),a&&m(a.id))},varCatUp:function(a){var n=t.v(e.ui.selVar),i=+a;!n||i<1||t.commit(function(){var t=n.cats.splice(i,1)[0];n.cats.splice(i-1,0,t)})},catMove:function(e){var a=e.split(":"),n=t.curTab(),i=n.slots[a[0]],o=+a[1],r=o+ +a[2];r<0||r>=i.cats.length||t.commit(function(){var t=i.cats.splice(o,1)[0];i.cats.splice(r,0,t)},{run:n.id})},catTwo:function(e){var a=t.curTab(),n=a.slots[e].cats.filter(function(t){return t.on}),i=Math.ceil(n.length/2);t.commit(function(){var t=n.slice(0,i),e=n.slice(i),a=t.map(function(t){return t.v}).join("・"),o=e.map(function(t){return t.v}).join("・");t.forEach(function(t){t.label=a}),e.forEach(function(t){t.label=o})},{run:a.id})},catReset:function(e){var a=t.curTab(),n=t.def(a.type).slots.find(function(t){return t.id===e}),i=a.slots[e];t.commit(function(){i.cats=i.cols?t.defaultCatsMany(i.cols,n):t.defaultCats(t.v(i.col),n)},{run:a.id})},fsStep:function(e){var a=t.curFig();if(a){var n=a.fsTick,i=l.findIndex(function(t){return t>=n});i<0&&(i=l.length-1),+e>0&&l[i]===n?i++:+e<0&&i--,u("fig.fsAll",l[o(i,0,l.length-1)])}},pickColor:function(t,e){var a=e.getBoundingClientRect();k(+t,a.left-240,a.bottom+2)},pickPath:function(t,e){var a=e.getBoundingClientRect(),n="tst.headFill"===t||"tst.stripe"===t;C(Math.min(a.left,window.innerWidth-250),a.bottom+2,function(e){(e||n)&&u(t,e)},n?"色を付けない":null)},palettePop:function(e,a){p();var n=a.getBoundingClientRect(),o=document.createElement("div"),r=t.curFig(),s=t.curTab(),l=Chart.model(i(s)),c="tst.heatPal"===e||r&&l&&"heat"===Chart.kindOf(l,r)?["濃淡","2 方向"]:null;o.className="md-palpop",o.innerHTML=t.paletteGallery(e,t.get(e),c),document.body.appendChild(o),v(o,n.left,n.bottom+2)},clearColors:function(){var e=t.curFig();t.commit(function(){e.colors={}})},clearLegNames:function(){var e=t.curFig();t.commit(function(){e.legNames={}})},pickLegBg:function(e,a){var n=a.getBoundingClientRect();t.curFig()&&C(Math.min(n.left,window.innerWidth-250),n.bottom+2,function(t){u("fig.legBg",t)},null,[["","自動（図の中に置いたときだけ白）"],["none","塗りなし（透明）"]])},autoSave:function(){if(e.data){if(e.P.settings.autoSave)return e.P.settings.autoSave=!1,t.markDirty(),t.toast("自動保存をオフにしました。この設定も、次に保存するときにプロジェクトに入ります。"),void t.render("chrome");e.projName?(e.P.settings.autoSave=!0,t.toast("自動保存をオンにしました。変更すると数秒後に「"+e.projName+"」へ上書き保存します。"),t.markDirty(),t.render("chrome")):w("自動保存するプロジェクトの名前",t.baseName(),async function(a){e.P.settings.autoSave=!0,await t.saveProjectAs(a)?(x(),t.toast("自動保存をオンにしました。変更すると数秒後に「"+e.projName+"」へ上書き保存します。")):e.P.settings.autoSave=!1,t.render("chrome")})}},figDefault:function(){var a=t.curFig(),n={};c.concat(["w","h","orient"]).forEach(function(t){n[t]=a[t]}),t.commit(function(){e.P.figDefault=t.clone(n)}),t.toast("これから作る図に、この書式を使います。")},figApplyAll:function(){var a=t.curFig(),n={},i=0;c.forEach(function(t){n[t]=a[t]}),t.commit(function(){e.P.tabs.forEach(function(e){e.figs.forEach(function(e){Object.assign(e,t.clone(n)),i++})}),e.P.figDefault=Object.assign(e.P.figDefault||{},t.clone(n))}),t.toast("すべての図の書式をそろえました（"+i+" 個）。")},figReset:function(){var a=t.curTab(),n=Math.min(e.ui.selFig,a.figs.length-1),i=a.figs[n].kind;t.commit(function(){a.figs[n]=t.newFig(),a.figs[n].kind=i})},addFig:function(){var e=t.curTab();e&&q(e)},addFigTo:function(e){var a=t.tabById(e);a&&q(a)},delFig:function(){var a=t.curTab();a&&V(a,Math.min(e.ui.selFig,a.figs.length-1))},delFigAt:function(a){var n=a.split(":"),i=t.tabById(n[0]);i&&(e.ui.sel=i.id,V(i,+n[1]))},selFig:function(a){e.ui.selFig=+a,t.render()},figPng:function(){var a=t.curTab();a&&A(a,Math.min(e.ui.selFig,a.figs.length-1))},figPngAt:function(e){var a=e.split(":");A(t.tabById(a[0]),+a[1])},figCopy:function(){var a=t.curTab();a&&B(a,Math.min(e.ui.selFig,a.figs.length-1))},figCopyAt:function(e){var a=e.split(":");B(t.tabById(a[0]),+a[1])},figSvg:async function(){var a=function(){var a=t.curTab();return a?T(a,Math.min(e.ui.selFig,a.figs.length-1)):null}(),n=t.curTab();a&&await t.saveBlob(new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n'+a.r.svg],{type:"image/svg+xml"}),t.safeName(n.name)+"_図"+(Math.min(e.ui.selFig,n.figs.length-1)+1)+".svg","SVG 画像",".svg")&&t.toast("図を SVG で保存しました。")},tblCopy:function(){var e=t.curTab();e&&L(e)},tblCopyAt:function(e){L(t.tabById(e))},tblCsv:function(){var e=t.curTab();e&&S(e)},tblCsvAt:function(e){S(t.tabById(e))},tblPng:async function(){var a=t.curTab();if(a)try{await t.saveBlob(await function(a){var n=t.tablesSvg(a,i(a));return n?Chart.toPng(n,e.P.settings.pngScale||2):Promise.reject(new Error("表がありません。"))}(a),t.safeName(a.name)+"_表.png","PNG 画像",".png")&&t.toast("表を画像で保存しました。")}catch(e){t.toast("表を画像にできませんでした（"+e.message+"）。",!0)}},tDesign:function(e){var a=t.curTab();a&&t.commit(function(){a.tstyle.design=e,Object.assign(a.tstyle,d[e])})},tstDefault:function(){var a=t.curTab();t.commit(function(){e.P.tstyleDefault=t.clone(a.tstyle)}),t.toast("これから作る解析の表に、このデザインを使います。")},tstApplyAll:function(){var a=t.curTab(),n=t.clone(a.tstyle);t.commit(function(){e.P.tabs.forEach(function(e){var i=e.tstyle.heat;e.tstyle=t.clone(n),e.tstyle.heat=e===a?n.heat:i}),e.P.tstyleDefault=t.clone(n)}),t.toast("すべての表のデザインをそろえました（"+e.P.tabs.length+" 個）。")},tstReset:function(){var a=t.curTab();t.commit(function(){a.tstyle=Object.assign(t.tableDefaults(),t.clone(e.P.tstyleDefault||{}))})},textCopyAt:async function(e){var a=t.tabById(e),n=i(a);n&&n.ok&&await P(null!==a.reportText?a.reportText:n.report)&&t.toast("文をコピーしました。")},resetTextAt:function(e){var a=t.tabById(e);a&&t.commit(function(){a.reportText=null,a.reportBase=null})},resetAllText:function(){t.commit(function(){e.P.tabs.forEach(function(t){t.reportText=null,t.reportBase=null})}),t.toast("すべての文を定型文に戻しました。")},repPdf:function(){t.savePdf()},tblSizeAuto:function(){var e=t.curTab();e&&t.commit(function(){delete e.tstyle.tw,delete e.tstyle.rowH})},itemRev:function(e){var a=e.split(":"),n=t.tabById(a[0]);if(n){var i=n.slots[a[1]],o=+a[2];t.commit(function(){var t=(i.reverse||[]).slice(),e=t.indexOf(o);e>=0?t.splice(e,1):t.push(o),i.reverse=t},{run:n.id})}},asNumeric:function(e){var a=t.v(+e);a&&(t.commit(function(){a.typeOrig=a.type,a.type="numeric"}),j(+e),t.toast("「"+a.label+"」を数値として読みます。直した回答と読めない回答は「確かめる」で見直せます。"))},asChoice:function(e){var a=t.v(+e);a&&a.typeOrig&&(t.commit(function(){a.type=a.typeOrig,delete a.typeOrig}),j(+e))},numClean:function(t){O(+t)},repTxt:async function(){await t.ensureHolmAsync(),await t.saveBlob(new Blob(["\ufeff"+t.reportPlain()],{type:"text/plain"}),t.baseName()+"_報告書.txt","テキスト",".txt")&&t.toast("報告書をテキストで保存しました。")},repCopy:async function(){await t.ensureHolmAsync(),await P(t.reportPlain())&&t.toast("報告書の全文をコピーしました。")},excelOnly:async function(){var e=I();if(e.length){t.busy(!0,"Excel ファイルを作っています");try{var a=await M(e);return t.busy(!1),void(await t.saveBlob(a.blob,t.baseName()+"_解析.xlsx","Excel ブック",".xlsx")&&t.toast("Excel ファイルを保存しました。"+N(a)))}catch(e){t.toast(e.message,!0)}t.busy(!1)}else t.toast("☑ を付けた解析のうち、結果が出ているものがありません。",!0)},exportAll:function(){var e=I(),a=e.reduce(function(t,e){return t+e.figs.length},0),o=!!window.showDirectoryPicker;e.length?(b("まとめて書き出す","<p>☑ を付けた <b>"+e.length+' 件</b>の解析を書き出します。</p><label class="md-check"><input type="checkbox" id="md_ex_fig" checked>図（PNG、'+a+' 個）　名前は「解析の名前_図1.png」</label><label class="md-check"><input type="checkbox" id="md_ex_xl" checked>Excel ファイル（データと、関数で再現した解析）</label><label class="md-check"><input type="checkbox" id="md_ex_pdf" checked>報告書（PDF。文・表・図をすべて含む）</label><label class="md-check"><input type="checkbox" id="md_ex_rep">報告書（テキスト。文と表だけ）</label><p class="md-hint" style="margin-top:8px">'+(o?"次の画面で書き出し先のフォルダーを選びます。同じ名前のファイルがあるときは上書きします。":"この環境ではフォルダーを選べないため、1 つの ZIP ファイルにまとめて保存します。")+"</p>",'<button class="md-btn" data-act="closeModal">やめる</button><button class="md-btn md-btn-primary" id="md_ex_go">'+(o?"フォルダーを選んで書き出す":"ZIP にまとめて保存")+"</button>",520),n("#md_ex_go").onclick=async function(){var e={figs:n("#md_ex_fig").checked,excel:n("#md_ex_xl").checked,report:n("#md_ex_rep").checked,pdf:n("#md_ex_pdf").checked},a=null;if(e.pdf&&t.askLocalFonts&&t.askLocalFonts(),o)try{a=await window.showDirectoryPicker({mode:"readwrite"})}catch(t){return}h(),async function(e,a){var n=I(),o=[],r={},s="";t.busy(!0,"書き出しの準備をしています");try{if(a.figs)for(var l=0;l<n.length;l++){var c=t.figsOf(n[l],i(n[l])),d=t.safeName(n[l].name);r[d]?(r[d]++,d+="("+r[d]+")"):r[d]=1;for(var u=0;u<c.length;u++){t.busy(!0,"図を画像にしています（"+(l+1)+" / "+n.length+"）");try{o.push({name:d+"_図"+(u+1)+".png",blob:await _(c[u])})}finally{t.busy(!1)}}}if(a.excel){t.busy(!0,"Excel ファイルを作っています");try{var f=await M(n);o.push({name:t.baseName()+"_解析.xlsx",blob:f.blob}),s=N(f)}finally{t.busy(!1)}}if(a.pdf&&o.push({name:t.baseName()+"_報告書.pdf",blob:await t.reportPdf()}),a.report&&(await t.ensureHolmAsync(),o.push({name:t.baseName()+"_報告書.txt",blob:new Blob(["\ufeff"+t.reportPlain()],{type:"text/plain"})})),!o.length)return void t.toast("書き出すものがありません。",!0);if(e){for(var m=0;m<o.length;m++){t.busy(!0,"ファイルを保存しています（"+(m+1)+" / "+o.length+"）");try{var p=await e.getFileHandle(o[m].name,{create:!0}),v=await p.createWritable();await v.write(o[m].blob),await v.close()}finally{t.busy(!1)}}t.toast(o.length+" 個のファイルを「"+e.name+"」に書き出しました。"+s)}else{for(var g=[],b=0;b<o.length;b++)g.push({name:o[b].name,data:new Uint8Array(await o[b].blob.arrayBuffer())});await t.saveBlob(await t.zip(g),t.baseName()+"_書き出し.zip","ZIP",".zip")&&t.toast(o.length+" 個のファイルを 1 つの ZIP にまとめて保存しました。"+s)}}catch(e){t.toast(e&&"AbortError"===e.name?"書き出しをやめました。":"書き出せませんでした（"+e.message+"）。",!0)}finally{t.busy(!1)}}(a,e)}):t.toast("☑ を付けた解析のうち、結果が出ているものがありません。解析の見出しのチェックを確かめてください。",!0)},about:function(){b("このアプリについて",function(){var n=!!window.CTS_WEB,i=window.CTS_APP_VERSION?" "+a(window.CTS_APP_VERSION):"";function o(t){return'<div class="md-sec-title" style="margin:14px 0 4px">'+t+"</div>"}function r(t,e){return'<table class="md-t0" style="width:100%"><tr>'+t.map(function(t){return'<th class="md-rh">'+t+"</th>"}).join("")+"</tr>"+e.map(function(e){return"string"==typeof e?'<tr><th class="md-rh" colspan="'+t.length+'" style="text-align:left;background:#F3F7F4">'+e+"</th></tr>":'<tr><th class="md-rh" style="width:30%;white-space:normal">'+e[0]+"</th>"+e.slice(1).map(function(t){return'<td class="md-tx" style="white-space:normal">'+t+"</td>"}).join("")+"</tr>"}).join("")+"</table>"}var s=["集計",["単純集計","選択肢ごとの人数と割合。「回答の偏りを検定する」を選ぶと、適合度のカイ二乗検定（chisq.test）。複数回答の質問は、選んだ人の割合（合計は 100% を超える）。"],["複数の設問の単純集計","同じ選択肢の設問を並べて集計。順序のある回答では、フリードマン検定（friedman.test、すべての設問に答えた人のみ）と効果量 Kendall の W を選べる。"],["数値の要約とヒストグラム","n、平均、標準偏差、最小値、四分位数、中央値、最大値。区切り方は、自動（整数で範囲が狭ければ値ごと）・スタージェスの公式・フリードマン＝ダイアコニスの方法から選ぶ。"],["回答日時の推移","回答日時を日・週・月ごとに数え、累積の割合も示す。"],"2 つの質問の関連",["カイ二乗検定","chisq.test（2×2 の表でも補正なしが初期設定。イェーツの補正を選べる）。効果量は Cramér の V（2×2 では φ）。調整済み標準化残差でセルごとの多い・少ないを判定。"],["フィッシャーの正確確率検定","fisher.test。2×2 の表では条件付き最尤推定のオッズ比と 95% 信頼区間。表が大きく正確な計算が難しいときは、モンテカルロ法（20 万回）に自動で切り替え。"],["割合の傾向検定","prop.trend.test（コクラン・アーミテージ）。段階に等間隔の得点を与える。"],"順序のある回答の比較",["マン・ホイットニーの U 検定","wilcox.test（正規近似、同順位と連続性の補正）。効果量 r = |Z| / √N。"],["クラスカル・ウォリス検定","kruskal.test。効果量 ε² = H / (N − 1)。多重比較は pairwise.wilcox.test（ホルム法）。"],["スピアマンの順位相関",'cor.test(method = "spearman")。'],"平均の比較",["t 検定","ウェルチの t 検定（t.test）。分散が等しいと仮定するスチューデントの t 検定も選べる。効果量は Hedges の g。平均の差の 95% 信頼区間。"],["一元配置分散分析","ウェルチの分散分析（oneway.test）と、ゲームス・ハウエルの方法による多重比較。分散が等しいと仮定する通常の分散分析（テューキーの方法、TukeyHSD）も選べる。効果量は η²。"],["対応のある t 検定","t.test(paired = TRUE)。効果量は dz（差の平均 ÷ 差の標準偏差）。差の 95% 信頼区間。"],"同じ人の 2 つの回答",["ウィルコクソンの符号付順位検定","wilcox.test(paired = TRUE)。"],["マクネマー検定","mcnemar.test（連続性の補正あり）。食い違った組が 25 未満のときは binom.test（正確二項検定）。"],"関連・相関",["ピアソンの相関係数",'cor.test(method = "pearson")。95% 信頼区間はフィッシャーの z 変換による。散布図に回帰直線（lm）を引く。'],"複数回答",["複数回答のクロス集計","選択肢ごとに chisq.test または fisher.test、p.adjust（ホルム法）で補正。"],"尺度・多変量",["尺度の信頼性","クロンバックの α と標準化 α、項目と残りの合計との相関、その項目を除いたときの α。逆転項目は得点を反転して計算。"],["探索的因子分析","最尤法（factanal）。回転はプロマックス（因子間相関も示す）またはバリマックス。因子の数は、自動のときは固有値が 1 を超える数（カイザー基準）。"],["コレスポンデンス分析","標準化残差の行列の特異値分解。行と列の両方を主座標で示す（対称マップ）。関連の有無はカイ二乗検定で示す。"],"自由記述",["テキストマイニング","文をブラウザの単語分割（Intl.Segmenter）で語に分け、漢字・カタカナの続く語をつなげ、助詞などを除く。頻出語、Jaccard 係数による共起ネットワーク（配置はフルクターマン・ラインゴールド法、まとまりはラベル伝播法）。グループを選ぶと、語ごとにカイ二乗検定を行い、ホルム法で補正。"]];return"<p><b>CrossTab Studio</b>"+i+"　アンケート（Google フォームの回答など）の集計と検定を行うソフトです。計算はすべて"+(n?"この端末のブラウザの中で動く R（webR）":"このパソコンの中の R")+(e.r?"（バージョン "+a(e.r)+"）":"")+"で行います。</p>"+o("データの扱い")+'<ul style="margin:0;padding-left:1.4em"><li>読み込んだデータと結果は、'+(n?"この端末の中":"このパソコンの中")+"だけで扱い、外部に送信しません。AI のサービスにもつないでいません。</li><li>プロジェクトは"+(n?"この端末（ブラウザの中）に保存します。ブラウザのデータを消すと消えるので、大事なものは「ファイルに書き出す」で .prj ファイルにも保存してください。":"この端末（ブラウザの中）に保存します。")+"</li>"+(n?"<li>インターネットにつないで開いたのが 2 週間より前になると、使えなくなります。つないで開き直すと、また使えます。このとき確かめるのは公開が続いているかだけで、データは送りません。</li>":"")+"</ul>"+o("解析と計算の方法")+r(["解析","使う R の関数と出力"],s)+o("すべての解析に共通の決まり")+'<ul style="margin:0;padding-left:1.4em"><li>順序のある回答は、先頭の選択肢を上位として順位や得点を付けます。</li><li>無回答と、チェックを外した選択肢を選んだ人は、その解析から除きます。数値の回答は、全角数字・単位・範囲（「1〜2 時間」など）を直してから使い、数値にできない回答は除きます。</li><li>p 値は「関連がない（差がない）」という仮定のもとで、今回以上の偏りが出る確率です。有意でないことは、関連がないことの証明にはなりません。</li><li>報告書では、☑ を付けた検定をまとめてホルム法で補正した p も示します（設定で切り替えられます）。</li><li>「平均と信頼区間」の図の線は、t 分布による平均の 95% 信頼区間です。</li></ul>'+o("Excel での再現")+'<p style="margin:0">Excel ファイルには、データと、解析の計算を Excel の関数で書いたセルを入れます。結果の値は貼り付けず、すべて数式なので、計算の過程を確かめられます。次のものは Excel の関数では求められないため載せていません。アプリの値を使ってください。</p><ul style="margin:4px 0 0;padding-left:1.4em"><li>2×2 より大きい表のフィッシャーの正確確率検定の p</li><li>分散分析のあとの多重比較の p（スチューデント化された範囲の分布の関数が Excel にないため。平均の差と t は載せます）</li><li>探索的因子分析（反復計算のため）</li><li>コレスポンデンス分析の次元と座標（特異値分解のため。関連のカイ二乗検定までは載せます）</li><li>テキストマイニング（語の分割のため）</li></ul><p style="margin:4px 0 0">自由度が小数になるウェルチの検定の p は、Excel の T.DIST・F.DIST が自由度の小数を切り捨てるため、BETA.DIST で求めています。</p>'+o("報告書（PDF）の字体")+'<p style="margin:0">本文と表は、和文を MS 明朝、英数字を Times New Roman で書きます（'+(n?"パソコンの Chrome・Edge で、字体の使用を許可したとき":"パソコンに入っているとき")+"）。使えないときは、形の近い BIZ UD明朝と Tinos で書きます。見出しと図は BIZ UDPゴシックです。</p>"+o("論文などでの引用のしかた")+'<p style="margin:0">このアプリは広く配布されている一般的なソフトではないため、APA 方式などでは、本文で使ったことと版を書き、参考文献にも挙げます。計算に使った R も挙げるのが一般的です。投稿先や提出先に決まりがあるときは、そちらに合わせてください。本文の書き方の例：「集計と検定には CrossTab Studio（バージョン '+a(window.CTS_APP_VERSION||"")+"; "+t.citeList()[0].inText.replace(/^（|）、.*$/g,"")+'）を用いた。」</p><table class="md-t0" style="width:100%;margin-top:6px">'+t.citeList().map(function(t){return'<tr><th class="md-rh" style="width:24%;white-space:normal">'+a(t.name)+'</th><td class="md-tx" style="white-space:normal;overflow-wrap:anywhere">'+t.ref(!0)+(t.inText?'<br><span class="md-hint" style="margin:0">本文中：'+a(t.inText)+"</span>":"")+"</td></tr>"}).join("")+'</table><p class="md-hint" style="margin:4px 0 0">版の番号は、使った版に合わせてください（報告書の末尾にも、作ったときの版で書き出します）。SIST 02 の形の（参照 …）は、アプリを使った日に直してください。</p>'+o("使っている部品")+'<p style="margin:0">R（GPL）'+(n?"、webR（MIT ライセンス）":"、httpuv・jsonlite（R のパッケージ）")+"、pdf-lib・fontkit（MIT ライセンス）、HarfBuzz（MIT ライセンス）、BIZ UDPゴシック・BIZ UD明朝・Tinos（SIL Open Font License 1.1）。</p>"}(),'<button class="md-btn md-btn-primary" data-act="closeModal">閉じる</button>',760)}};function z(t,a,n){var o=e.P.tabs.findIndex(function(e){return e.id===t}),r=e.P.tabs[o];r&&(f(t),g(a,n,[{name:"名前を変更",key:"F2",run:function(){D(t)}},{name:r.collapsed?"開く":"畳む",run:function(){H.toggleAn(t)}},"-",{name:"上へ動かす",run:function(){R(t,-1)},off:0===o},{name:"下へ動かす",run:function(){R(t,1)},off:o===e.P.tabs.length-1},"-",{name:"複製",run:H.dupTab},{name:"種類を変える",run:H.changeType},{name:"図を追加",run:H.addFig,off:!Chart.model(i(r))},"-",{name:"削除",danger:!0,run:H.delTab}]))}function U(a){e.ui.rtab=a,"data"===a&&e.data?e.ui.view="data":"data"===e.ui.view&&"settings"!==a&&"home"!==a&&(e.ui.view="analysis"),"report"!==e.ui.view||"analysis"!==a&&"figure"!==a&&"table"!==a||(e.ui.view="analysis"),"analysis"!==a&&"figure"!==a&&"table"!==a||t.curTab()||!e.P.tabs.length||(e.ui.sel=e.P.tabs[0].id),t.render()}function W(a){var n=t.RTABS.map(function(t){return t[0]}),i=n.indexOf(e.ui.rtab);U(n[(i+a+n.length)%n.length])}document.addEventListener("click",function(a){a.target.closest('.md-menu, .md-colorpop, .md-palpop, [data-act="fileMenu"], [data-act="pickColor"], [data-act="pickPath"], [data-act="palettePop"], [data-act="anMenu"], [data-el]')&&!Z||p();var n=a.target.closest(".md-an"),i=a.target.closest(".md-figwrap"),o=a.target.closest(".md-tables");if(n&&!a.target.closest('[data-act="toggleAn"], [data-act="delFigAt"], [data-ancheck]')){var r=i?"figure":o?"table":null;r&&["figure","table","export"].indexOf(e.ui.rtab)>=0&&"export"!==e.ui.rtab&&(r=i?"figure":"table"),r&&"export"===e.ui.rtab&&(r=null),f(n.dataset.an,i?+i.dataset.fig.split(":")[1]:null,r)}var s=a.target.closest("[data-act]");if(s&&!s.disabled)return a.preventDefault(),void(H[s.dataset.act]&&H[s.dataset.act](s.dataset.arg,s,a));if(!(s=a.target.closest("[data-toggle]"))||s.disabled){if((s=a.target.closest("[data-radio]"))&&!s.disabled){var l=!!s.closest(".md-palpop");return u(s.dataset.radio,s.dataset.val),void(l&&p())}if(s=a.target.closest("[data-rtab]"))U(s.dataset.rtab);else{if((s=a.target.closest("[data-view]"))&&!s.disabled)return c=s.dataset.view,e.ui.view=c,"data"===c?e.ui.rtab="data":"report"===c?e.ui.rtab="export":"data"===e.ui.rtab&&(e.ui.rtab="home"),void t.render();var c;if((s=a.target.closest("[data-varrow]"))&&!a.target.closest("input"))return e.ui.selVar=+s.dataset.varrow,e.ui.rtab="data",void t.render();if(s=a.target.closest(".md-merged")){var d=s.parentNode.querySelector('[data-cat$=":label"]').dataset.cat.split(":"),m=t.curTab(),v=m.slots[d[0]].cats[+d[1]];t.commit(function(){v.label=v.v},{run:m.id})}else(s=a.target.closest('.md-figwrap [data-el^="legend:"]'))&&!Z&&k(+s.getAttribute("data-el").split(":")[1],a.clientX,a.clientY+8),Z=!1}}else u(s.dataset.toggle,!t.get(s.dataset.toggle))}),document.addEventListener("focusin",function(a){var n=a.target.closest&&a.target.closest("[data-varrow]");n&&e.ui.selVar!==+n.dataset.varrow&&(e.ui.selVar=+n.dataset.varrow,t.renderPane(),document.querySelectorAll("tr[data-varrow]").forEach(function(t){t.classList.toggle("sel",+t.dataset.varrow===e.ui.selVar)}))}),document.addEventListener("change",function(a){var n=a.target,i=t.curTab();if("md_pane_sel"!==n.id)if(n.dataset.ancheck){var o=t.tabById(n.dataset.ancheck);o&&t.commit(function(){o.checked=n.checked},{key:"check"})}else if(n.dataset.set){if("radio"===n.type&&!n.checked)return;u(n.dataset.set,function(t){var e=t.dataset.type,a=t.value;if("checkbox"===t.type)return t.checked;if("num"===e){var n=parseFloat(a);return isFinite(n)?n:void 0}if("numnull"===e){if(""===a.trim()||"自動"===a.trim())return null;var i=parseFloat(a);return isFinite(i)?i:void 0}return"boolstr"===e?"true"===a:"strnull"===e&&""===a?null:a}(n))}else if(void 0===n.dataset.legname){if(n.dataset.additem){var r=t.tabById(n.dataset.tab);if(!r||""===n.value)return;var s=(r.slots[n.dataset.additem].cols||[]).concat([+n.value]);return e.ui.sel=r.id,void t.commit(function(){t.setItems(r,n.dataset.additem,s)},{run:r.id})}if(n.dataset.slot){var l=t.tabById(n.dataset.tab)||i;if(!l)return;return e.ui.sel=l.id,void t.commit(function(){t.setSlot(l,n.dataset.slot,""===n.value?null:+n.value)},{run:l.id})}if(n.dataset.cat&&i){var c=n.dataset.cat.split(":"),d=i.slots[c[0]],f=d.cats[+c[1]];t.commit(function(){if("on"===c[2])f.on=n.checked;else{var t=n.value.trim()||f.v,e=f.label,a=d.cats.filter(function(t){return t!==f&&t.on&&t.label===e});f.label=t,a.length&&!d.cats.some(function(e){return e!==f&&a.indexOf(e)<0&&e.label===t})&&a.forEach(function(e){e.label=t})}},{run:i.id})}else if(n.dataset.filter&&i)t.commit(function(){if("col"===n.dataset.filter)i.filter=""===n.value?null:{col:+n.value,values:[]};else{var e=t.v(i.filter.col).cats[+n.dataset.idx].v,a=i.filter.values.indexOf(e);n.checked&&a<0&&i.filter.values.push(e),!n.checked&&a>=0&&i.filter.values.splice(a,1)}},{run:i.id});else{if(n.dataset.varlabel){var m=t.v(+n.dataset.varlabel),p=n.value.trim();return m&&p&&p!==m.label?(t.commit(function(){m.label=p,e.P.tabs.forEach(t.autoName)},{quiet:!0}),t.syncResults(),void t.render()):void t.render()}if(n.dataset.var){var v=t.v(e.ui.selVar);if(!v)return;!async function(a,n,i){var o=["nominal","ordinal","multi"].indexOf(n)>=0,r=a.cats,s="multi"===n==("multi"===a.type)&&i===a.delim&&t.isCat(a);try{if(o&&!s){var l=await t.apiData("/api/varinfo",{col:a.col,type:"multi"===n?"multi":"nominal",delim:i});if(!l.ok)throw new Error(l.message);r=l.cats}t.commit(function(){a.type=n,a.delim=i,a.cats=o?r:[],e.P.tabs.forEach(function(e){t.def(e.type).slots.forEach(function(i){var r=e.slots[i.id];r.cols?r.cols.indexOf(a.col)>=0&&i.types.indexOf(n)<0?t.setItems(e,i.id,r.cols.filter(function(t){return t!==a.col})):r.cols.indexOf(a.col)>=0&&t.setItems(e,i.id,r.cols):r.col===a.col&&(e.slots[i.id]=i.types.indexOf(n)>=0?{col:a.col,cats:o?t.defaultCats(a,i):[]}:{col:null,cats:[]})}),e.filter&&e.filter.col===a.col&&(e.filter=null)})},{quiet:!0}),t.syncResults(),t.render()}catch(e){t.toast(e.message,!0),t.render()}}(v,"type"===n.dataset.var?n.value:v.type,"delim"===n.dataset.var?n.value:v.delim)}else n.dataset.reptext&&t.render("chrome")}}else F(+n.dataset.legname,n.value);else U(n.value)}),document.addEventListener("input",function(e){var a=e.target;if(a.dataset&&a.dataset.reptext){var n=t.tabById(a.dataset.reptext),o=i(n);n&&(t.commit(function(){n.reportText=a.value,n.reportBase=o&&o.ok?o.report:null},{quiet:!0,key:"rep:"+n.id}),t.autoGrow(a),document.querySelectorAll('textarea[data-reptext="'+n.id+'"]').forEach(function(e){e!==a&&(e.value=a.value,t.autoGrow(e))}))}}),document.addEventListener("keydown",function(a){var i=/^(INPUT|TEXTAREA|SELECT)$/.test(a.target.tagName),o=a.key.toLowerCase();if("Escape"!==a.key){if("Enter"!==a.key||"INPUT"!==a.target.tagName||"checkbox"===a.target.type)return"F2"===a.key&&!i&&e.ui.sel?(a.preventDefault(),void D(e.ui.sel)):void((a.ctrlKey||a.metaKey)&&("s"===o?(a.preventDefault(),H.save()):"o"===o?(a.preventDefault(),H.openCsv()):i||"z"!==o||a.shiftKey?!i&&("y"===o||"z"===o&&a.shiftKey)&&(a.preventDefault(),t.redo()):(a.preventDefault(),t.undo())));a.target.blur()}else{var r=n(".md-figedit, .md-an-rename");r?(r.dataset.cancel="1",r.blur()):n(".md-menu")||n(".md-colorpop")||n(".md-palpop")?p():n("#md_modal")?h():i&&a.target.blur()}});var X=null,G=null;function Y(e,a,n){var s=t.curTab(),l=t.curFig(),c=Chart.model(i(s));if(l&&c){var d=Chart.seriesFor(c,l)[n],u=(l.legNames||{})[d]||d,f=a.closest("[data-legend]")||a,m=e.getBoundingClientRect(),p=f.getBoundingClientRect(),v=a.getBoundingClientRect(),g=r(e),b=document.createElement("input"),h=Math.max(160,p.width/g+20);b.className="md-figedit",b.value=u,b.style.width=h+"px",b.style.left=o((v.left-m.left)/g-4,0,Math.max(0,m.width/g-h))+"px",b.style.top=o((v.top-m.top)/g+v.height/g/2-13,0,Math.max(0,m.height/g-26))+"px",e.appendChild(b),b.focus(),b.select(),b.addEventListener("mousedown",function(t){t.stopPropagation()}),b.addEventListener("blur",function(){var t=b.dataset.cancel,e=b.value;b.remove(),t||F(n,e)})}}document.addEventListener("mouseover",function(t){var e=t.target.closest&&t.target.closest("[data-tip]");e!==G&&(clearTimeout(X),n("#md_tip").style.display="none",G=e,e&&(X=setTimeout(function(){var t=n("#md_tip");t.textContent=e.getAttribute("data-tip"),t.style.display="block";var a=e.getBoundingClientRect(),i=t.getBoundingClientRect(),r=a.bottom+6;r+i.height>window.innerHeight-4&&(r=a.top-i.height-6),t.style.left=o(a.left+a.width/2-i.width/2,4,window.innerWidth-i.width-4)+"px",t.style.top=Math.max(4,r)+"px"},400)))}),document.addEventListener("mousedown",function(){clearTimeout(X),n("#md_tip").style.display="none",G=null}),document.addEventListener("dblclick",function(a){var n=a.target.closest&&a.target.closest("[data-anname]");if(n)D(n.dataset.anname);else{var i=a.target.closest&&a.target.closest(".md-figwrap [data-el]");if(i){var s=i.closest(".md-figwrap"),l=s.dataset.fig.split(":"),c=i.getAttribute("data-el");if(/^legname:/.test(c))return p(),e.ui.sel=l[0],e.ui.selFig=+l[1],void Y(s,i,+c.split(":")[1]);if(!(["vTitle","cTitle"].indexOf(c)<0)){e.ui.sel=l[0],e.ui.selFig=+l[1];var d=s.getBoundingClientRect(),f=i.getBoundingClientRect(),m=r(s),v=document.createElement("input"),g=(t.curTab(),t.curFig()[c]);null==g&&(g=i.getAttribute("data-full")||i.textContent),v.className="md-figedit",v.value=g;var b=Math.max(180,f.width/m+30);v.style.width=b+"px",v.style.left=o((f.left-d.left)/m+f.width/m/2-b/2,0,Math.max(0,d.width/m-b))+"px",v.style.top=o((f.top-d.top)/m+f.height/m/2-13,0,Math.max(0,d.height/m-26))+"px",s.appendChild(v),v.focus(),v.select(),v.addEventListener("blur",function(){var t=v.dataset.cancel,e=v.value;v.remove(),t||e===g||u("fig."+c,e)})}}}});var Z=!1;document.addEventListener("mousedown",function(a){if(0===a.button){var i=a.target.closest&&a.target.closest(".md-figwrap [data-legend], .md-figwrap [data-cbar]");if(i){var s=i.closest(".md-figwrap"),l=s.dataset.fig.split(":"),c=t.tabById(l[0]),d=+l[1],u=c&&c.figs[d];if(u){a.preventDefault();var f=i.hasAttribute("data-legend"),m=s.querySelector("svg"),p=+m.getAttribute("width"),v=+m.getAttribute("height"),g=r(s),b=a.clientX,h=a.clientY,y=(i.getAttribute("data-box")||"0,0,0,0").split(",").map(Number),w=!1,x=null,E=0,C=0,F=document.createElement("div");F.className="md-snap";var k=f?{right:[.82*p,0,.18*p,v,"右に並べる"],bottom:[0,.86*v,.82*p,.14*v,"下に並べる"],top:[0,0,.82*p,.12*v,"上に並べる"]}:{right:[.75*p,0,.25*p,v,"右に置く"],bottom:[0,.75*v,.75*p,.25*v,"下に置く"]};document.addEventListener("mousemove",P),document.addEventListener("mouseup",function a(){document.removeEventListener("mousemove",P),document.removeEventListener("mouseup",a),document.body.classList.remove("md-moving"),F.remove(),w&&(Z=!0,setTimeout(function(){Z=!1},300),e.ui.sel=c.id,e.ui.selFig=d,t.commit(function(){f?"free"===x?(u.legend="free",u.legX=Math.round(o(y[0]+E,0,Math.max(0,p-y[2]))),u.legY=Math.round(o(y[1]+C,0,Math.max(0,v-y[3])))):u.legend=x:u.bar=x}))})}}}function P(t){if(E=(t.clientX-b)/g,C=(t.clientY-h)/g,w||!(Math.abs(E)+Math.abs(C)<4)){w||(w=!0,s.appendChild(F),document.body.classList.add("md-moving"),n("#md_tip").style.display="none"),i.setAttribute("transform","translate("+E+","+C+")");var e=m.getBoundingClientRect(),a=(t.clientX-e.left)/g,o=(t.clientY-e.top)/g,r=k[x=f?a>.82*p?"right":o>.86*v?"bottom":o<.12*v?"top":"free":a/p-.5>o/v-.5?"right":"bottom"];r?(F.style.display="flex",F.style.left=r[0]+"px",F.style.top=r[1]+"px",F.style.width=r[2]+"px",F.style.height=r[3]+"px",F.textContent=r[4]):F.style.display="none",n("#md_status .md-st-mode").textContent="free"===x?"凡例を移動：置いた位置に置きます":"凡例を移動："+(r?r[4]:"")}}}),document.addEventListener("mousedown",function(a){var n=a.target.closest&&a.target.closest(".md-th");if(n&&0===a.button){a.preventDefault();var i=n.closest(".md-tblwrap"),o=i.dataset.tbl.split(":"),r=t.tabById(o[0]);if(r){var s=i.querySelector("table.md-t"),l=[].slice.call(s.rows),c=n.dataset.h,d=(e.P.settings.zoom||100)/100,u=s.getBoundingClientRect().width/d,f=l.reduce(function(t,e){return t+e.getBoundingClientRect().height},0)/d/l.length,m=a.clientX,p=a.clientY,v=null,g=0,b=null,h=null,y=s.style.width;s.style.width="";var w=s.getBoundingClientRect().width/d;s.style.width=y,e.ui.sel=r.id,document.body.classList.add("md-resizing-"+c),document.addEventListener("mousemove",E),document.addEventListener("mouseup",function e(){if(document.removeEventListener("mousemove",E),document.removeEventListener("mouseup",e),document.body.classList.remove("md-resizing-"+c),g&&(cancelAnimationFrame(g),x()),null!==b||null!==h){var a=Math.round(s.getBoundingClientRect().width/d);t.commit(function(){null!==b&&(a<=Math.ceil(w)+1?delete r.tstyle.tw:r.tstyle.tw=a),null!==h&&(r.tstyle.rowH=h)})}})}}function x(){g=0,v&&("s"!==c&&(b=Math.max(Math.ceil(w),Math.round(u+(v.clientX-m)/d)),s.style.width=b+"px"),"e"!==c&&(h=Math.max(12,Math.round(f+(v.clientY-p)/d/Math.max(1,l.length))),l.forEach(function(t){t.style.height=h+"px"})))}function E(t){v=t,g||(g=requestAnimationFrame(x))}}),document.addEventListener("dblclick",function(e){var a=e.target.closest&&e.target.closest(".md-th");if(a){var n=t.tabById(a.closest(".md-tblwrap").dataset.tbl.split(":")[0]);n&&t.commit(function(){delete n.tstyle.tw,delete n.tstyle.rowH})}}),document.addEventListener("mousedown",function(a){var n=a.target.closest&&a.target.closest(".md-fh");if(n&&0===a.button){a.preventDefault();var s=n.closest(".md-figwrap"),l=s.dataset.fig.split(":"),c=t.tabById(l[0]),d=+l[1],u=c.figs[d],f=Chart.model(i(c)),m=n.dataset.h;e.ui.sel=c.id,e.ui.selFig=d;var p=JSON.stringify(e.P),v=r(s),g=a.clientX,b=a.clientY,h=Chart.render(f,u,e.P.settings.figLang),y=h.w,w=h.h,x=0,E=null,C=s.parentNode.querySelector(".md-figsize");document.body.classList.add("md-resizing-"+m),document.addEventListener("mousemove",k),document.addEventListener("mouseup",function a(){document.removeEventListener("mousemove",k),document.removeEventListener("mouseup",a),document.body.classList.remove("md-resizing-"+m),x&&(cancelAnimationFrame(x),F()),JSON.stringify(e.P)!==p&&(e.undo.push(p),e.undo.length>100&&e.undo.shift(),e.redo=[],t.markDirty()),t.render()})}function F(){if(x=0,E){u.fit=!1,"s"!==m&&(u.w=o(Math.round(y+(E.clientX-g)/v),160,2400)),"e"!==m&&(u.h=o(Math.round(w+(E.clientY-b)/v),120,2400)),"s"===m&&(u.w=y),"e"===m&&(u.h=w);var t=Chart.render(f,u,e.P.settings.figLang),a=s.querySelector("svg"),n=document.createElement("div");n.innerHTML=t.svg,a.replaceWith(n.firstChild),C&&(C.textContent=t.w+" × "+t.h)}}function k(t){E=t,x||(x=requestAnimationFrame(F))}}),document.addEventListener("contextmenu",function(e){var a=e.target.closest&&e.target.closest(".md-figwrap"),n=e.target.closest&&e.target.closest(".md-an-head");if(a){e.preventDefault();var i=a.dataset.fig.split(":");f(i[0],+i[1]);var o=t.curFig(),r=e.target.closest('[data-el^="legend:"], [data-el^="legname:"]'),s=e.clientX,l=e.clientY;if(r){var c=+r.getAttribute("data-el").split(":")[1],d=a.querySelector('[data-el="legname:'+c+'"]')||r;return void g(s,l,[{name:"この系列の名前を変更",run:function(){Y(a,d,c)}},{name:"この系列の色を変える",run:function(){k(c,s,l+8)}},"-",{name:o.legFrame?"凡例の枠を消す":"凡例を枠で囲む",run:function(){u("fig.legFrame",!o.legFrame)}},{name:"凡例を消す",run:function(){u("fig.legend","none")}}])}g(e.clientX,e.clientY,[{name:"図をコピー",run:H.figCopy},{name:"画像で保存",run:H.figPng},{name:"SVG で保存",run:H.figSvg},"-",{name:o.transparent?"背景を白にする":"背景を透明にする",run:function(){u("fig.transparent",!o.transparent)}},{name:o.labels?"値のラベルを消す":"値のラベルを出す",run:function(){u("fig.labels",!o.labels)}},{name:"none"===o.legend?"凡例を出す":"凡例を消す",run:function(){u("fig.legend","none"===o.legend?"right":"none")}},"-",{name:"図を追加",run:H.addFig},{name:"この図を削除",danger:!0,run:H.delFig}])}else n&&!e.target.closest("input")&&(e.preventDefault(),z(n.dataset.anhead,e.clientX,e.clientY))});var K=null;function J(){document.querySelectorAll(".md-an.drop-before, .md-an.drop-after").forEach(function(t){t.classList.remove("drop-before","drop-after")})}document.addEventListener("dragstart",function(t){var e=t.target.closest&&t.target.closest(".md-an-head");if(e&&!t.target.closest("input, button")){K=e.dataset.anhead,t.dataTransfer.effectAllowed="move";try{t.dataTransfer.setData("text/plain",K)}catch(t){}e.parentNode.classList.add("dragging")}else e&&t.preventDefault()}),document.addEventListener("dragover",function(t){if(K){var e=t.target.closest&&t.target.closest(".md-an");if(e&&(t.preventDefault(),J(),e.dataset.an!==K)){var a=e.getBoundingClientRect();e.classList.add(t.clientY<a.top+a.height/2?"drop-before":"drop-after")}}}),document.addEventListener("drop",function(a){if(K){var n=a.target.closest&&a.target.closest(".md-an"),i=K;a.preventDefault();var o=n&&n.classList.contains("drop-before");J(),K=null,n&&n.dataset.an!==i?t.commit(function(){var t=e.P.tabs.findIndex(function(t){return t.id===i}),a=e.P.tabs.splice(t,1)[0],r=e.P.tabs.findIndex(function(t){return t.id===n.dataset.an});e.P.tabs.splice(o?r:r+1,0,a)}):t.render()}}),document.addEventListener("dragend",function(){K=null,J(),document.querySelectorAll(".md-an.dragging").forEach(function(t){t.classList.remove("dragging")})});var $=0;function Q(t){return!K&&t.dataTransfer&&[].indexOf.call(t.dataTransfer.types||[],"Files")>=0}async function tt(){try{var a=await(await fetch("/api/ping")).json();e.rYear=a.ryear||null,e.r!==a.r&&(e.r=a.r,t.renderStatus())}catch(a){null!==e.r&&(e.r=null,t.renderStatus())}}function et(){var t=window.CTS_CHANGES||[],e=window.CTS_APP_VERSION,i="cts-seen-version",o=null;if(e){try{o=localStorage.getItem(i)}catch(t){return}if(o!==e){var r='<div class="md-welcome"><div class="md-welcome-h">ようこそ</div>';if(o){var s=t.filter(function(t){return function(t,e){t=String(t).split(".").map(Number),e=String(e).split(".").map(Number);for(var a=0;a<3;a++){var n=(t[a]||0)-(e[a]||0);if(n)return n}return 0}(t.v,o)>0});if(s.length){b("CrossTab Studio",r+"<p>新しい版（バージョン "+a(e)+"）に更新しました。前回からの変更点は次のとおりです。</p></div>"+s.map(function(t){return'<div class="md-chg"><div class="md-chg-v">'+a(t.v)+(t.date?"<span>"+a(t.date)+"</span>":"")+"</div><ul>"+t.items.map(function(t){return"<li>"+a(t)+"</li>"}).join("")+"</ul></div>"}).join(""),'<button class="md-btn md-btn-primary" id="md_chg_ok">わかりました</button>',560),n("#md_chg_ok").onclick=function(){d(),h()};var l=n("#md_modal");l&&l.addEventListener("mousedown",d)}else d()}else{b("CrossTab Studio",r+'<p>アンケートの回答（CSV ファイル）を読み込むと、集計・検定・図・報告書までを作れます。データはこの端末の中だけで処理され、外部には送られません。</p><p>まずは画面の「ファイルを選ぶ」から、回答の CSV を開いてください。</p><p class="md-welcome-v">バージョン '+a(e)+"</p></div>",'<button class="md-btn md-btn-primary" id="md_chg_ok">はじめる</button>',520),n("#md_chg_ok").onclick=function(){d(),h()};var c=n("#md_modal");c&&c.addEventListener("mousedown",d)}}}function d(){try{localStorage.setItem(i,e)}catch(t){}}}window.addEventListener("dragenter",function(t){Q(t)&&(t.preventDefault(),$++,document.body.classList.add("md-dragover"))}),window.addEventListener("dragover",function(t){Q(t)&&t.preventDefault()}),window.addEventListener("dragleave",function(t){Q(t)&&--$<=0&&($=0,document.body.classList.remove("md-dragover"))}),window.addEventListener("drop",function(e){if(Q(e)){e.preventDefault(),$=0,document.body.classList.remove("md-dragover");var a=e.dataTransfer.files[0];a&&t.handleFile(a)}}),window.addEventListener("beforeunload",function(t){e.dirty&&e.data&&!window.__noGuard&&(t.preventDefault(),t.returnValue="")}),window.addEventListener("pagehide",function(){try{navigator.sendBeacon("/api/bye")}catch(t){}}),t.showChanges=et,t.setPath=u,t.act=H,t.selectTab=f,async function(){t.render();try{var a=await t.api("/api/registry",{});e.registry=a.analyses||[]}catch(e){t.toast(e.message,!0)}await tt(),setInterval(tt,5e3),e.projList=await t.listProjects(),t.render(),et()}()}();
+// events.js ― 操作（クリック・入力・ドラッグ・キー）と、小さな画面（一覧・色・メニュー・書き出し）
+(function () {
+  'use strict';
+  var A = window.App, S = A.S, esc = A.esc, $ = A.$;
+  function resOf(tab) { return tab ? S.results[tab.id] : null; }
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+  // 画面の拡大率。図は、スマホ版で画面の幅に収めるために縮めて見せることがある（その倍率も掛ける）
+  function zoom(el) { var z = (S.P.settings.zoom || 100) / 100, w = el && el.closest && el.closest('.md-figwrap'); if (w && w.dataset.fit) z *= +w.dataset.fit; return z; }
+  var LIMITS = { fsAxis: [6, 60], fsTick: [6, 60], fsLegend: [6, 60], fsLabel: [6, 60], lwAxis: [0, 8], lwBar: [0, 8], lwGrid: [0, 8], w: [160, 2400], h: [120, 2400], barW: [10, 100], tickLen: [0, 20], labelDec: [0, 2], fs: [6, 40], lw: [0, 6] };
+  var FS_STEPS = [8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 24, 28, 32];
+  var FIG_STYLE_KEYS = ['fontJa', 'fontEn', 'fsAxis', 'fsTick', 'fsLegend', 'fsLabel', 'lwAxis', 'lwBar', 'lwGrid', 'labels', 'labelDec', 'showN', 'legend', 'legFrame', 'legShape', 'legTitle', 'tickDir', 'tickLen', 'grid', 'gridColor', 'frame', 'transparent', 'palette', 'colorMode', 'barW', 'bar', 'barShape', 'legBg', 'labelWhat'];
+  var T_PRESET = { grid: { headFill: '#F2F2F2', headInk: '#000000', lc: '#7F7F7F' }, three: { headFill: null, headInk: '#000000', lc: '#000000' }, stripe: { headFill: null, headInk: '#000000', lc: '#000000', stripe: '#F3F3F3' }, plain: { headFill: null, headInk: '#000000', lc: '#000000' }, head: { headFill: '#217346', headInk: '#FFFFFF', lc: '#BFBFBF' } };
+
+  // ---------------- 値を変える（リボンと作業ウィンドウの共通の入口）
+  function parseVal(el) {
+    var t = el.dataset.type, val = el.value;
+    if (el.type === 'checkbox') return el.checked;
+    if (t === 'num') { var n = parseFloat(val); return isFinite(n) ? n : undefined; }
+    if (t === 'numnull') { if (val.trim() === '' || val.trim() === '自動') return null; var m = parseFloat(val); return isFinite(m) ? m : undefined; }
+    if (t === 'boolstr') return val === 'true';
+    if (t === 'strnull') return val === '' ? null : val;
+    return val;
+  }
+  function setPath(path, val, o) {
+    if (val === undefined) { A.render(); return; }
+    var i = path.indexOf('.'), sc = path.slice(0, i), k = path.slice(i + 1), tab = A.curTab(), run = null, target;
+    if (sc === 'ui') { S.ui[k] = val; A.render(); return; }
+    if ((sc === 'fig' || sc === 'tbl' || sc === 'tst' || sc === 'opt' || sc === 'tab') && !tab) return;
+    if (LIMITS[k] && typeof val === 'number') val = clamp(val, LIMITS[k][0], LIMITS[k][1]);
+    if (sc === 'fig') { target = A.curFig(); if (!target) return; } else if (sc === 'tbl') target = tab.table; else if (sc === 'tst') target = tab.tstyle; else if (sc === 'opt') { target = tab.opts; run = tab.id; }
+    else if (sc === 'tab') target = tab; else if (sc === 'set') { target = S.P.settings; if (k === 'alpha' || k === 'lead0') run = 'all'; }
+    else if (sc === 'rep') target = S.P.report; else if (sc === 'proj') target = S.P; else return;
+    A.commit(function () {
+      if (path === 'fig.fsAll') { val = clamp(val, 6, 60); target.fsTick = val; target.fsAxis = val; target.fsLegend = val; target.fsLabel = Math.max(6, val - 1); }
+      else target[k] = val;
+      if (path === 'tab.name') tab.nameAuto = false;
+      // 「割合」「人数」のボタンを押したら、値のラベルもそれに合わせる（ラベルを「割合だけ」「人数だけ」に固定していると、円グラフでは見た目が変わらないため）
+      if (path === 'fig.value' && (target.labelWhat === 'pct' || target.labelWhat === 'n')) target.labelWhat = 'value';
+      if (sc === 'fig' && (k === 'w' || k === 'h')) target.fit = false;                // 大きさを自分で決めたら、自動で広げない
+    }, Object.assign({ run: run, key: path }, o || {}));
+    if (path === 'set.zoom') A.applyZoom();
+  }
+
+  // ---------------- 選ぶ（画面を作り直さずに、選択の表示だけ変える）
+  function selectTab(id, figK, rtab) {
+    var changed = S.ui.sel !== id || (figK !== undefined && figK !== null && S.ui.selFig !== figK) || (rtab && S.ui.rtab !== rtab);
+    if (S.ui.sel !== id) S.ui.selFig = 0;
+    S.ui.sel = id; if (figK !== undefined && figK !== null) S.ui.selFig = figK; if (rtab) S.ui.rtab = rtab;
+    if (!changed) return;
+    document.querySelectorAll('.md-an').forEach(function (s) { s.classList.toggle('sel', s.dataset.an === id); });
+    document.querySelectorAll('.md-figwrap').forEach(function (w) { var t = A.tabById(id); w.classList.toggle('sel', w.dataset.fig === id + ':' + S.ui.selFig && (S.ui.rtab === 'figure' || (t && t.figs.length > 1))); });
+    A.render('chrome'); A.renderPane();
+  }
+  function scrollToAn(id) { setTimeout(function () { if (A.stopKeep) A.stopKeep(); var el = document.querySelector('.md-an[data-an="' + id + '"]'); if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, 30); }
+
+  // ---------------- 小さな画面
+  function closePop() { document.querySelectorAll('.md-menu, .md-colorpop, .md-palpop').forEach(function (e) { e.remove(); }); }
+  function place(d, x, y) { var r = d.getBoundingClientRect(); d.style.left = Math.max(4, Math.min(x, window.innerWidth - r.width - 6)) + 'px'; d.style.top = Math.max(4, Math.min(y, window.innerHeight - r.height - 6)) + 'px'; }
+  function menu(x, y, items) {
+    closePop();
+    var d = document.createElement('div'); d.className = 'md-menu';
+    d.innerHTML = items.map(function (it, i) { return it === '-' ? '<hr>' : '<button data-i="' + i + '" class="' + (it.danger ? 'danger' : '') + '"' + (it.off ? ' disabled' : '') + '>' + esc(it.name) + (it.key ? '<kbd>' + it.key + '</kbd>' : '') + '</button>'; }).join('');
+    document.body.appendChild(d); place(d, x, y);
+    d.addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; e.stopPropagation(); var it = items[+b.dataset.i]; closePop(); it.run(); });
+  }
+  function modal(title, body, foot, wide) {
+    closeModal();
+    var d = document.createElement('div'); d.className = 'md-modal-back'; d.id = 'md_modal';
+    d.innerHTML = '<div class="md-modal"' + (wide ? ' style="width:' + wide + 'px"' : '') + '><div class="md-modal-head">' + esc(title) + '<button data-act="closeModal" data-tip="閉じる（Esc）">×</button></div><div class="md-modal-body">' + body + '</div>' + (foot ? '<div class="md-modal-foot">' + foot + '</div>' : '') + '</div>';
+    document.body.appendChild(d);
+    d.addEventListener('mousedown', function (e) { if (e.target === d) closeModal(); });
+    return d;
+  }
+  function closeModal() { var m = $('#md_modal'); if (m) m.remove(); }
+  function analysisDialog(onPick, title) {
+    // スマホでは検索欄を出さない（一覧から選ぶ方が速く、入力欄に触れると画面が拡大されるため）
+    var useSearch = !window.CTS_PHONE;
+    modal(title, (useSearch ? '<input class="md-in" id="md_asearch" placeholder="解析の名前や目的で探す（例：フィッシャー、複数回答、順序）" style="margin-bottom:6px">' : '') + '<div id="md_alist"></div>');
+    function draw(q) {
+      var groups = [], h = '';
+      S.registry.forEach(function (a) { if (q && (a.name + a.desc + a.group).indexOf(q) < 0) return; var g = groups.find(function (x) { return x.name === a.group; }); if (!g) { g = { name: a.group, items: [] }; groups.push(g); } g.items.push(a); });
+      groups.forEach(function (g) { h += '<div class="md-alist-group">' + esc(g.name) + '</div>' + g.items.map(function (a) { return '<button class="md-aitem" data-aid="' + a.id + '"><b>' + esc(a.name) + '</b><span>' + esc(a.desc) + '</span></button>'; }).join(''); });
+      $('#md_alist').innerHTML = h || '<div class="md-empty">当てはまる解析がありません。別のことばで探してください。</div>';
+    }
+    draw('');
+    if (useSearch) $('#md_asearch').addEventListener('input', function (e) { draw(e.target.value.trim()); });
+    $('#md_alist').addEventListener('click', function (e) { var b = e.target.closest('[data-aid]'); if (b) { closeModal(); onPick(b.dataset.aid); } });
+    if (useSearch && !window.CTS_TOUCH) $('#md_asearch').focus();   // 指の端末では、キーボードが勝手に出ないように自動で選ばない
+  }
+  A.askReplace = function (buf, name) {
+    modal('新しいデータの読み込み', '<p>解析が ' + S.P.tabs.length + ' 個あります。「' + esc(name) + '」をどのように読み込みますか。</p><p class="md-hint">回答が増えた同じアンケートなら「解析を残して差し替える」を選ぶと、同じ質問の列に解析の設定を引き継いで、すべて計算し直します。</p>',
+      '<button class="md-btn" data-act="closeModal">やめる</button><button class="md-btn" id="md_rep_new">新しく始める</button><button class="md-btn md-btn-primary" id="md_rep_keep">解析を残して差し替える</button>');
+    $('#md_rep_new').onclick = function () { closeModal(); A.loadCsv(buf, name, false).catch(function (e) { A.toast(e.message, true); }); };
+    $('#md_rep_keep').onclick = function () { closeModal(); A.loadCsv(buf, name, true).catch(function (e) { A.toast(e.message, true); }); };
+  };
+  function askName(title, def, onOk) {
+    modal(title, '<label class="md-field"><span>プロジェクトの名前</span><input type="text" id="md_pname" value="' + esc(def) + '"></label><p class="md-hint">データ（CSV の中身）・解析・図と表の設定をまとめて、この端末（ブラウザの中）に保存します。同じ名前があるときは上書きします。</p>',
+      '<button class="md-btn" data-act="closeModal">やめる</button><button class="md-btn md-btn-primary" id="md_pname_ok">保存</button>', 480);
+    var inp = $('#md_pname'); inp.focus(); inp.select();
+    function go() { var v = inp.value.trim(); if (!v) return; closeModal(); onOk(v); }
+    $('#md_pname_ok').onclick = go; inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.stopPropagation(); go(); } });
+  }
+  async function refreshProjects() { S.projList = await A.listProjects(); if (!S.data) A.renderCenter(); }
+  async function projectDialog() {
+    var d = await A.listProjects(); S.projList = d;
+    var rows = d.items.length ? d.items.map(function (p) { return '<div class="md-projrow"><button class="md-aitem" data-pname="' + esc(p.name) + '"><b>' + esc(p.name) + '</b><span>保存：' + esc(p.saved) + '　' + Math.max(1, Math.round(p.size / 1024)) + ' KB</span></button><button class="md-btn md-btn-sm md-danger" data-pdel="' + esc(p.name) + '" data-tip="このプロジェクトを削除します。">削除</button></div>'; }).join('')
+      : '<div class="md-empty">保存したプロジェクトはまだありません。「上書き保存」で保存すると、ここに並びます。</div>';
+    var m = modal('プロジェクトを開く', rows + (d.folder ? '<p class="md-hint" style="margin-top:10px">保存先：' + esc(d.folder) + '</p>' : ''), '<button class="md-btn" id="md_pfile">ファイルから開く…</button><button class="md-btn" data-act="closeModal">閉じる</button>', 560);
+    m.addEventListener('click', async function (e) {
+      var b = e.target.closest('[data-pname]'), del = e.target.closest('[data-pdel]');
+      if (b) { closeModal(); A.openProjectByName(b.dataset.pname); }
+      else if (del) {
+        if (del.dataset.sure) { await A.api('/api/proj/delete', { name: del.dataset.pdel }); A.toast('プロジェクト「' + del.dataset.pdel + '」を削除しました。'); projectDialog(); }
+        else { del.dataset.sure = '1'; del.textContent = '本当に削除'; }
+      }
+    });
+    // スマホ・タブレットは、知らない拡張子のファイルを選べなくすることがあるので、種類を絞らない
+    $('#md_pfile').onclick = async function () { var f = await A.pickFile(window.CTS_TOUCH ? '' : '.prj,.ctsproj,.json'); if (f) { closeModal(); A.handleFile(f); } };
+  }
+  function shade(hex, t) { return t >= 0 ? Chart.lerp(hex, '#FFFFFF', t) : Chart.lerp(hex, '#000000', -t); }
+  function colorPop(x, y, onPick, autoLabel, extra) {
+    closePop();
+    var theme = ['#FFFFFF', '#000000', '#E7E6E6', '#3E4A5B', '#4E79A7', '#F28E2B', '#E15759', '#76B7B2', '#59A14F', '#B07AA1'];   // Tableau 10 を元にした、彩度を抑えた色
+    var rows = [0, 1, 2, 3, 4, 5].map(function (r) {
+      return theme.map(function (c) { if (r === 0) return c; if (c === '#FFFFFF') return shade(c, -[0, 0.05, 0.15, 0.25, 0.35, 0.5][r]); if (c === '#000000') return shade(c, [0, 0.5, 0.35, 0.25, 0.15, 0.05][r]); return shade(c, [0, 0.8, 0.6, 0.4, -0.25, -0.5][r]); });
+    });
+    var grays = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(function (i) { return Chart.lerp('#F2F2F2', '#0D0D0D', i / 9); });
+    var std = ['#E64B35', '#4DBBD5', '#00A087', '#3C5488', '#F39B7F', '#8491B4', '#91D1C2', '#DC0000', '#7E6148', '#B09C85'];   // 論文誌でよく使われる色（ggsci の npg）
+    var cud = ['#0072B2', '#E69F00', '#009E73', '#CC79A7', '#56B4E9', '#D55E00', '#F0E442', '#999999'];
+    function g(list) { return '<div class="md-cp-g">' + list.map(function (c) { return '<button style="background:' + c + '" data-c="' + c + '" data-tip="' + c + '"></button>'; }).join('') + '</div>'; }
+    var d = document.createElement('div'); d.className = 'md-colorpop';
+    d.innerHTML = (autoLabel ? '<button class="md-btn md-btn-sm" data-c="" style="width:100%">' + esc(autoLabel) + '</button>' : '') +
+      (extra || []).map(function (x) { return '<button class="md-btn md-btn-sm" data-c="' + esc(x[0]) + '" data-raw="1" style="width:100%;margin-bottom:3px">' + esc(x[1]) + '</button>'; }).join('') + '<div class="md-cp-t">テーマの色</div>' + g([].concat.apply([], rows)) + '<div class="md-cp-t">白〜黒</div>' + g(grays) + '<div class="md-cp-t">論文誌風の色</div>' + g(std) + '<div class="md-cp-t">色覚に配慮した色</div>' + g(cud) +
+      '<label class="md-check" style="margin-top:6px">その他の色… <input type="color" id="md_cp_other" style="width:44px;height:24px;padding:0;border:1px solid #C6E0CF"></label>';
+    document.body.appendChild(d); place(d, x, y);
+    d.addEventListener('click', function (e) { var b = e.target.closest('[data-c]'); if (b) { e.stopPropagation(); closePop(); onPick(b.dataset.c || null); } });
+    $('#md_cp_other').addEventListener('change', function (e) { closePop(); onPick(e.target.value.toUpperCase()); });
+  }
+  // 凡例に出す系列の名前を変える（空にすると元の名前に戻す）。色と同じく、元の名前にひも付けて保つ
+  function renameSeries(i, val) {
+    var tab = A.curTab(), fig = A.curFig(), m = Chart.model(resOf(tab)); if (!tab || !fig || !m) return;
+    var lab = Chart.seriesFor(m, fig)[i]; if (lab === undefined) return;
+    val = String(val || '').trim();
+    var cur = (fig.legNames || {})[lab] || lab; if ((val || lab) === cur) { A.render(); return; }
+    A.commit(function () { fig.legNames = Object.assign({}, fig.legNames); if (val && val !== lab) fig.legNames[lab] = val; else delete fig.legNames[lab]; });
+  }
+  function pickSeriesColor(i, x, y) {
+    var tab = A.curTab(), fig = A.curFig(), m = Chart.model(resOf(tab)); if (!tab || !fig || !m) return;
+    var ser = Chart.colorKeys(m, fig); if (!ser[i]) return;
+    var lab = ser[i];
+    // 色を選んだら「系列ごとに選ぶ」にする
+    colorPop(x, y, function (c) { A.commit(function () { fig.colors = Object.assign({}, fig.colors); fig.colorMode = 'series'; if (c) fig.colors[lab] = c; else delete fig.colors[lab]; }); }, '配色の色に戻す');
+  }
+
+  // ---------------- 書き出しの部品
+  async function copyText(text, html) {
+    try {
+      if (html && window.ClipboardItem) await navigator.clipboard.write([new ClipboardItem({ 'text/plain': new Blob([text], { type: 'text/plain' }), 'text/html': new Blob([html], { type: 'text/html' }) })]);
+      else await navigator.clipboard.writeText(text);
+      return true;
+    } catch (e) { var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); var ok = false; try { ok = document.execCommand('copy'); } catch (e2) {} ta.remove(); return ok; }
+  }
+  function figAt(tab, k) { var f = A.figsOf(tab, resOf(tab)); return f[k] || null; }
+  function selFigObj() { var tab = A.curTab(); return tab ? figAt(tab, Math.min(S.ui.selFig, tab.figs.length - 1)) : null; }
+  function csvOf(tables) { return '﻿' + tables.map(function (t) { return [[t.caption]].concat(t.rows, t.note ? [[t.note]] : []).map(function (r) { return r.map(function (c) { c = String(c); return /[",\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(','); }).join('\r\n'); }).join('\r\n\r\n'); }
+  function pngBlob(fg) { return Chart.toPng(fg.r.svg, S.P.settings.pngScale || 2); }
+  async function savePng(tab, k) {
+    var fg = figAt(tab, k); if (!fg) return;
+    try { if (await A.saveBlob(await pngBlob(fg), A.safeName(tab.name) + '_図' + (k + 1) + '.png', 'PNG 画像', '.png')) A.toast('図を画像で保存しました（画面と同じ ' + fg.r.w + ' × ' + fg.r.h + ' の形' + (fg.st.transparent ? '、背景は透明' : '') + '）。'); }
+    catch (e) { A.toast(e.message, true); }
+  }
+  async function copyPng(tab, k) {
+    var fg = figAt(tab, k); if (!fg) return;
+    try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': await pngBlob(fg) })]); A.toast('図をコピーしました。Word や PowerPoint に貼り付けられます。'); }
+    catch (e) { A.toast('図をコピーできませんでした。「画像で保存」を使ってください。', true); }
+  }
+  async function copyTables(tab) { var ts = A.tablesOf(tab, resOf(tab)); if (!ts.length) return; if (await copyText(ts.map(A.tableTsv).join('\n\n'), ts.map(function (t) { return A.tableHtml(t, tab.tstyle); }).join('<br>'))) A.toast('表をコピーしました。Excel や Word に貼り付けられます。'); else A.toast('コピーできませんでした。「CSV で保存」を使ってください。', true); }
+  async function saveTablesCsv(tab) { var ts = A.tablesOf(tab, resOf(tab)); if (!ts.length) return; if (await A.saveBlob(new Blob([csvOf(ts)], { type: 'text/csv' }), A.safeName(tab.name) + '_表.csv', 'CSV', '.csv')) A.toast('表を CSV で保存しました。'); }
+  // 表を画像にする（画面と同じデザインの決まりで SVG に描いてから PNG にする）
+  function tablesPng(tab) { var svg = A.tablesSvg(tab, resOf(tab)); if (!svg) return Promise.reject(new Error('表がありません。')); return Chart.toPng(svg, S.P.settings.pngScale || 2); }
+  async function excelBlob(tabs) {
+    var items = tabs.map(function (t) { return { name: t.name, req: A.buildReq(t) }; });
+    var d = await A.apiData('/api/excel', { items: items });
+    if (!d.ok) throw new Error(d.message || 'Excel ファイルを作れませんでした。');
+    var enc = new TextEncoder(), files = Object.keys(d.files).map(function (k) { return { name: k, data: enc.encode(d.files[k]) }; });
+    return { blob: await A.zip(files, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'), notes: d.notReproduced || [], skipped: d.skipped || [] };
+  }
+  function okTabs() { return S.P.tabs.filter(function (t) { return t.checked && resOf(t) && resOf(t).ok; }); }
+  function excelNote(x) { return (x.notes.length ? 'Excel の関数で再現していないもの：' + x.notes.join('、') + '。' : '') + (x.skipped.length ? '書けなかった解析：' + x.skipped.join('、') + '。' : ''); }
+  // ☑ を付けた解析の図・Excel・報告書をまとめて書き出す。dir：選んだフォルダー（選べない環境では ZIP にまとめる）
+  async function exportAll(dir, opt) {
+    var tabs = okTabs(), out = [], used = {}, note = '';
+    A.busy(true, '書き出しの準備をしています');
+    try {
+      if (opt.figs) for (var i = 0; i < tabs.length; i++) {
+        var figs = A.figsOf(tabs[i], resOf(tabs[i])), base = A.safeName(tabs[i].name);
+        if (used[base]) { used[base]++; base += '(' + used[base] + ')'; } else used[base] = 1;           // 同じ名前の解析があるときは (2) を付ける
+        for (var k = 0; k < figs.length; k++) { A.busy(true, '図を画像にしています（' + (i + 1) + ' / ' + tabs.length + '）'); try { out.push({ name: base + '_図' + (k + 1) + '.png', blob: await pngBlob(figs[k]) }); } finally { A.busy(false); } }
+      }
+      if (opt.excel) { A.busy(true, 'Excel ファイルを作っています'); try { var x = await excelBlob(tabs); out.push({ name: A.baseName() + '_解析.xlsx', blob: x.blob }); note = excelNote(x); } finally { A.busy(false); } }
+      if (opt.pdf) out.push({ name: A.baseName() + '_報告書.pdf', blob: await A.reportPdf() });
+      if (opt.report) { await A.ensureHolmAsync(); out.push({ name: A.baseName() + '_報告書.txt', blob: new Blob(['﻿' + A.reportPlain()], { type: 'text/plain' }) }); }
+      if (!out.length) { A.toast('書き出すものがありません。', true); return; }
+      if (dir) {
+        for (var j = 0; j < out.length; j++) { A.busy(true, 'ファイルを保存しています（' + (j + 1) + ' / ' + out.length + '）'); try { var fh = await dir.getFileHandle(out[j].name, { create: true }), w = await fh.createWritable(); await w.write(out[j].blob); await w.close(); } finally { A.busy(false); } }
+        A.toast(out.length + ' 個のファイルを「' + dir.name + '」に書き出しました。' + note);
+      } else {
+        var files = []; for (var q = 0; q < out.length; q++) files.push({ name: out[q].name, data: new Uint8Array(await out[q].blob.arrayBuffer()) });
+        if (await A.saveBlob(await A.zip(files), A.baseName() + '_書き出し.zip', 'ZIP', '.zip')) A.toast(out.length + ' 個のファイルを 1 つの ZIP にまとめて保存しました。' + note);
+      }
+    } catch (e) { A.toast(e && e.name === 'AbortError' ? '書き出しをやめました。' : '書き出せませんでした（' + e.message + '）。', true); }
+    finally { A.busy(false); }
+  }
+
+  // ---------------- 数値の列のデータクリーニング
+  function rerunCol(col) {
+    S.P.tabs.forEach(function (t) { var d = A.def(t.type); if (!d) return; var uses = d.slots.some(function (s) { var sl = t.slots[s.id]; return sl && (sl.col === col || (sl.cols || []).indexOf(col) >= 0); }); if (uses) A.schedule(t.id); });
+    A.render();
+  }
+  function numCleanDialog(col) {
+    var x = A.v(col); if (!x || !x.clean) return;
+    var c = x.clean, fix = x.fix || {}, rows = '';
+    function val(r) { return Object.prototype.hasOwnProperty.call(fix, r.raw) ? fix[r.raw] : (r.val === undefined ? null : r.val); }
+    function row(r, kind) {
+      var v0 = val(r), ex = v0 === null;
+      return '<tr data-raw="' + esc(r.raw) + '" data-kind="' + kind + '"><td class="md-nc-raw">' + esc(r.raw) + '</td><td class="num">' + r.n + '</td>' +
+        '<td><input type="text" inputmode="decimal" class="md-in md-nc-val" value="' + (ex ? '' : esc(String(v0))) + '" placeholder="（除外）"></td></tr>';
+    }
+    (c.fixed || []).forEach(function (r) { rows += row(r, 'fixed'); });
+    var rowsF = ''; (c.fail || []).forEach(function (r) { rowsF += row(r, 'fail'); });
+    var body = '<p>「' + esc(x.label) + '」の回答のうち、そのままでは数値として読めなかったものです。値を直すと、その回答をした人すべてに当てはめます。<b>空欄にした回答は解析から除外します。</b></p>' +
+      (rows ? '<div class="md-sub">自動で直した回答（' + c.nFixed + ' 件）</div><p class="md-hint">全角数字・単位（歳・時間など）・「約」「くらい」を外し、「3～4」のような範囲は中央の値にしました。</p><table class="md-numclean"><thead><tr><th>回答</th><th>件数</th><th>使う値</th></tr></thead><tbody>' + rows + '</tbody></table>' : '') +
+      (rowsF ? '<div class="md-sub">数値として読めなかった回答（' + c.nFail + ' 件）</div><p class="md-hint">値を入れると、その値として使います。空欄のままなら除外します。</p><table class="md-numclean"><thead><tr><th>回答</th><th>件数</th><th>使う値</th></tr></thead><tbody>' + rowsF + '</tbody></table>' : '');
+    modal('数値の回答を確かめる', body, '<button class="md-btn" data-act="closeModal">やめる</button><button class="md-btn" id="md_nc_reset">最初の状態に戻す</button><button class="md-btn md-btn-primary" id="md_nc_ok">この値で使う</button>', 560);
+    $('#md_nc_reset').onclick = function () { closeModal(); A.commit(function () { delete x.fix; }); rerunCol(col); };
+    $('#md_nc_ok').onclick = function () {
+      var nf = {}, bad = [];
+      document.querySelectorAll('#md_modal tr[data-raw]').forEach(function (tr) {
+        var raw = tr.dataset.raw, kind = tr.dataset.kind, t = tr.querySelector('.md-nc-val').value.trim().replace(/[０-９．－]/g, function (ch) { return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0); });
+        var auto = (kind === 'fixed' ? ((c.fixed || []).find(function (r) { return r.raw === raw; }) || {}).val : null);
+        if (t === '') { if (kind === 'fixed') nf[raw] = null; return; }
+        if (!isFinite(+t)) { bad.push(raw); return; }
+        if (kind === 'fail' || +t !== auto) nf[raw] = +t;
+      });
+      if (bad.length) { A.toast('数値でない値があります（' + bad.slice(0, 3).join('、') + '）。数字を入れるか空欄にしてください。', true); return; }
+      closeModal(); A.commit(function () { if (Object.keys(nf).length) x.fix = nf; else delete x.fix; }); rerunCol(col);
+      A.toast('数値の回答を直しました。この列を使う解析を計算し直します。');
+    };
+  }
+  // ---------------- 解析の名前を変える（見出しの名前を入力欄に替える）
+  function renameAn(id) {
+    var tab = A.tabById(id || S.ui.sel); if (!tab) return;
+    if (S.ui.view !== 'analysis') { S.ui.view = 'analysis'; A.render(); }
+    var span = document.querySelector('[data-anname="' + tab.id + '"]'); if (!span) return;
+    var inp = document.createElement('input'); inp.type = 'text'; inp.className = 'md-an-rename'; inp.value = tab.name; span.replaceWith(inp); inp.focus(); inp.select();
+    inp.addEventListener('mousedown', function (e) { e.stopPropagation(); });
+    inp.addEventListener('blur', function () { var v = inp.value.trim(), cancel = inp.dataset.cancel; if (!cancel && v && v !== tab.name) A.commit(function () { tab.name = v; tab.nameAuto = false; }); else A.render(); });
+  }
+  function moveTab(id, d) { var i = S.P.tabs.findIndex(function (t) { return t.id === id; }), j = i + d; if (i < 0 || j < 0 || j >= S.P.tabs.length) return; A.commit(function () { var t = S.P.tabs.splice(i, 1)[0]; S.P.tabs.splice(j, 0, t); }); scrollToAn(id); }
+  function addFig(tab) {
+    var m = Chart.model(resOf(tab)); if (!m) return;
+    var kinds = Chart.kinds(m), used = tab.figs.map(function (f) { return Chart.kindOf(m, f); }), next = kinds.find(function (k) { return used.indexOf(k) < 0; }) || kinds[0];
+    A.commit(function () { var f = tab.figs.length ? A.clone(tab.figs[tab.figs.length - 1]) : A.newFig(); f.kind = next; f.colors = {}; f.vTitle = null; f.cTitle = null; f.min = f.max = f.step = null; f.w = 560; f.h = 340; f.fit = true; tab.figs.push(f); }, { quiet: true });
+    S.ui.sel = tab.id; S.ui.selFig = tab.figs.length - 1; S.ui.rtab = 'figure'; A.render();
+  }
+  function delFig(tab, k) { if (!tab.figs[k]) return; A.commit(function () { tab.figs.splice(k, 1); }, { quiet: true }); S.ui.selFig = Math.max(0, Math.min(S.ui.selFig, tab.figs.length - 1)); A.render(); A.toast('図を削除しました。Ctrl+Z で元に戻せます。'); }
+
+  // ---------------- ボタンの動作
+  var act = {
+    closeModal: closeModal,
+    openCsv: async function () { var f = await A.pickFile('.csv,.tsv,.txt'); if (f) A.handleFile(f); },
+    replaceCsv: async function () { var f = await A.pickFile('.csv,.tsv,.txt'); if (!f) return; try { await A.loadCsv(new Uint8Array(await f.arrayBuffer()), f.name, true); } catch (e) { A.toast(e.message, true); } },
+    openProject: projectDialog,
+    openProjName: function (arg) { A.openProjectByName(arg); },
+    save: async function () { if (!S.data) return; if (S.projName) { await A.saveProjectAs(S.projName); refreshProjects(); } else act.saveAs(); },
+    saveAs: function () { if (!S.data) { A.toast('保存するデータがありません。先に CSV を入れてください。', true); return; } askName('プロジェクトを保存', S.projName || A.baseName(), async function (name) { await A.saveProjectAs(name); refreshProjects(); }); },
+    projFile: A.exportProjectFile,
+    undo: A.undo, redo: A.redo,
+    togglePane: function () { S.ui.pane = !S.ui.pane; A.render(); },
+    panePrev: function () { stepRtab(-1); }, paneNext: function () { stepRtab(1); },
+    fileMenu: function (arg, el) {
+      var r = el.getBoundingClientRect();
+      menu(r.left, r.bottom, [{ name: 'CSV を開く', key: 'Ctrl+O', run: act.openCsv }, { name: 'プロジェクトを開く', run: act.openProject }, '-',
+        { name: '上書き保存', key: 'Ctrl+S', run: act.save, off: !S.data }, { name: '名前を付けて保存', run: act.saveAs, off: !S.data }, { name: 'プロジェクトをファイルに書き出す', run: act.projFile, off: !S.data }, '-',
+        { name: 'まとめて書き出す', run: act.exportAll, off: !S.P.tabs.length }, { name: 'このアプリについて', run: act.about }]);
+    },
+    newAnalysis: function () {
+      if (!S.data) { A.toast('先に CSV ファイルを入れてください。', true); return; }
+      if (S.P.tabs.length >= A.MAX_TABS) { A.toast('解析は ' + A.MAX_TABS + ' 個までです。使わない解析を削除してください。', true); return; }
+      var first = !S.P.tabs.length;
+      analysisDialog(function (id) {
+        var t; A.commit(function () { t = A.newTab(id); }, { quiet: true });
+        if (t) { S.ui.sel = t.id; S.ui.selFig = 0; S.ui.view = 'analysis'; S.ui.rtab = 'analysis'; }
+        A.render();
+        if (t) { scrollToAn(t.id); if (!window.CTS_TOUCH) setTimeout(function () { var sel = document.querySelector('.md-an[data-an="' + t.id + '"] select[data-slot]'); if (sel) sel.focus(); }, 60); }
+      }, first ? '解析を始める：解析の種類を選ぶ' : '新しい解析：解析の種類を選ぶ');
+    },
+    changeType: function () {
+      var tab = A.curTab(); if (!tab) return;
+      analysisDialog(function (id) {
+        if (id === tab.type) return;
+        A.commit(function () {
+          var old = []; Object.keys(tab.slots).forEach(function (k) { A.slotCols(tab.slots[k]).forEach(function (c) { old.push({ col: c, cats: tab.slots[k].cols ? null : tab.slots[k].cats }); }); }); var d = A.def(id);
+          tab.type = id; tab.slots = {}; tab.opts = {}; (d.opts || []).forEach(function (o) { tab.opts[o.id] = o.default; });
+          d.slots.forEach(function (sd) {
+            if (sd.many) { var cs = old.filter(function (s) { var x = A.v(s.col); return x && sd.types.indexOf(x.type) >= 0; }).map(function (s) { return s.col; }); old = old.filter(function (s) { return cs.indexOf(s.col) < 0; }); tab.slots[sd.id] = { cols: [], cats: [] }; A.setItems(tab, sd.id, cs); return; }
+            var k = old.findIndex(function (s) { var x = A.v(s.col); return x && sd.types.indexOf(x.type) >= 0; });
+            if (k >= 0) { var s = old.splice(k, 1)[0]; tab.slots[sd.id] = sd.excludeSpecial || !s.cats ? { col: s.col, cats: A.defaultCats(A.v(s.col), sd) } : { col: s.col, cats: s.cats }; } else tab.slots[sd.id] = { col: null, cats: [] };
+          });
+          tab.figs.forEach(function (f) { f.kind = null; }); A.autoName(tab);
+        }, { run: tab.id });
+      }, '解析の種類を変える');
+    },
+    toFisher: function (arg) { var tab = A.tabById(arg) || A.curTab(); if (!tab) return; A.commit(function () { tab.type = 'fisher'; var keep = tab.opts.residMode; tab.opts = { residMode: keep || 'z' }; }, { run: tab.id }); },
+    dupTab: function () {
+      var tab = A.curTab(); if (!tab) return;
+      if (S.P.tabs.length >= A.MAX_TABS) { A.toast('解析は ' + A.MAX_TABS + ' 個までです。', true); return; }
+      var c; A.commit(function () { c = A.clone(tab); c.id = 't' + (++S.P.seq); c.name = tab.name + '（コピー）'; c.nameAuto = false; c.collapsed = false; S.P.tabs.splice(S.P.tabs.indexOf(tab) + 1, 0, c); }, { quiet: true });
+      S.ui.sel = c.id; S.ui.selFig = 0; A.schedule(c.id); A.render(); scrollToAn(c.id);
+    },
+    delTab: function () {
+      var tab = A.curTab(); if (!tab) return; var i = S.P.tabs.indexOf(tab);
+      A.commit(function () { S.P.tabs.splice(i, 1); }, { quiet: true }); delete S.results[tab.id];
+      S.ui.sel = S.P.tabs.length ? S.P.tabs[Math.min(i, S.P.tabs.length - 1)].id : null; S.ui.selFig = 0; A.render();
+      A.toast('「' + tab.name + '」を削除しました。Ctrl+Z で元に戻せます。');
+    },
+    swap: function () {
+      var tab = A.curTab(); if (!tab) return; var ks = tab.slots.a && tab.slots.b ? ['a', 'b'] : tab.slots.x && tab.slots.y ? ['x', 'y'] : null; if (!ks) return;
+      var d = A.def(tab.type), ok = ks.every(function (k, i) { var other = tab.slots[ks[1 - i]], sd = d.slots.find(function (s) { return s.id === k; }), x = other.col !== null ? A.v(other.col) : null; return !x || sd.types.indexOf(x.type) >= 0; });
+      if (!ok) { A.toast('この 2 つの列は種類が違うため、入れ替えられません。', true); return; }
+      A.commit(function () { var t = tab.slots[ks[0]]; tab.slots[ks[0]] = tab.slots[ks[1]]; tab.slots[ks[1]] = t; A.autoName(tab); }, { run: tab.id });
+    },
+    swapAt: function (arg) { if (A.tabById(arg)) { S.ui.sel = arg; act.swap(); } },
+    itemRemove: function (arg) { var p = arg.split(':'), tab = A.tabById(p[0]); if (!tab) return; var cols = tab.slots[p[1]].cols.slice(); cols.splice(+p[2], 1); S.ui.sel = tab.id; A.commit(function () { A.setItems(tab, p[1], cols); }, { run: tab.id }); },
+    itemMove: function (arg) { var p = arg.split(':'), tab = A.tabById(p[0]); if (!tab) return; var cols = tab.slots[p[1]].cols.slice(), i = +p[2], j = i + (+p[3]); if (j < 0 || j >= cols.length) return; var c = cols.splice(i, 1)[0]; cols.splice(j, 0, c); S.ui.sel = tab.id; A.commit(function () { tab.slots[p[1]].cols = cols; A.autoName(tab); }, { run: tab.id }); },
+    itemAddSame: function (arg) {
+      var p = arg.split(':'), tab = A.tabById(p[0]); if (!tab) return; var sd = A.def(tab.type).slots.find(function (x) { return x.id === p[1]; }), cols = tab.slots[p[1]].cols.slice(), first = A.v(cols[0]);
+      S.P.vars.forEach(function (x) { if (cols.indexOf(x.col) < 0 && sd.types.indexOf(x.type) >= 0 && A.sameChoices(first, x)) cols.push(x.col); });
+      S.ui.sel = tab.id; A.commit(function () { A.setItems(tab, p[1], cols); }, { run: tab.id });
+    },
+    rerun: function () { var tab = A.curTab(); if (tab) { delete S.results[tab.id]; A.schedule(tab.id); A.render(); } },
+    toggleAn: function (arg) { var tab = A.tabById(arg); if (tab) A.commit(function () { tab.collapsed = !tab.collapsed; }, { key: 'fold' }); },
+    foldAll: function (arg) { A.commit(function () { S.P.tabs.forEach(function (t) { t.collapsed = arg === '1'; }); }); },
+    moveAn: function (arg) { if (S.ui.sel) moveTab(S.ui.sel, +arg); },
+    moveAnId: function (arg) { var p = arg.split(':'); moveTab(p[0], +p[1]); },
+    renameAn: function (arg) { renameAn(arg); },
+    anMenu: function (arg, el) {
+      var r = el.getBoundingClientRect(); anMenuAt(arg, r.left, r.bottom);
+    },
+    checkAll: function (arg) { A.commit(function () { S.P.tabs.forEach(function (t) { t.checked = arg === '1'; }); }); },
+    goReport: function () { S.ui.view = 'report'; S.ui.rtab = 'export'; A.render(); },
+    goTab: function (arg) { setRtab(arg); },
+    moreRows: function () { S.ui.rawRows += 500; A.renderCenter(); },
+    freqOfVar: function () {
+      var x = S.ui.selVar !== null ? A.v(S.ui.selVar) : null; if (!x || !A.isCat(x)) return; var t;
+      A.commit(function () { t = A.newTab('freq'); if (t) A.setSlot(t, 'a', x.col); }, { quiet: true });
+      if (t) { S.ui.sel = t.id; S.ui.selFig = 0; S.ui.view = 'analysis'; S.ui.rtab = 'analysis'; A.schedule(t.id); } A.render(); if (t) scrollToAn(t.id);
+    },
+    varCatUp: function (arg) { var x = A.v(S.ui.selVar), i = +arg; if (!x || i < 1) return; A.commit(function () { var c = x.cats.splice(i, 1)[0]; x.cats.splice(i - 1, 0, c); }); },
+    catMove: function (arg) { var p = arg.split(':'), tab = A.curTab(), sl = tab.slots[p[0]], i = +p[1], j = i + (+p[2]); if (j < 0 || j >= sl.cats.length) return; A.commit(function () { var c = sl.cats.splice(i, 1)[0]; sl.cats.splice(j, 0, c); }, { run: tab.id }); },
+    catTwo: function (arg) {
+      var tab = A.curTab(), sl = tab.slots[arg], on = sl.cats.filter(function (c) { return c.on; }), half = Math.ceil(on.length / 2);
+      A.commit(function () { var a = on.slice(0, half), b = on.slice(half), la = a.map(function (c) { return c.v; }).join('・'), lb = b.map(function (c) { return c.v; }).join('・'); a.forEach(function (c) { c.label = la; }); b.forEach(function (c) { c.label = lb; }); }, { run: tab.id });
+    },
+    catReset: function (arg) { var tab = A.curTab(), d = A.def(tab.type), sd = d.slots.find(function (s) { return s.id === arg; }), sl = tab.slots[arg]; A.commit(function () { sl.cats = sl.cols ? A.defaultCatsMany(sl.cols, sd) : A.defaultCats(A.v(sl.col), sd); }, { run: tab.id }); },
+    fsStep: function (arg) { var f = A.curFig(); if (!f) return; var cur = f.fsTick, i = FS_STEPS.findIndex(function (v) { return v >= cur; }); if (i < 0) i = FS_STEPS.length - 1; if (+arg > 0 && FS_STEPS[i] === cur) i++; else if (+arg < 0) i--; setPath('fig.fsAll', FS_STEPS[clamp(i, 0, FS_STEPS.length - 1)]); },
+    pickColor: function (arg, el) { var r = el.getBoundingClientRect(); pickSeriesColor(+arg, r.left - 240, r.bottom + 2); },
+    pickPath: function (arg, el) { var r = el.getBoundingClientRect(), none = arg === 'tst.headFill' || arg === 'tst.stripe'; colorPop(Math.min(r.left, window.innerWidth - 250), r.bottom + 2, function (c) { if (c || none) setPath(arg, c); }, none ? '色を付けない' : null); },
+    palettePop: function (arg, el) {
+      closePop(); var r = el.getBoundingClientRect(), d = document.createElement('div'), fig = A.curFig(), tab = A.curTab(), m = Chart.model(resOf(tab));
+      var only = arg === 'tst.heatPal' || (fig && m && Chart.kindOf(m, fig) === 'heat') ? ['濃淡', '2 方向'] : null;
+      d.className = 'md-palpop'; d.innerHTML = A.paletteGallery(arg, A.get(arg), only); document.body.appendChild(d); place(d, r.left, r.bottom + 2);
+    },
+    clearColors: function () { var f = A.curFig(); A.commit(function () { f.colors = {}; }); },
+    clearLegNames: function () { var f = A.curFig(); A.commit(function () { f.legNames = {}; }); },
+    pickLegBg: function (arg, el) {
+      var r = el.getBoundingClientRect(), f = A.curFig(); if (!f) return;
+      colorPop(Math.min(r.left, window.innerWidth - 250), r.bottom + 2, function (c) { setPath('fig.legBg', c); }, null, [['', '自動（図の中に置いたときだけ白）'], ['none', '塗りなし（透明）']]);
+    },
+    // 自動保存のスイッチ。まだ名前がないときは、先に名前を付けて保存してからオンにする
+    autoSave: function () {
+      if (!S.data) return;
+      if (S.P.settings.autoSave) { S.P.settings.autoSave = false; A.markDirty(); A.toast('自動保存をオフにしました。この設定も、次に保存するときにプロジェクトに入ります。'); A.render('chrome'); return; }
+      function turnOn() { S.P.settings.autoSave = true; A.toast('自動保存をオンにしました。変更すると数秒後に「' + S.projName + '」へ上書き保存します。'); A.markDirty(); A.render('chrome'); }
+      if (S.projName) turnOn();
+      else askName('自動保存するプロジェクトの名前', A.baseName(), async function (name) {
+        S.P.settings.autoSave = true;
+        if (await A.saveProjectAs(name)) { refreshProjects(); A.toast('自動保存をオンにしました。変更すると数秒後に「' + S.projName + '」へ上書き保存します。'); }
+        else S.P.settings.autoSave = false;
+        A.render('chrome');
+      });
+    },
+    figDefault: function () { var f = A.curFig(), o = {}; FIG_STYLE_KEYS.concat(['w', 'h', 'orient']).forEach(function (k) { o[k] = f[k]; }); A.commit(function () { S.P.figDefault = A.clone(o); }); A.toast('これから作る図に、この書式を使います。'); },
+    figApplyAll: function () { var f = A.curFig(), o = {}, n = 0; FIG_STYLE_KEYS.forEach(function (k) { o[k] = f[k]; }); A.commit(function () { S.P.tabs.forEach(function (t) { t.figs.forEach(function (g) { Object.assign(g, A.clone(o)); n++; }); }); S.P.figDefault = Object.assign(S.P.figDefault || {}, A.clone(o)); }); A.toast('すべての図の書式をそろえました（' + n + ' 個）。'); },
+    figReset: function () { var tab = A.curTab(), k = Math.min(S.ui.selFig, tab.figs.length - 1), kind = tab.figs[k].kind; A.commit(function () { tab.figs[k] = A.newFig(); tab.figs[k].kind = kind; }); },
+    addFig: function () { var tab = A.curTab(); if (tab) addFig(tab); },
+    addFigTo: function (arg) { var tab = A.tabById(arg); if (tab) addFig(tab); },
+    delFig: function () { var tab = A.curTab(); if (tab) delFig(tab, Math.min(S.ui.selFig, tab.figs.length - 1)); },
+    delFigAt: function (arg) { var p = arg.split(':'), tab = A.tabById(p[0]); if (tab) { S.ui.sel = tab.id; delFig(tab, +p[1]); } },
+    selFig: function (arg) { S.ui.selFig = +arg; A.render(); },
+    figPng: function () { var tab = A.curTab(); if (tab) savePng(tab, Math.min(S.ui.selFig, tab.figs.length - 1)); },
+    figPngAt: function (arg) { var p = arg.split(':'); savePng(A.tabById(p[0]), +p[1]); },
+    figCopy: function () { var tab = A.curTab(); if (tab) copyPng(tab, Math.min(S.ui.selFig, tab.figs.length - 1)); },
+    figCopyAt: function (arg) { var p = arg.split(':'); copyPng(A.tabById(p[0]), +p[1]); },
+    figSvg: async function () { var fg = selFigObj(), tab = A.curTab(); if (!fg) return; if (await A.saveBlob(new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n' + fg.r.svg], { type: 'image/svg+xml' }), A.safeName(tab.name) + '_図' + (Math.min(S.ui.selFig, tab.figs.length - 1) + 1) + '.svg', 'SVG 画像', '.svg')) A.toast('図を SVG で保存しました。'); },
+    tblCopy: function () { var tab = A.curTab(); if (tab) copyTables(tab); }, tblCopyAt: function (arg) { copyTables(A.tabById(arg)); },
+    tblCsv: function () { var tab = A.curTab(); if (tab) saveTablesCsv(tab); }, tblCsvAt: function (arg) { saveTablesCsv(A.tabById(arg)); },
+    tblPng: async function () {
+      var tab = A.curTab(); if (!tab) return;
+      try { if (await A.saveBlob(await tablesPng(tab), A.safeName(tab.name) + '_表.png', 'PNG 画像', '.png')) A.toast('表を画像で保存しました。'); } catch (e) { A.toast('表を画像にできませんでした（' + e.message + '）。', true); }
+    },
+    tDesign: function (arg) { var tab = A.curTab(); if (!tab) return; A.commit(function () { tab.tstyle.design = arg; Object.assign(tab.tstyle, T_PRESET[arg]); }); },
+    tstDefault: function () { var tab = A.curTab(); A.commit(function () { S.P.tstyleDefault = A.clone(tab.tstyle); }); A.toast('これから作る解析の表に、このデザインを使います。'); },
+    tstApplyAll: function () { var tab = A.curTab(), o = A.clone(tab.tstyle); A.commit(function () { S.P.tabs.forEach(function (t) { var heat = t.tstyle.heat; t.tstyle = A.clone(o); t.tstyle.heat = t === tab ? o.heat : heat; }); S.P.tstyleDefault = A.clone(o); }); A.toast('すべての表のデザインをそろえました（' + S.P.tabs.length + ' 個）。'); },
+    tstReset: function () { var tab = A.curTab(); A.commit(function () { tab.tstyle = Object.assign(A.tableDefaults(), A.clone(S.P.tstyleDefault || {})); }); },
+    textCopyAt: async function (arg) { var tab = A.tabById(arg), res = resOf(tab); if (!res || !res.ok) return; if (await copyText(tab.reportText !== null ? tab.reportText : res.report)) A.toast('文をコピーしました。'); },
+    resetTextAt: function (arg) { var tab = A.tabById(arg); if (tab) A.commit(function () { tab.reportText = null; tab.reportBase = null; }); },
+    resetAllText: function () { A.commit(function () { S.P.tabs.forEach(function (t) { t.reportText = null; t.reportBase = null; }); }); A.toast('すべての文を定型文に戻しました。'); },
+    repPdf: function () { A.savePdf(); },
+    tblSizeAuto: function () { var tab = A.curTab(); if (!tab) return; A.commit(function () { delete tab.tstyle.tw; delete tab.tstyle.rowH; }); },
+    itemRev: function (arg) {
+      var p = arg.split(':'), tab = A.tabById(p[0]); if (!tab) return; var sl = tab.slots[p[1]], c = +p[2];
+      A.commit(function () { var r = (sl.reverse || []).slice(), i = r.indexOf(c); if (i >= 0) r.splice(i, 1); else r.push(c); sl.reverse = r; }, { run: tab.id });
+    },
+    asNumeric: function (arg) { var x = A.v(+arg); if (!x) return; A.commit(function () { x.typeOrig = x.type; x.type = 'numeric'; }); rerunCol(+arg); A.toast('「' + x.label + '」を数値として読みます。直した回答と読めない回答は「確かめる」で見直せます。'); },
+    asChoice: function (arg) { var x = A.v(+arg); if (!x || !x.typeOrig) return; A.commit(function () { x.type = x.typeOrig; delete x.typeOrig; }); rerunCol(+arg); },
+    numClean: function (arg) { numCleanDialog(+arg); },
+    repTxt: async function () { await A.ensureHolmAsync(); if (await A.saveBlob(new Blob(['﻿' + A.reportPlain()], { type: 'text/plain' }), A.baseName() + '_報告書.txt', 'テキスト', '.txt')) A.toast('報告書をテキストで保存しました。'); },
+    repCopy: async function () { await A.ensureHolmAsync(); if (await copyText(A.reportPlain())) A.toast('報告書の全文をコピーしました。'); },
+    excelOnly: async function () {
+      var tabs = okTabs(); if (!tabs.length) { A.toast('☑ を付けた解析のうち、結果が出ているものがありません。', true); return; }
+      A.busy(true, 'Excel ファイルを作っています');
+      try { var x = await excelBlob(tabs); A.busy(false); if (await A.saveBlob(x.blob, A.baseName() + '_解析.xlsx', 'Excel ブック', '.xlsx')) A.toast('Excel ファイルを保存しました。' + excelNote(x)); return; } catch (e) { A.toast(e.message, true); }
+      A.busy(false);
+    },
+    exportAll: function () {
+      var tabs = okTabs(), nfig = tabs.reduce(function (s, t) { return s + t.figs.length; }, 0), canDir = !!window.showDirectoryPicker;
+      if (!tabs.length) { A.toast('☑ を付けた解析のうち、結果が出ているものがありません。解析の見出しのチェックを確かめてください。', true); return; }
+      modal('まとめて書き出す', '<p>☑ を付けた <b>' + tabs.length + ' 件</b>の解析を書き出します。</p>' +
+        '<label class="md-check"><input type="checkbox" id="md_ex_fig" checked>図（PNG、' + nfig + ' 個）　名前は「解析の名前_図1.png」</label>' +
+        '<label class="md-check"><input type="checkbox" id="md_ex_xl" checked>Excel ファイル（データと、関数で再現した解析）</label>' +
+        '<label class="md-check"><input type="checkbox" id="md_ex_pdf" checked>報告書（PDF。文・表・図をすべて含む）</label>' +
+        '<label class="md-check"><input type="checkbox" id="md_ex_rep">報告書（テキスト。文と表だけ）</label>' +
+        '<p class="md-hint" style="margin-top:8px">' + (canDir ? '次の画面で書き出し先のフォルダーを選びます。同じ名前のファイルがあるときは上書きします。' : 'この環境ではフォルダーを選べないため、1 つの ZIP ファイルにまとめて保存します。') + '</p>',
+        '<button class="md-btn" data-act="closeModal">やめる</button><button class="md-btn md-btn-primary" id="md_ex_go">' + (canDir ? 'フォルダーを選んで書き出す' : 'ZIP にまとめて保存') + '</button>', 520);
+      $('#md_ex_go').onclick = async function () {
+        var opt = { figs: $('#md_ex_fig').checked, excel: $('#md_ex_xl').checked, report: $('#md_ex_rep').checked, pdf: $('#md_ex_pdf').checked }, dir = null;
+        if (opt.pdf && A.askLocalFonts) A.askLocalFonts();                 // MS 明朝・Times New Roman を使う許可は、押した直後にしかたずねられない
+        if (canDir) { try { dir = await window.showDirectoryPicker({ mode: 'readwrite' }); } catch (e) { return; } }       // フォルダーを選ぶ画面（OS 標準）
+        closeModal(); exportAll(dir, opt);
+      };
+    },
+    about: function () { modal('このアプリについて', aboutHtml(), '<button class="md-btn md-btn-primary" data-act="closeModal">閉じる</button>', 760); }
+  };
+  // 「このアプリについて」の中身：概要、データの扱い、解析ごとの計算方法、共通の決まり、Excel での再現、使っている部品
+  function aboutHtml() {
+    var web = !!window.CTS_WEB, v = window.CTS_APP_VERSION ? ' ' + esc(window.CTS_APP_VERSION) : '';
+    function h(t) { return '<div class="md-sec-title" style="margin:14px 0 4px">' + t + '</div>'; }
+    function tbl(head, rows) {
+      return '<table class="md-t0" style="width:100%"><tr>' + head.map(function (x) { return '<th class="md-rh">' + x + '</th>'; }).join('') + '</tr>' + rows.map(function (r) {
+        if (typeof r === 'string') return '<tr><th class="md-rh" colspan="' + head.length + '" style="text-align:left;background:#F3F7F4">' + r + '</th></tr>';
+        return '<tr><th class="md-rh" style="width:30%;white-space:normal">' + r[0] + '</th>' + r.slice(1).map(function (c) { return '<td class="md-tx" style="white-space:normal">' + c + '</td>'; }).join('') + '</tr>';
+      }).join('') + '</table>';
+    }
+    var A1 = [
+      '集計',
+      ['単純集計', '選択肢ごとの人数と割合。「回答の偏りを検定する」を選ぶと、適合度のカイ二乗検定（chisq.test）。複数回答の質問は、選んだ人の割合（合計は 100% を超える）。'],
+      ['複数の設問の単純集計', '同じ選択肢の設問を並べて集計。順序のある回答では、フリードマン検定（friedman.test、すべての設問に答えた人のみ）と効果量 Kendall の W を選べる。'],
+      ['数値の要約とヒストグラム', 'n、平均、標準偏差、最小値、四分位数、中央値、最大値。区切り方は、自動（整数で範囲が狭ければ値ごと）・スタージェスの公式・フリードマン＝ダイアコニスの方法から選ぶ。'],
+      ['回答日時の推移', '回答日時を日・週・月ごとに数え、累積の割合も示す。'],
+      '2 つの質問の関連',
+      ['カイ二乗検定', 'chisq.test（2×2 の表でも補正なしが初期設定。イェーツの補正を選べる）。効果量は Cramér の V（2×2 では φ）。調整済み標準化残差でセルごとの多い・少ないを判定。'],
+      ['フィッシャーの正確確率検定', 'fisher.test。2×2 の表では条件付き最尤推定のオッズ比と 95% 信頼区間。表が大きく正確な計算が難しいときは、モンテカルロ法（20 万回）に自動で切り替え。'],
+      ['割合の傾向検定', 'prop.trend.test（コクラン・アーミテージ）。段階に等間隔の得点を与える。'],
+      '順序のある回答の比較',
+      ['マン・ホイットニーの U 検定', 'wilcox.test（正規近似、同順位と連続性の補正）。効果量 r = |Z| / √N。'],
+      ['クラスカル・ウォリス検定', 'kruskal.test。効果量 ε² = H / (N − 1)。多重比較は pairwise.wilcox.test（ホルム法）。'],
+      ['スピアマンの順位相関', 'cor.test(method = "spearman")。'],
+      '平均の比較',
+      ['t 検定', 'ウェルチの t 検定（t.test）。分散が等しいと仮定するスチューデントの t 検定も選べる。効果量は Hedges の g。平均の差の 95% 信頼区間。'],
+      ['一元配置分散分析', 'ウェルチの分散分析（oneway.test）と、ゲームス・ハウエルの方法による多重比較。分散が等しいと仮定する通常の分散分析（テューキーの方法、TukeyHSD）も選べる。効果量は η²。'],
+      ['対応のある t 検定', 't.test(paired = TRUE)。効果量は dz（差の平均 ÷ 差の標準偏差）。差の 95% 信頼区間。'],
+      '同じ人の 2 つの回答',
+      ['ウィルコクソンの符号付順位検定', 'wilcox.test(paired = TRUE)。'],
+      ['マクネマー検定', 'mcnemar.test（連続性の補正あり）。食い違った組が 25 未満のときは binom.test（正確二項検定）。'],
+      '関連・相関',
+      ['ピアソンの相関係数', 'cor.test(method = "pearson")。95% 信頼区間はフィッシャーの z 変換による。散布図に回帰直線（lm）を引く。'],
+      '複数回答',
+      ['複数回答のクロス集計', '選択肢ごとに chisq.test または fisher.test、p.adjust（ホルム法）で補正。'],
+      '尺度・多変量',
+      ['尺度の信頼性', 'クロンバックの α と標準化 α、項目と残りの合計との相関、その項目を除いたときの α。逆転項目は得点を反転して計算。'],
+      ['探索的因子分析', '最尤法（factanal）。回転はプロマックス（因子間相関も示す）またはバリマックス。因子の数は、自動のときは固有値が 1 を超える数（カイザー基準）。'],
+      ['コレスポンデンス分析', '標準化残差の行列の特異値分解。行と列の両方を主座標で示す（対称マップ）。関連の有無はカイ二乗検定で示す。'],
+      '自由記述',
+      ['テキストマイニング', '文をブラウザの単語分割（Intl.Segmenter）で語に分け、漢字・カタカナの続く語をつなげ、助詞などを除く。頻出語、Jaccard 係数による共起ネットワーク（配置はフルクターマン・ラインゴールド法、まとまりはラベル伝播法）。グループを選ぶと、語ごとにカイ二乗検定を行い、ホルム法で補正。']
+    ];
+    return '<p><b>CrossTab Studio</b>' + v + '　アンケート（Google フォームの回答など）の集計と検定を行うソフトです。計算はすべて' + (web ? 'この端末のブラウザの中で動く R（webR）' : 'このパソコンの中の R') + (S.r ? '（バージョン ' + esc(S.r) + '）' : '') + 'で行います。</p>' +
+      h('データの扱い') +
+      '<ul style="margin:0;padding-left:1.4em">' +
+      '<li>読み込んだデータと結果は、' + (web ? 'この端末の中' : 'このパソコンの中') + 'だけで扱い、外部に送信しません。AI のサービスにもつないでいません。</li>' +
+      '<li>プロジェクトは' + (web ? 'この端末（ブラウザの中）に保存します。ブラウザのデータを消すと消えるので、大事なものは「ファイルに書き出す」で .prj ファイルにも保存してください。' : 'この端末（ブラウザの中）に保存します。') + '</li>' +
+      '</ul>' +
+      h('解析と計算の方法') + tbl(['解析', '使う R の関数と出力'], A1) +
+      h('すべての解析に共通の決まり') +
+      '<ul style="margin:0;padding-left:1.4em">' +
+      '<li>順序のある回答は、先頭の選択肢を上位として順位や得点を付けます。</li>' +
+      '<li>無回答と、チェックを外した選択肢を選んだ人は、その解析から除きます。数値の回答は、全角数字・単位・範囲（「1〜2 時間」など）を直してから使い、数値にできない回答は除きます。</li>' +
+      '<li>p 値は「関連がない（差がない）」という仮定のもとで、今回以上の偏りが出る確率です。有意でないことは、関連がないことの証明にはなりません。</li>' +
+      '<li>報告書では、☑ を付けた検定をまとめてホルム法で補正した p も示します（設定で切り替えられます）。</li>' +
+      '<li>「平均と信頼区間」の図の線は、t 分布による平均の 95% 信頼区間です。</li>' +
+      '</ul>' +
+      h('Excel での再現') +
+      '<p style="margin:0">Excel ファイルには、データと、解析の計算を Excel の関数で書いたセルを入れます。結果の値は貼り付けず、すべて数式なので、計算の過程を確かめられます。次のものは Excel の関数では求められないため載せていません。アプリの値を使ってください。</p>' +
+      '<ul style="margin:4px 0 0;padding-left:1.4em">' +
+      '<li>2×2 より大きい表のフィッシャーの正確確率検定の p</li>' +
+      '<li>分散分析のあとの多重比較の p（スチューデント化された範囲の分布の関数が Excel にないため。平均の差と t は載せます）</li>' +
+      '<li>探索的因子分析（反復計算のため）</li>' +
+      '<li>コレスポンデンス分析の次元と座標（特異値分解のため。関連のカイ二乗検定までは載せます）</li>' +
+      '<li>テキストマイニング（語の分割のため）</li></ul>' +
+      '<p style="margin:4px 0 0">自由度が小数になるウェルチの検定の p は、Excel の T.DIST・F.DIST が自由度の小数を切り捨てるため、BETA.DIST で求めています。</p>' +
+      h('報告書（PDF）の字体') +
+      '<p style="margin:0">本文と表は、和文を MS 明朝、英数字を Times New Roman で書きます（' + (web ? 'パソコンの Chrome・Edge で、字体の使用を許可したとき' : 'パソコンに入っているとき') + '）。使えないときは、形の近い BIZ UD明朝と Tinos で書きます。見出しと図は BIZ UDPゴシックです。</p>' +
+      h('論文などでの引用のしかた') +
+      '<p style="margin:0">このアプリは広く配布されている一般的なソフトではないため、APA 方式などでは、本文で使ったことと版を書き、参考文献にも挙げます。計算に使った R も挙げるのが一般的です。投稿先や提出先に決まりがあるときは、そちらに合わせてください。本文の書き方の例：「集計と検定には CrossTab Studio（バージョン ' + esc(window.CTS_APP_VERSION || '') + '; ' + A.citeList()[0].inText.replace(/^（|）、.*$/g, '') + '）を用いた。」</p>' +
+      '<table class="md-t0" style="width:100%;margin-top:6px">' + A.citeList().map(function (c) {
+        return '<tr><th class="md-rh" style="width:24%;white-space:normal">' + esc(c.name) + '</th><td class="md-tx" style="white-space:normal;overflow-wrap:anywhere">' + c.ref(true) + (c.inText ? '<br><span class="md-hint" style="margin:0">本文中：' + esc(c.inText) + '</span>' : '') + '</td></tr>';
+      }).join('') + '</table>' +
+      '<p class="md-hint" style="margin:4px 0 0">版の番号は、使った版に合わせてください（報告書の末尾にも、作ったときの版で書き出します）。SIST 02 の形の（参照 …）は、アプリを使った日に直してください。</p>' +
+      h('ソースコード') +
+      '<p style="margin:0">このアプリのソースコードは、MIT ライセンスで GitHub に公開しています（https://github.com/OKUYAMA23/crosstab-studio）。計算の中身を確かめたり、改良したりできます。同梱している部品は、それぞれのライセンスに従います。</p>' +
+      h('使っている部品') +
+      '<p style="margin:0">R（GPL）' + (web ? '、webR（配布している一式は GPL-3.0）' : '、httpuv・jsonlite（R のパッケージ）') + '、pdf-lib・fontkit（MIT ライセンス）、HarfBuzz（MIT ライセンス）、BIZ UDPゴシック・BIZ UD明朝・Tinos（SIL Open Font License 1.1）。</p>';
+  }
+  function anMenuAt(id, x, y) {
+    var i = S.P.tabs.findIndex(function (t) { return t.id === id; }), tab = S.P.tabs[i]; if (!tab) return;
+    selectTab(id);
+    menu(x, y, [{ name: '名前を変更', key: 'F2', run: function () { renameAn(id); } }, { name: tab.collapsed ? '開く' : '畳む', run: function () { act.toggleAn(id); } }, '-',
+      { name: '上へ動かす', run: function () { moveTab(id, -1); }, off: i === 0 }, { name: '下へ動かす', run: function () { moveTab(id, 1); }, off: i === S.P.tabs.length - 1 }, '-',
+      { name: '複製', run: act.dupTab }, { name: '種類を変える', run: act.changeType }, { name: '図を追加', run: act.addFig, off: !Chart.model(resOf(tab)) }, '-', { name: '削除', danger: true, run: act.delTab }]);
+  }
+  function setRtab(k) {
+    S.ui.rtab = k;
+    if (k === 'data' && S.data) S.ui.view = 'data';
+    else if (S.ui.view === 'data' && k !== 'settings' && k !== 'home') S.ui.view = 'analysis';
+    if (S.ui.view === 'report' && (k === 'analysis' || k === 'figure' || k === 'table')) S.ui.view = 'analysis';
+    if ((k === 'analysis' || k === 'figure' || k === 'table') && !A.curTab() && S.P.tabs.length) S.ui.sel = S.P.tabs[0].id;
+    A.render();
+  }
+  function stepRtab(d) { var ks = A.RTABS.map(function (t) { return t[0]; }), i = ks.indexOf(S.ui.rtab); setRtab(ks[(i + d + ks.length) % ks.length]); }
+  function setView(v) { S.ui.view = v; if (v === 'data') S.ui.rtab = 'data'; else if (v === 'report') S.ui.rtab = 'export'; else if (S.ui.rtab === 'data') S.ui.rtab = 'home'; A.render(); }
+  async function changeVar(x, type, delim) {
+    var needCats = ['nominal', 'ordinal', 'multi'].indexOf(type) >= 0, cats = x.cats, same = (type === 'multi') === (x.type === 'multi') && delim === x.delim && A.isCat(x);
+    try {
+      if (needCats && !same) { var d = await A.apiData('/api/varinfo', { col: x.col, type: type === 'multi' ? 'multi' : 'nominal', delim: delim }); if (!d.ok) throw new Error(d.message); cats = d.cats; }
+      A.commit(function () {
+        x.type = type; x.delim = delim; x.cats = needCats ? cats : [];
+        S.P.tabs.forEach(function (t) { var d2 = A.def(t.type); d2.slots.forEach(function (sd) { var sl = t.slots[sd.id]; if (sl.cols) { if (sl.cols.indexOf(x.col) >= 0 && sd.types.indexOf(type) < 0) A.setItems(t, sd.id, sl.cols.filter(function (c) { return c !== x.col; })); else if (sl.cols.indexOf(x.col) >= 0) A.setItems(t, sd.id, sl.cols); return; } if (sl.col === x.col) t.slots[sd.id] = sd.types.indexOf(type) >= 0 ? { col: x.col, cats: needCats ? A.defaultCats(x, sd) : [] } : { col: null, cats: [] }; }); if (t.filter && t.filter.col === x.col) t.filter = null; });
+      }, { quiet: true });
+      A.syncResults(); A.render();
+    } catch (e) { A.toast(e.message, true); A.render(); }
+  }
+
+  // ---------------- クリック
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.md-menu, .md-colorpop, .md-palpop, [data-act="fileMenu"], [data-act="pickColor"], [data-act="pickPath"], [data-act="palettePop"], [data-act="anMenu"], [data-el]') || legDragged) closePop();
+    var an = e.target.closest('.md-an'), fw = e.target.closest('.md-figwrap'), tb = e.target.closest('.md-tables');
+    if (an && !e.target.closest('[data-act="toggleAn"], [data-act="delFigAt"], [data-ancheck]')) {
+      var rt = fw ? 'figure' : tb ? 'table' : null;
+      if (rt && ['figure', 'table', 'export'].indexOf(S.ui.rtab) >= 0 && S.ui.rtab !== 'export') rt = fw ? 'figure' : 'table';
+      if (rt && S.ui.rtab === 'export') rt = null;
+      selectTab(an.dataset.an, fw ? +fw.dataset.fig.split(':')[1] : null, rt);
+    }
+    var el = e.target.closest('[data-act]');
+    if (el && !el.disabled) { e.preventDefault(); act[el.dataset.act] && act[el.dataset.act](el.dataset.arg, el, e); return; }
+    el = e.target.closest('[data-toggle]'); if (el && !el.disabled) { setPath(el.dataset.toggle, !A.get(el.dataset.toggle)); return; }
+    el = e.target.closest('[data-radio]'); if (el && !el.disabled) { var inPop = !!el.closest('.md-palpop'); setPath(el.dataset.radio, el.dataset.val); if (inPop) closePop(); return; }
+    el = e.target.closest('[data-rtab]'); if (el) { setRtab(el.dataset.rtab); return; }
+    el = e.target.closest('[data-view]'); if (el && !el.disabled) { setView(el.dataset.view); return; }
+    el = e.target.closest('[data-varrow]'); if (el && !e.target.closest('input')) { S.ui.selVar = +el.dataset.varrow; S.ui.rtab = 'data'; A.render(); return; }
+    el = e.target.closest('.md-merged'); if (el) { var inp = el.parentNode.querySelector('[data-cat$=":label"]'), p = inp.dataset.cat.split(':'), tab = A.curTab(), c = tab.slots[p[0]].cats[+p[1]]; A.commit(function () { c.label = c.v; }, { run: tab.id }); return; }
+    el = e.target.closest('.md-figwrap [data-el^="legend:"]'); if (el && !legDragged) pickSeriesColor(+el.getAttribute('data-el').split(':')[1], e.clientX, e.clientY + 8);
+    legDragged = false;
+  });
+  document.addEventListener('focusin', function (e) { var r = e.target.closest && e.target.closest('[data-varrow]'); if (r && S.ui.selVar !== +r.dataset.varrow) { S.ui.selVar = +r.dataset.varrow; A.renderPane(); document.querySelectorAll('tr[data-varrow]').forEach(function (tr) { tr.classList.toggle('sel', +tr.dataset.varrow === S.ui.selVar); }); } });
+
+  // ---------------- 入力
+  document.addEventListener('change', function (e) {
+    var el = e.target, tab = A.curTab();
+    if (el.id === 'md_pane_sel') { setRtab(el.value); return; }
+    if (el.dataset.ancheck) { var t = A.tabById(el.dataset.ancheck); if (t) A.commit(function () { t.checked = el.checked; }, { key: 'check' }); return; }
+    if (el.dataset.set) { if (el.type === 'radio' && !el.checked) return; setPath(el.dataset.set, parseVal(el)); return; }
+    if (el.dataset.legname !== undefined) { renameSeries(+el.dataset.legname, el.value); return; }
+    if (el.dataset.additem) {
+      var t3 = A.tabById(el.dataset.tab); if (!t3 || el.value === '') return;
+      var cols3 = (t3.slots[el.dataset.additem].cols || []).concat([+el.value]); S.ui.sel = t3.id;
+      A.commit(function () { A.setItems(t3, el.dataset.additem, cols3); }, { run: t3.id });
+      return;
+    }
+    if (el.dataset.slot) {
+      var st2 = A.tabById(el.dataset.tab) || tab; if (!st2) return;
+      S.ui.sel = st2.id;
+      A.commit(function () { A.setSlot(st2, el.dataset.slot, el.value === '' ? null : +el.value); }, { run: st2.id });
+      return;
+    }
+    if (el.dataset.cat && tab) {
+      var p = el.dataset.cat.split(':'), sl = tab.slots[p[0]], c = sl.cats[+p[1]];
+      A.commit(function () {
+        if (p[2] === 'on') c.on = el.checked;
+        else { var nv = el.value.trim() || c.v, old = c.label, group = sl.cats.filter(function (k) { return k !== c && k.on && k.label === old; }); c.label = nv; if (group.length && !sl.cats.some(function (k) { return k !== c && group.indexOf(k) < 0 && k.label === nv; })) group.forEach(function (k) { k.label = nv; }); }
+      }, { run: tab.id }); return;
+    }
+    if (el.dataset.filter && tab) {
+      A.commit(function () {
+        if (el.dataset.filter === 'col') tab.filter = el.value === '' ? null : { col: +el.value, values: [] };
+        else { var fv = A.v(tab.filter.col), val = fv.cats[+el.dataset.idx].v, i = tab.filter.values.indexOf(val); if (el.checked && i < 0) tab.filter.values.push(val); if (!el.checked && i >= 0) tab.filter.values.splice(i, 1); }
+      }, { run: tab.id }); return;
+    }
+    if (el.dataset.varlabel) {
+      var x = A.v(+el.dataset.varlabel), nv2 = el.value.trim(); if (!x || !nv2 || nv2 === x.label) { A.render(); return; }
+      A.commit(function () { x.label = nv2; S.P.tabs.forEach(A.autoName); }, { quiet: true }); A.syncResults(); A.render(); return;
+    }
+    if (el.dataset.var) { var xv = A.v(S.ui.selVar); if (!xv) return; changeVar(xv, el.dataset.var === 'type' ? el.value : xv.type, el.dataset.var === 'delim' ? el.value : xv.delim); return; }
+    if (el.dataset.reptext) A.render('chrome');
+  });
+  document.addEventListener('input', function (e) {
+    var el = e.target;
+    if (!el.dataset || !el.dataset.reptext) return;
+    var tab = A.tabById(el.dataset.reptext), res = resOf(tab); if (!tab) return;
+    A.commit(function () { tab.reportText = el.value; tab.reportBase = res && res.ok ? res.report : null; }, { quiet: true, key: 'rep:' + tab.id });
+    A.autoGrow(el);
+    document.querySelectorAll('textarea[data-reptext="' + tab.id + '"]').forEach(function (o) { if (o !== el) { o.value = el.value; A.autoGrow(o); } });
+  });
+  document.addEventListener('keydown', function (e) {
+    var inText = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName), k = e.key.toLowerCase();
+    if (e.key === 'Escape') { var ed = $('.md-figedit, .md-an-rename'); if (ed) { ed.dataset.cancel = '1'; ed.blur(); } else if ($('.md-menu') || $('.md-colorpop') || $('.md-palpop')) closePop(); else if ($('#md_modal')) closeModal(); else if (inText) e.target.blur(); return; }
+    if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type !== 'checkbox') { e.target.blur(); return; }
+    if (e.key === 'F2' && !inText && S.ui.sel) { e.preventDefault(); renameAn(S.ui.sel); return; }
+    if (!(e.ctrlKey || e.metaKey)) return;
+    if (k === 's') { e.preventDefault(); act.save(); }
+    else if (k === 'o') { e.preventDefault(); act.openCsv(); }
+    else if (!inText && k === 'z' && !e.shiftKey) { e.preventDefault(); A.undo(); }
+    else if (!inText && (k === 'y' || (k === 'z' && e.shiftKey))) { e.preventDefault(); A.redo(); }
+  });
+
+  // ---------------- 説明（ツールチップ）
+  var tipT = null, tipEl = null;
+  document.addEventListener('mouseover', function (e) {
+    var el = e.target.closest && e.target.closest('[data-tip]'); if (el === tipEl) return;
+    clearTimeout(tipT); $('#md_tip').style.display = 'none'; tipEl = el; if (!el) return;
+    tipT = setTimeout(function () {
+      var t = $('#md_tip'); t.textContent = el.getAttribute('data-tip'); t.style.display = 'block';
+      var r = el.getBoundingClientRect(), tr = t.getBoundingClientRect(), y = r.bottom + 6; if (y + tr.height > window.innerHeight - 4) y = r.top - tr.height - 6;
+      t.style.left = clamp(r.left + r.width / 2 - tr.width / 2, 4, window.innerWidth - tr.width - 4) + 'px'; t.style.top = Math.max(4, y) + 'px';
+    }, 400);
+  });
+  document.addEventListener('mousedown', function () { clearTimeout(tipT); $('#md_tip').style.display = 'none'; tipEl = null; });
+
+  // ---------------- 図を直接さわる
+  document.addEventListener('dblclick', function (e) {
+    var nm = e.target.closest && e.target.closest('[data-anname]'); if (nm) { renameAn(nm.dataset.anname); return; }
+    var el = e.target.closest && e.target.closest('.md-figwrap [data-el]'); if (!el) return;
+    var wrap = el.closest('.md-figwrap'), p = wrap.dataset.fig.split(':'), key = el.getAttribute('data-el');
+    if (/^legname:/.test(key)) { closePop(); S.ui.sel = p[0]; S.ui.selFig = +p[1]; editLegName(wrap, el, +key.split(':')[1]); return; }
+    if (['vTitle', 'cTitle'].indexOf(key) < 0) return;
+    S.ui.sel = p[0]; S.ui.selFig = +p[1];
+    var wr = wrap.getBoundingClientRect(), r = el.getBoundingClientRect(), z = zoom(wrap), inp = document.createElement('input'), tab = A.curTab(), cur = A.curFig()[key];
+    if (cur === null || cur === undefined) cur = el.getAttribute('data-full') || el.textContent;
+    inp.className = 'md-figedit'; inp.value = cur; var w = Math.max(180, r.width / z + 30);
+    inp.style.width = w + 'px'; inp.style.left = clamp((r.left - wr.left) / z + r.width / z / 2 - w / 2, 0, Math.max(0, wr.width / z - w)) + 'px'; inp.style.top = clamp((r.top - wr.top) / z + r.height / z / 2 - 13, 0, Math.max(0, wr.height / z - 26)) + 'px';
+    wrap.appendChild(inp); inp.focus(); inp.select();
+    inp.addEventListener('blur', function () { var cancel = inp.dataset.cancel, val = inp.value; inp.remove(); if (!cancel && val !== cur) setPath('fig.' + key, val); });
+  });
+  function editLegName(wrap, el, i) {
+    var tab = A.curTab(), fig = A.curFig(), m = Chart.model(resOf(tab)); if (!fig || !m) return;
+    var lab = Chart.seriesFor(m, fig)[i], cur = (fig.legNames || {})[lab] || lab, g = el.closest('[data-legend]') || el;
+    var wr = wrap.getBoundingClientRect(), r = g.getBoundingClientRect(), er = el.getBoundingClientRect(), z = zoom(wrap), inp = document.createElement('input'), w = Math.max(160, r.width / z + 20);
+    inp.className = 'md-figedit'; inp.value = cur; inp.style.width = w + 'px';
+    inp.style.left = clamp((er.left - wr.left) / z - 4, 0, Math.max(0, wr.width / z - w)) + 'px'; inp.style.top = clamp((er.top - wr.top) / z + er.height / z / 2 - 13, 0, Math.max(0, wr.height / z - 26)) + 'px';
+    wrap.appendChild(inp); inp.focus(); inp.select();
+    inp.addEventListener('mousedown', function (ev) { ev.stopPropagation(); });
+    inp.addEventListener('blur', function () { var cancel = inp.dataset.cancel, val = inp.value; inp.remove(); if (!cancel) renameSeries(i, val); });
+  }
+  // 凡例とカラーバーをドラッグで動かす。凡例は右・上・下の端に寄せると図の外に並べ、それ以外は置いた位置に置く
+  var legDragged = false;
+  document.addEventListener('mousedown', function (e) {
+    if (e.button !== 0) return;
+    var g = e.target.closest && e.target.closest('.md-figwrap [data-legend], .md-figwrap [data-cbar]'); if (!g) return;
+    var wrap = g.closest('.md-figwrap'), p = wrap.dataset.fig.split(':'), tab = A.tabById(p[0]), k = +p[1], fig = tab && tab.figs[k]; if (!fig) return;
+    e.preventDefault();
+    var isLeg = g.hasAttribute('data-legend'), svg = wrap.querySelector('svg'), W = +svg.getAttribute('width'), H = +svg.getAttribute('height'), z = zoom(wrap), x0 = e.clientX, y0 = e.clientY;
+    var box = (g.getAttribute('data-box') || '0,0,0,0').split(',').map(Number), moved = false, zone = null, dx = 0, dy = 0, ind = document.createElement('div');
+    ind.className = 'md-snap';
+    var ZONES = isLeg ? { right: [W * 0.82, 0, W * 0.18, H, '右に並べる'], bottom: [0, H * 0.86, W * 0.82, H * 0.14, '下に並べる'], top: [0, 0, W * 0.82, H * 0.12, '上に並べる'] }
+      : { right: [W * 0.75, 0, W * 0.25, H, '右に置く'], bottom: [0, H * 0.75, W * 0.75, H * 0.25, '下に置く'] };
+    function mv(ev) {
+      dx = (ev.clientX - x0) / z; dy = (ev.clientY - y0) / z;
+      if (!moved && Math.abs(dx) + Math.abs(dy) < 4) return;
+      if (!moved) { moved = true; wrap.appendChild(ind); document.body.classList.add('md-moving'); $('#md_tip').style.display = 'none'; }
+      g.setAttribute('transform', 'translate(' + dx + ',' + dy + ')');
+      var r = svg.getBoundingClientRect(), fx = (ev.clientX - r.left) / z, fy = (ev.clientY - r.top) / z;
+      if (isLeg) zone = fx > W * 0.82 ? 'right' : fy > H * 0.86 ? 'bottom' : fy < H * 0.12 ? 'top' : 'free';
+      else zone = fx / W - 0.5 > fy / H - 0.5 ? 'right' : 'bottom';
+      var zr = ZONES[zone];
+      if (zr) { ind.style.display = 'flex'; ind.style.left = zr[0] + 'px'; ind.style.top = zr[1] + 'px'; ind.style.width = zr[2] + 'px'; ind.style.height = zr[3] + 'px'; ind.textContent = zr[4]; }
+      else ind.style.display = 'none';
+      $('#md_status .md-st-mode').textContent = zone === 'free' ? '凡例を移動：置いた位置に置きます' : '凡例を移動：' + (zr ? zr[4] : '');
+    }
+    function up() {
+      document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); document.body.classList.remove('md-moving'); ind.remove();
+      if (!moved) return;
+      legDragged = true; setTimeout(function () { legDragged = false; }, 300);
+      S.ui.sel = tab.id; S.ui.selFig = k;
+      A.commit(function () {
+        if (!isLeg) { fig.bar = zone; return; }
+        if (zone === 'free') { fig.legend = 'free'; fig.legX = Math.round(clamp(box[0] + dx, 0, Math.max(0, W - box[2]))); fig.legY = Math.round(clamp(box[1] + dy, 0, Math.max(0, H - box[3]))); }
+        else fig.legend = zone;
+      });
+    }
+    document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+  });
+  // 表の右端・下端・右下の角をドラッグすると、表の幅と行の高さが変わる（同じ解析の表すべてに当てはめる）
+  document.addEventListener('mousedown', function (e) {
+    var hd = e.target.closest && e.target.closest('.md-th'); if (!hd || e.button !== 0) return;
+    e.preventDefault();
+    var wrap = hd.closest('.md-tblwrap'), p = wrap.dataset.tbl.split(':'), tab = A.tabById(p[0]); if (!tab) return;
+    var tbl = wrap.querySelector('table.md-t'), trs = [].slice.call(tbl.rows), dir = hd.dataset.h, z = (S.P.settings.zoom || 100) / 100;
+    var r0 = tbl.getBoundingClientRect(), w0 = r0.width / z, rh0 = trs.reduce(function (a, r) { return a + r.getBoundingClientRect().height; }, 0) / z / trs.length, x0 = e.clientX, y0 = e.clientY, last = null, raf = 0, nw = null, nh = null;
+    // 中身に合わせた幅（これより狭くはしない。画像・PDF の表と同じ決まり）
+    var keepW = tbl.style.width; tbl.style.width = ''; var wNat = tbl.getBoundingClientRect().width / z; tbl.style.width = keepW;
+    S.ui.sel = tab.id;
+    document.body.classList.add('md-resizing-' + dir);
+    function draw() {
+      raf = 0; if (!last) return;
+      if (dir !== 's') { nw = Math.max(Math.ceil(wNat), Math.round(w0 + (last.clientX - x0) / z)); tbl.style.width = nw + 'px'; }
+      if (dir !== 'e') { nh = Math.max(12, Math.round(rh0 + (last.clientY - y0) / z / Math.max(1, trs.length))); trs.forEach(function (r) { r.style.height = nh + 'px'; }); }
+    }
+    function mv(ev) { last = ev; if (!raf) raf = requestAnimationFrame(draw); }
+    function up() {
+      document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); document.body.classList.remove('md-resizing-' + dir);
+      if (raf) { cancelAnimationFrame(raf); draw(); }
+      if (nw === null && nh === null) return;
+      var aw = Math.round(tbl.getBoundingClientRect().width / z);              // 中身より狭くはならないので、実際の幅を記録する
+      A.commit(function () { if (nw !== null) { if (aw <= Math.ceil(wNat) + 1) delete tab.tstyle.tw; else tab.tstyle.tw = aw; } if (nh !== null) tab.tstyle.rowH = nh; });
+    }
+    document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+  });
+  document.addEventListener('dblclick', function (e) {
+    var hd = e.target.closest && e.target.closest('.md-th'); if (!hd) return;
+    var tab = A.tabById(hd.closest('.md-tblwrap').dataset.tbl.split(':')[0]); if (!tab) return;
+    A.commit(function () { delete tab.tstyle.tw; delete tab.tstyle.rowH; });
+  });
+  // 図の右端・下端・右下の角をドラッグすると、その大きさに描き直しながら変わる
+  document.addEventListener('mousedown', function (e) {
+    var hd = e.target.closest && e.target.closest('.md-fh'); if (!hd || e.button !== 0) return;
+    e.preventDefault();
+    var wrap = hd.closest('.md-figwrap'), p = wrap.dataset.fig.split(':'), tab = A.tabById(p[0]), k = +p[1], fig = tab.figs[k], m = Chart.model(resOf(tab)), dir = hd.dataset.h;
+    S.ui.sel = tab.id; S.ui.selFig = k;
+    var snap = JSON.stringify(S.P), z = zoom(wrap), x0 = e.clientX, y0 = e.clientY, r0 = Chart.render(m, fig, S.P.settings.figLang), w0 = r0.w, h0 = r0.h, raf = 0, last = null, cap = wrap.parentNode.querySelector('.md-figsize');
+    document.body.classList.add('md-resizing-' + dir);
+    function draw() {
+      raf = 0; if (!last) return;
+      fig.fit = false;
+      if (dir !== 's') fig.w = clamp(Math.round(w0 + (last.clientX - x0) / z), 160, 2400);
+      if (dir !== 'e') fig.h = clamp(Math.round(h0 + (last.clientY - y0) / z), 120, 2400);
+      if (dir === 's') fig.w = w0; if (dir === 'e') fig.h = h0;
+      var r = Chart.render(m, fig, S.P.settings.figLang), old = wrap.querySelector('svg'), tmp = document.createElement('div'); tmp.innerHTML = r.svg; old.replaceWith(tmp.firstChild);
+      if (cap) cap.textContent = r.w + ' × ' + r.h;
+    }
+    function mv(ev) { last = ev; if (!raf) raf = requestAnimationFrame(draw); }
+    function up() {
+      document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); document.body.classList.remove('md-resizing-' + dir);
+      if (raf) { cancelAnimationFrame(raf); draw(); }
+      if (JSON.stringify(S.P) !== snap) { S.undo.push(snap); if (S.undo.length > 100) S.undo.shift(); S.redo = []; A.markDirty(); }
+      A.render();
+    }
+    document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+  });
+  document.addEventListener('contextmenu', function (e) {
+    var fw = e.target.closest && e.target.closest('.md-figwrap'), hd = e.target.closest && e.target.closest('.md-an-head');
+    if (fw) {
+      e.preventDefault(); var p = fw.dataset.fig.split(':'); selectTab(p[0], +p[1]); var fig = A.curFig();
+      var li = e.target.closest('[data-el^="legend:"], [data-el^="legname:"]'), ex = e.clientX, ey = e.clientY;
+      if (li) { var si = +li.getAttribute('data-el').split(':')[1], nmEl = fw.querySelector('[data-el="legname:' + si + '"]') || li;
+        menu(ex, ey, [{ name: 'この系列の名前を変更', run: function () { editLegName(fw, nmEl, si); } }, { name: 'この系列の色を変える', run: function () { pickSeriesColor(si, ex, ey + 8); } }, '-',
+          { name: fig.legFrame ? '凡例の枠を消す' : '凡例を枠で囲む', run: function () { setPath('fig.legFrame', !fig.legFrame); } }, { name: '凡例を消す', run: function () { setPath('fig.legend', 'none'); } }]); return; }
+      menu(e.clientX, e.clientY, [{ name: '図をコピー', run: act.figCopy }, { name: '画像で保存', run: act.figPng }, { name: 'SVG で保存', run: act.figSvg }, '-',
+        { name: fig.transparent ? '背景を白にする' : '背景を透明にする', run: function () { setPath('fig.transparent', !fig.transparent); } },
+        { name: fig.labels ? '値のラベルを消す' : '値のラベルを出す', run: function () { setPath('fig.labels', !fig.labels); } },
+        { name: fig.legend === 'none' ? '凡例を出す' : '凡例を消す', run: function () { setPath('fig.legend', fig.legend === 'none' ? 'right' : 'none'); } }, '-',
+        { name: '図を追加', run: act.addFig }, { name: 'この図を削除', danger: true, run: act.delFig }]);
+    } else if (hd && !e.target.closest('input')) { e.preventDefault(); anMenuAt(hd.dataset.anhead, e.clientX, e.clientY); }
+  });
+
+  // ---------------- 解析の並べ替え（見出しをドラッグ）
+  var dragId = null;
+  function clearDrop() { document.querySelectorAll('.md-an.drop-before, .md-an.drop-after').forEach(function (s) { s.classList.remove('drop-before', 'drop-after'); }); }
+  document.addEventListener('dragstart', function (e) {
+    var hd = e.target.closest && e.target.closest('.md-an-head'); if (!hd || e.target.closest('input, button')) { if (hd) e.preventDefault(); return; }
+    dragId = hd.dataset.anhead; e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', dragId); } catch (err) {}
+    hd.parentNode.classList.add('dragging');
+  });
+  document.addEventListener('dragover', function (e) {
+    if (!dragId) return; var an = e.target.closest && e.target.closest('.md-an'); if (!an) return;
+    e.preventDefault(); clearDrop(); if (an.dataset.an === dragId) return;
+    var r = an.getBoundingClientRect(); an.classList.add(e.clientY < r.top + r.height / 2 ? 'drop-before' : 'drop-after');
+  });
+  document.addEventListener('drop', function (e) {
+    if (!dragId) return; var an = e.target.closest && e.target.closest('.md-an'), id = dragId; e.preventDefault();
+    var before = an && an.classList.contains('drop-before'); clearDrop(); dragId = null;
+    if (!an || an.dataset.an === id) { A.render(); return; }
+    A.commit(function () { var i = S.P.tabs.findIndex(function (t) { return t.id === id; }), t = S.P.tabs.splice(i, 1)[0], j = S.P.tabs.findIndex(function (x) { return x.id === an.dataset.an; }); S.P.tabs.splice(before ? j : j + 1, 0, t); });
+  });
+  document.addEventListener('dragend', function () { dragId = null; clearDrop(); document.querySelectorAll('.md-an.dragging').forEach(function (s) { s.classList.remove('dragging'); }); });
+
+  // ---------------- ファイルのドロップ
+  var dragN = 0;
+  function hasFiles(e) { return !dragId && e.dataTransfer && [].indexOf.call(e.dataTransfer.types || [], 'Files') >= 0; }
+  window.addEventListener('dragenter', function (e) { if (!hasFiles(e)) return; e.preventDefault(); dragN++; document.body.classList.add('md-dragover'); });
+  window.addEventListener('dragover', function (e) { if (hasFiles(e)) e.preventDefault(); });
+  window.addEventListener('dragleave', function (e) { if (!hasFiles(e)) return; dragN--; if (dragN <= 0) { dragN = 0; document.body.classList.remove('md-dragover'); } });
+  window.addEventListener('drop', function (e) { if (!hasFiles(e)) return; e.preventDefault(); dragN = 0; document.body.classList.remove('md-dragover'); var f = e.dataTransfer.files[0]; if (f) A.handleFile(f); });
+  window.addEventListener('beforeunload', function (e) { if (S.dirty && S.data && !window.__noGuard) { e.preventDefault(); e.returnValue = ''; } });
+  window.addEventListener('pagehide', function () { try { navigator.sendBeacon('/api/bye'); } catch (e) {} });
+
+  // ---------------- 起動
+  async function ping() { try { var d = await (await fetch('/api/ping')).json(); S.rYear = d.ryear || null; if (S.r !== d.r) { S.r = d.r; A.renderStatus(); } } catch (e) { if (S.r !== null) { S.r = null; A.renderStatus(); } } }
+  async function init() {
+    A.render();
+    try { var d = await A.api('/api/registry', {}); S.registry = d.analyses || []; } catch (e) { A.toast(e.message, true); }
+    await ping(); setInterval(ping, 5000);
+    S.projList = await A.listProjects();
+    A.render();
+    showChanges();
+  }
+  // ---------------- 新しい版で初めて起動したとき：変わった点を見せる（初めて使う人には出さない）
+  function showChanges() {
+    var list = window.CTS_CHANGES || [], cur = window.CTS_APP_VERSION, KEY = 'cts-seen-version', seen = null;
+    if (!cur) return;
+    try { seen = localStorage.getItem(KEY); } catch (e) { return; }
+    function mark() { try { localStorage.setItem(KEY, cur); } catch (e) {} }
+    if (seen === cur) return;
+    var hello = '<div class="md-welcome"><div class="md-welcome-h">ようこそ</div>';
+    if (!seen) {                                                     // 初めて使う人：アプリの紹介と最初の一歩
+      modal('CrossTab Studio', hello + '<p>アンケートの回答（CSV ファイル）を読み込むと、集計・検定・図・報告書までを作れます。データはこの端末の中だけで処理され、外部には送られません。</p><p>まずは画面の「ファイルを選ぶ」から、回答の CSV を開いてください。</p><p class="md-welcome-v">バージョン ' + esc(cur) + '</p></div>',
+        '<button class="md-btn md-btn-primary" id="md_chg_ok">はじめる</button>', 520);
+      $('#md_chg_ok').onclick = function () { mark(); closeModal(); };
+      var bk = $('#md_modal'); if (bk) bk.addEventListener('mousedown', mark);
+      return;
+    }
+    var newer = list.filter(function (c) { return vcmp(c.v, seen) > 0; });
+    if (!newer.length) { mark(); return; }
+    var body = hello + '<p>新しい版（バージョン ' + esc(cur) + '）に更新しました。前回からの変更点は次のとおりです。</p></div>' + newer.map(function (c) { return '<div class="md-chg"><div class="md-chg-v">' + esc(c.v) + (c.date ? '<span>' + esc(c.date) + '</span>' : '') + '</div><ul>' + c.items.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></div>'; }).join('');
+    modal('CrossTab Studio', body, '<button class="md-btn md-btn-primary" id="md_chg_ok">わかりました</button>', 560);
+    $('#md_chg_ok').onclick = function () { mark(); closeModal(); };
+    var back = $('#md_modal'); if (back) back.addEventListener('mousedown', mark);
+  }
+  function vcmp(a, b) { a = String(a).split('.').map(Number); b = String(b).split('.').map(Number); for (var i = 0; i < 3; i++) { var d = (a[i] || 0) - (b[i] || 0); if (d) return d; } return 0; }
+  A.showChanges = showChanges;
+  A.setPath = setPath; A.act = act; A.selectTab = selectTab;
+  init();
+})();

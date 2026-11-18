@@ -1,4 +1,6 @@
+/* iPad 版の追加分 */
 html { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
+/* 起動中の表示 */
 #md_boot { position: fixed; inset: 0; z-index: 5000; background: #F4F9F6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: #1F4030; }
 #md_boot h1 { font-size: 26px; margin: 6px 0 0; color: #1E2F26; }
 #md_boot p { margin: 0; font-size: 13px; color: #567565; }
@@ -11,28 +13,38 @@ html { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
 .md-boot-steps div.now { color: #1F4030; font-weight: 700; } .md-boot-steps div.now::before { content: '◐ '; color: #217346; }
 .md-boot-note { max-width: 460px; text-align: center; font-size: 13px; color: #1F4030; min-height: 20px; }
 #md_boot.err .md-boot-msg { color: #C00000; }
+
+/* 指で操作するとき */
 .md-touch #md_tip { display: none !important; }
 .md-touch .md-app, .md-touch .md-menu, .md-touch .md-colorpop, .md-touch .md-palpop { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .md-touch input, .md-touch textarea, .md-touch .md-report, .md-touch .md-report * { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
 .md-touch .md-figwrap svg { -webkit-user-select: none; user-select: none; }
+/* 図の端（大きさを変える所）を指でつかみやすくする */
 .md-touch .md-fh-e { right: -12px; width: 24px; }
 .md-touch .md-fh-s { bottom: -12px; height: 24px; }
 .md-touch .md-fh-se { right: -12px; bottom: -12px; width: 24px; height: 24px; border-width: 2px; }
+/* メニューの行を指で押しやすい高さにする */
 .md-touch .md-menu button { min-height: 36px; align-items: center; }
 .md-touch .md-colorpop .md-cp-g { grid-template-columns: repeat(10, 24px); } .md-touch .md-colorpop .md-cp-g button { width: 24px; height: 24px; }
+/* リボンが画面の幅に入りきらないときは、指で横に送れるようにする */
 .md-touch .md-ribbon { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
 .md-touch .md-ribbon::-webkit-scrollbar { display: none; }
 .md-touch .md-ribbon-body.active { width: max-content; }
+/* 縦向きなど幅が狭いときは、作業ウィンドウを図の上に重ねて出す */
 @media (max-width: 1000px) {
-.md-main { position: relative; }
-.md-pane { position: absolute; right: 0; top: 0; bottom: 0; z-index: 20; box-shadow: -2px 0 8px rgba(31,64,48,.18); }
+  .md-main { position: relative; }
+  .md-pane { position: absolute; right: 0; top: 0; bottom: 0; z-index: 20; box-shadow: -2px 0 8px rgba(31,64,48,.18); }
 }
+
+/* iPhone・iPad の Safari では 100vh が見えている高さより大きく、下端が隠れる。見えている高さに合わせる */
 .md-app { height: 100vh; height: 100dvh; }
+/* 新しい版の知らせ */
 #md_update { position: fixed; left: 50%; top: 6px; transform: translateX(-50%); z-index: 4000; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center;
-max-width: calc(100vw - 16px); background: #FFF; border: 1px solid var(--accent, #217346); border-radius: 4px; box-shadow: 0 2px 10px rgba(31,64,48,.25); padding: 6px 10px; font-size: 13px; color: var(--ink, #1E2F28); }
+  max-width: calc(100vw - 16px); background: #FFF; border: 1px solid var(--accent, #217346); border-radius: 4px; box-shadow: 0 2px 10px rgba(31,64,48,.25); padding: 6px 10px; font-size: 13px; color: var(--ink, #1E2F28); }
 .md-touch .md-th-e { right: -12px; width: 24px; }
 .md-touch .md-th-s { bottom: -12px; height: 24px; }
 .md-touch .md-th-se { right: -12px; bottom: -12px; width: 24px; height: 24px; border-width: 2px; }
+/* 利用の確認の画面（ほかのすべての画面より手前） */
 #md_lock { position: fixed; inset: 0; z-index: 9000; background: #F4F8F5; display: flex; align-items: center; justify-content: center; padding: 20px; }
 .md-lock-box { max-width: 460px; text-align: center; color: var(--ink, #1E2F28); } .md-lock-box h1 { font-size: 22px; margin: 12px 0 10px; }
 .md-lock-box p { line-height: 1.7; margin: 8px 0; } .md-lock-box .md-btn { margin-top: 10px; padding: 8px 18px; } .md-lock-note { color: var(--ink-sub, #555); font-size: 12px; }

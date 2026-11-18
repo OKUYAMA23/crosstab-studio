@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "CrossTab Studio"
+abstract: >-
+  A browser-based application for tabulating and testing questionnaire data
+  (e.g., Google Forms CSV exports). It runs R in the browser (webR), offers
+  21 analyses including cross tabulation, chi-square tests, t tests, ANOVA,
+  reliability analysis and text mining, and produces figures, a PDF report and
+  an Excel workbook that reproduces the calculations with spreadsheet formulas.
+  Data never leave the user's device.
+authors:
+  - family-names: "Okuyama"
+    given-names: "Taiga"
+version: "0.8.1"
+date-released: "2026-11-19"
+license: MIT
+url: "https://okuyama23.github.io/crosstab-studio/"
+repository-code: "https://github.com/OKUYAMA23/crosstab-studio"
+keywords:
+  - questionnaire
+  - survey
+  - cross tabulation
+  - statistics
+  - R
+  - webR
+  - education
