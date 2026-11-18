@@ -5,6 +5,9 @@ const FILES = __FILES__;
 // 字体（PDF の報告書に使う大きなファイル）は版ごとに保存し直さず、別の入れ物に 1 回だけ保存する（更新のたびに数十 MB を取り直さないため）
 const FONT_CACHE = 'cts-fonts-1';
 const FONTS = __FONTS__;
+// R 本体（webR）も中身が変わらない限り 1 回だけ保存する（版を上げるたびに 20 MB を取り直さないため）
+const WEBR_CACHE = 'cts-webr-__WEBR_VERSION__';
+const WEBR = __WEBR__;
 async function fillFonts() {
   const c = await caches.open(FONT_CACHE);
   for (const f of FONTS) { try { if (!(await c.match(f))) { const r = await fetch(f); if (r.ok) await c.put(f, r); } } catch (e) {} }
@@ -17,22 +20,29 @@ async function fontFromCache(req) {
 }
 self.addEventListener('install', e => {
   e.waitUntil((async () => {
-    const c = await caches.open(CACHE);
+    const c = await caches.open(CACHE), cw = await caches.open(WEBR_CACHE);
+    const need = [];
+    for (const f of WEBR) {
+      if (await cw.match(f)) continue;
+      const old = await caches.match(f, { ignoreSearch: true });          // 前の版の入れ物にあれば、それを移す（取り直さない）
+      if (old) await cw.put(f, old); else need.push([cw, f]);
+    }
+    for (const f of FILES) need.push([c, f]);
     let done = 0;
-    await Promise.all(FILES.map(async f => {
+    await Promise.all(need.map(async ([cc, f]) => {
       const r = await fetch(f, { cache: 'reload' });
       if (!r.ok) throw new Error(f + ' ' + r.status);
-      await c.put(f, r);
+      await cc.put(f, r);
       done++;
       const cs = await self.clients.matchAll({ includeUncontrolled: true });
-      cs.forEach(cl => cl.postMessage({ type: 'cts-cache', done, total: FILES.length }));
+      cs.forEach(cl => cl.postMessage({ type: 'cts-cache', done, total: need.length }));
     }));
     await self.skipWaiting();
   })());
 });
 self.addEventListener('activate', e => {
   e.waitUntil((async () => {
-    for (const k of await caches.keys()) if (k !== CACHE && k !== FONT_CACHE) await caches.delete(k);
+    for (const k of await caches.keys()) if (k !== CACHE && k !== FONT_CACHE && k !== WEBR_CACHE) await caches.delete(k);
     await self.clients.claim();
   })());
   fillFonts();
@@ -43,6 +53,7 @@ async function fromCache(req) {
   const key = url.pathname.endsWith('/') ? url.pathname + 'index.html' : url.pathname;
   const c = await caches.open(CACHE);
   let r = await c.match(key, { ignoreSearch: true });
+  if (!r) r = await (await caches.open(WEBR_CACHE)).match(key, { ignoreSearch: true });
   if (!r) {
     r = await fetch(new Request(req.url, { method: 'GET', credentials: 'same-origin' }));
     if (!r.ok) return r;

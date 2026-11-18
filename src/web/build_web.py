@@ -68,7 +68,9 @@ import json, hashlib
 open(OUT + '/ping.json', 'w').write('{"active": true}')
 files = sorted(os.path.relpath(os.path.join(dp, f), OUT).replace(os.sep, '/') for dp, dn, fn in os.walk(OUT) for f in fn if not f.startswith('.') and f != 'ping.json')
 fonts = [f for f in files if f.startswith('fonts/') and f.endswith('.ttf')]; files = [f for f in files if f not in fonts]   # 字体は別に保存する（sw.js）
+wfiles = [f for f in files if f.startswith('webr/')]; files = [f for f in files if f not in wfiles]   # R 本体（webR）も別に保存する（版の更新で取り直さない）
 h = hashlib.md5(b''.join(open(OUT + '/' + f, 'rb').read() for f in files)).hexdigest()[:8]
-sw = open(WEB + '/pwa/sw.template.js', encoding='utf-8').read().replace('__VERSION__', VERSION + '-' + h).replace('__FILES__', json.dumps(['./'] + files)).replace('__FONTS__', json.dumps(fonts))
+hw = hashlib.md5(b''.join(open(OUT + '/' + f, 'rb').read() for f in wfiles)).hexdigest()[:8]
+sw = open(WEB + '/pwa/sw.template.js', encoding='utf-8').read().replace('__VERSION__', VERSION + '-' + h).replace('__FILES__', json.dumps(['./'] + files)).replace('__FONTS__', json.dumps(fonts)).replace('__WEBR_VERSION__', hw).replace('__WEBR__', json.dumps(wfiles))
 open(OUT + '/sw.js', 'w', encoding='utf-8').write(sw)
-print('webr files', n, round(size / 1e6, 1), 'MB', '| cache', VERSION + '-' + h, len(files), 'files')
+print('webr files', n, round(size / 1e6, 1), 'MB', '| cache', VERSION + '-' + h, len(files), 'files | webr cache', hw, len(wfiles), 'files')

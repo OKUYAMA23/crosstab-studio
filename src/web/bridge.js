@@ -14,17 +14,40 @@
   async function ensureOffline() {
     if (!('serviceWorker' in navigator) || window.CTS_NO_SW) return;
     try {
-      var sw = navigator.serviceWorker;
+      var sw = navigator.serviceWorker, updating = false;
       sw.addEventListener('message', function (e) {
-        var d = e.data || {}; if (d.type === 'cts-cache') bootStep(0, 'アプリをこの端末に保存しています（' + d.done + ' / ' + d.total + '）');
+        var d = e.data || {}; if (d.type === 'cts-cache') bootStep(0, (updating ? '新しい版を読み込んでいます（' : 'アプリをこの端末に保存しています（') + d.done + ' / ' + d.total + '）');
       });
       var had = !!sw.controller, reg = await sw.register('sw.js');
+      // 保存済みの版で開いたときは、R を起動する前に新しい版があるかを確かめる。
+      // あれば読み込み画面のまま新しい版を保存し、すぐに読み込み直す（古い版の画面を出してから切り替える二度手間をなくす）
+      if (had) {
+        bootStep(0, '新しい版がないか確かめています');
+        var found = await bootUpdate(sw, reg, function () { updating = true; bootStep(0, '新しい版を読み込んでいます'); });
+        if (found) { location.reload(); await new Promise(function () {}); }
+      }
       watchUpdate(sw, reg, had);
       if (had) return;
       bootStep(0, 'アプリをこの端末に保存しています（初回だけ 20 MB ほど）');
       await sw.ready;
       if (!sw.controller) await new Promise(function (res) { sw.addEventListener('controllerchange', res, { once: true }); setTimeout(res, 5000); });
     } catch (e) { /* 保存できない場所（Claude のページなど）では、そのまま起動する */ }
+  }
+  // 起動時の版の確認：通信できないときや確認に時間がかかるとき（4 秒）は、保存済みの版で起動する。
+  //   新しい版が見つかったら、保存が終わって切り替わるまで待つ（最大 3 分。失敗したら保存済みの版で起動）
+  async function bootUpdate(sw, reg, onFound) {
+    try {
+      if (!navigator.onLine) return false;
+      await Promise.race([reg.update(), new Promise(function (res) { setTimeout(res, 4000); })]);
+      var nw = reg.installing || reg.waiting; if (!nw) return false;
+      onFound();
+      return await new Promise(function (res) {
+        var t = setTimeout(function () { res(false); }, 180000);
+        sw.addEventListener('controllerchange', function () { clearTimeout(t); res(true); }, { once: true });
+        nw.addEventListener('statechange', function () { if (nw.state === 'redundant') { clearTimeout(t); res(false); } });
+        if (nw.state === 'activated') { clearTimeout(t); res(true); }
+      });
+    } catch (e) { return false; }
   }
   // ---------------- 新しい版が出たとき
   //   ホーム画面のアプリは、閉じずに裏へ回しただけだと読み込み直さないので、新しい版を保存し終えても古い画面のまま動き続ける。
