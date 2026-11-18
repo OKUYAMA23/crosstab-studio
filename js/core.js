@@ -144,6 +144,8 @@
     if (!tab.nameAuto) return;
     var d = def(tab.type), labs = d.slots.map(function (s) { var sl = tab.slots[s.id]; if (!sl) return null; if (s.many) return itemsName(sl.cols || []); var vr = v(sl.col); return vr ? vr.label : null; }).filter(Boolean);
     tab.name = labs.length ? labs.join(' × ') : d.name;
+    // 回帰分析は説明変数を並べると長くなるので「目的変数 ← 説明変数 n 個」にする
+    if ((tab.type === 'reg' || tab.type === 'logit') && tab.slots.y && v(tab.slots.y.col)) { var nx = (tab.slots.x && tab.slots.x.cols || []).length; tab.name = v(tab.slots.y.col).label + (nx ? ' ← 説明変数 ' + nx + ' 個' : ''); }
   }
   // 複数の設問の選択肢：最初の設問の並びを基に、ほかの設問にしかない選択肢を後ろに足す
   function defaultCatsMany(cols, sd) {
