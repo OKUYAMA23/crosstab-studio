@@ -131,7 +131,7 @@
     var d = document.createElement('div'); d.className = 'md-colorpop';
     d.innerHTML = (autoLabel ? '<button class="md-btn md-btn-sm" data-c="" style="width:100%">' + esc(autoLabel) + '</button>' : '') +
       (extra || []).map(function (x) { return '<button class="md-btn md-btn-sm" data-c="' + esc(x[0]) + '" data-raw="1" style="width:100%;margin-bottom:3px">' + esc(x[1]) + '</button>'; }).join('') + '<div class="md-cp-t">テーマの色</div>' + g([].concat.apply([], rows)) + '<div class="md-cp-t">白〜黒</div>' + g(grays) + '<div class="md-cp-t">論文誌風の色</div>' + g(std) + '<div class="md-cp-t">色覚に配慮した色</div>' + g(cud) +
-      '<label class="md-check" style="margin-top:6px">その他の色… <input type="color" id="md_cp_other" style="width:44px;height:24px;padding:0;border:1px solid #C6E0CF"></label>';
+      '<label class="md-check" style="margin-top:6px">その他の色… <input type="color" id="md_cp_other" style="width:44px;height:24px;padding:0;border:1px solid var(--t-c6e0cf)"></label>';
     document.body.appendChild(d); place(d, x, y);
     d.addEventListener('click', function (e) { var b = e.target.closest('[data-c]'); if (b) { e.stopPropagation(); closePop(); onPick(b.dataset.c || null); } });
     $('#md_cp_other').addEventListener('change', function (e) { closePop(); onPick(e.target.value.toUpperCase()); });
@@ -283,7 +283,7 @@
       var r = el.getBoundingClientRect();
       menu(r.left, r.bottom, [{ name: 'CSV を開く', key: 'Ctrl+O', run: act.openCsv }, { name: 'プロジェクトを開く', run: act.openProject }, '-',
         { name: '上書き保存', key: 'Ctrl+S', run: act.save, off: !S.data }, { name: '名前を付けて保存', run: act.saveAs, off: !S.data }, { name: 'プロジェクトをファイルに書き出す', run: act.projFile, off: !S.data }, '-',
-        { name: 'まとめて書き出す', run: act.exportAll, off: !S.P.tabs.length }, { name: 'このアプリについて', run: act.about }]);
+        { name: 'まとめて書き出す', run: act.exportAll, off: !S.P.tabs.length }, '-', { name: '設定', run: act.settings }, { name: 'このアプリについて', run: act.about }, { name: 'ご意見・不具合', run: act.feedback }]);
     },
     newAnalysis: function () {
       if (!S.data) { A.toast('先に CSV ファイルを入れてください。', true); return; }
@@ -476,17 +476,21 @@
       var n0 = S.data ? S.data.nrow : 0;
       try { await A.loadUrl(S.P.srcUrl, true); A.toast('最新の回答に更新しました（' + S.data.nrow + ' 件。前回より ' + (S.data.nrow - n0 >= 0 ? '+' : '') + (S.data.nrow - n0) + ' 件）。'); } catch (e) { A.toast(e.message, true); }
     },
+    setTheme: function (arg) { A.setTheme(arg); refreshSettings(); },
+    settings: function () {
+      modal('設定', '<div id="md_set_body">' + A.settingsHtml() + '</div>', '<button class="md-btn md-btn-primary" data-act="closeModal">閉じる</button>', 640);
+    },
     // ---- 既定の設定（初期設定・カスタム設定）
     defMode: function (arg) {
       if (arg === 'custom' && !A.customGet()) { A.toast('まだカスタム設定がありません。設定を整えてから「今の設定をカスタム設定に保存」を押してください。', true); return; }
-      A.setDefMode(arg); A.render('pane');
+      A.setDefMode(arg); A.render('pane'); refreshSettings();
       A.toast(arg === 'custom' ? 'これから新しく始めるときは、カスタム設定を使います。' : 'これから新しく始めるときは、初期設定を使います。カスタム設定は残してあります。');
     },
     customSave: function () {
       var c = customFromNow();
       if (A.customGet() && !confirm('保存してあるカスタム設定を、今の設定で置き換えますか。')) return;
       if (!A.customSet(c)) { A.toast('この端末に保存できませんでした（ブラウザの保存の設定を確かめてください）。', true); return; }
-      A.setDefMode('custom'); A.render('pane');
+      A.setDefMode('custom'); A.render('pane'); refreshSettings();
       A.toast('今の設定をカスタム設定に保存しました。これから新しく始めるときに使います。');
     },
     customApply: function () {
@@ -495,13 +499,13 @@
         if (c) A.applyDefaults(S.P, c);
         else { S.P.settings = Object.assign(base.settings, { autoSave: S.P.settings.autoSave }); S.P.report = base.report; S.P.figDefault = null; S.P.tstyleDefault = null; }
       });
-      A.applyZoom(); A.syncResults && A.syncResults(); A.render();
+      A.applyZoom(); A.syncResults && A.syncResults(); A.render(); refreshSettings();
       A.toast((c ? 'カスタム設定' : '初期設定') + 'を、開いているプロジェクトに当てはめました（判定と表記、報告書、これから作る図と表の書式）。今ある図と表を同じ書式にするには、「すべての図にそろえる」「すべての表にそろえる」を使ってください。');
     },
     customExport: async function () {
       var c = A.customGet(); if (!c) { A.toast('まだカスタム設定がありません。', true); return; }
       var blob = new Blob([JSON.stringify({ app: 'CrossTab Studio', kind: 'custom-settings', custom: c }, null, 1)], { type: 'application/json' });
-      try { if (await A.saveBlob(blob, 'CrossTabStudio_カスタム設定.json', 'カスタム設定', '.json')) A.toast('カスタム設定を書き出しました。別の端末の「設定」タブで読み込めます。'); } catch (e) { if (!(e && e.name === 'AbortError')) A.toast('書き出せませんでした（' + (e && e.message || e) + '）。', true); }
+      try { if (await A.saveBlob(blob, 'CrossTabStudio_カスタム設定.json', 'カスタム設定', '.json')) A.toast('カスタム設定を書き出しました。別の端末の「ファイル」→「設定」で読み込めます。'); } catch (e) { if (!(e && e.name === 'AbortError')) A.toast('書き出せませんでした（' + (e && e.message || e) + '）。', true); }
     },
     customImport: async function () {
       var f = await A.pickFile('.json'); if (!f) return;
@@ -509,13 +513,13 @@
         var j = JSON.parse(await f.text()), c = j && j.kind === 'custom-settings' ? j.custom : null;
         if (!c || typeof c !== 'object') throw new Error('CrossTab Studio のカスタム設定のファイルではありません。');
         if (A.customGet() && !confirm('保存してあるカスタム設定を、読み込んだ設定で置き換えますか。')) return;
-        A.customSet(c); A.setDefMode('custom'); A.render('pane'); A.toast('カスタム設定を読み込みました。これから新しく始めるときに使います。');
+        A.customSet(c); A.setDefMode('custom'); A.render('pane'); refreshSettings(); A.toast('カスタム設定を読み込みました。これから新しく始めるときに使います。');
       } catch (e) { A.toast(e.message || '読み込めませんでした。', true); }
     },
     customDelete: function () {
       if (!A.customGet()) return;
       if (!confirm('この端末に保存してあるカスタム設定を消しますか。消すと元に戻せません（書き出したファイルがあれば読み込み直せます）。')) return;
-      A.customSet(null); A.setDefMode('init'); A.render('pane'); A.toast('カスタム設定を消しました。初期設定を使います。');
+      A.customSet(null); A.setDefMode('init'); A.render('pane'); refreshSettings(); A.toast('カスタム設定を消しました。初期設定を使います。');
     },
     scoreNew: function () { scoreDialog(null); },
     guide: function () { guideDialog(); },
@@ -580,7 +584,7 @@
     function h(t) { return '<div class="md-sec-title" style="margin:14px 0 4px">' + t + '</div>'; }
     function tbl(head, rows) {
       return '<table class="md-t0" style="width:100%"><tr>' + head.map(function (x) { return '<th class="md-rh">' + x + '</th>'; }).join('') + '</tr>' + rows.map(function (r) {
-        if (typeof r === 'string') return '<tr><th class="md-rh" colspan="' + head.length + '" style="text-align:left;background:#F3F7F4">' + r + '</th></tr>';
+        if (typeof r === 'string') return '<tr><th class="md-rh" colspan="' + head.length + '" style="text-align:left;background:var(--t-f3f7f4)">' + r + '</th></tr>';
         return '<tr><th class="md-rh" style="width:30%;white-space:normal">' + r[0] + '</th>' + r.slice(1).map(function (c) { return '<td class="md-tx" style="white-space:normal">' + c + '</td>'; }).join('') + '</tr>';
       }).join('') + '</table>';
     }
@@ -719,6 +723,7 @@
   document.addEventListener('change', function (e) {
     var el = e.target, tab = A.curTab();
     if (el.id === 'md_pane_sel') { setRtab(el.value); return; }
+    if (el.dataset.cust) { setCustom(el.dataset.cust, el.value); return; }
     if (el.dataset.ancheck) { var t = A.tabById(el.dataset.ancheck); if (t) A.commit(function () { t.checked = el.checked; }, { key: 'check' }); return; }
     if (el.dataset.set) { if (el.type === 'radio' && !el.checked) return; setPath(el.dataset.set, parseVal(el)); return; }
     if (el.dataset.legname !== undefined) { renameSeries(+el.dataset.legname, el.value); return; }
@@ -1000,7 +1005,7 @@
       '<div class="md-grid2"><label class="md-field">名前<input type="text" id="md_sc_name" value="' + esc(name) + '"></label>' +
       '<div class="md-field">計算<div class="md-row" style="gap:12px;margin-top:4px"><label><input type="radio" name="md_sc_m" value="mean"' + (comp.method !== 'sum' ? ' checked' : '') + '> 平均点</label><label><input type="radio" name="md_sc_m" value="sum"' + (comp.method === 'sum' ? ' checked' : '') + '> 合計点</label></div></div></div>' +
       '<p class="md-hint" style="margin:6px 0">尺度に含める項目に ☑ を付けます。逆の向きに聞いた項目（例：「海は好きではない」）には「逆転」を付けると、点数を反対にしてから計算します。すべての項目に答えた人だけ得点を出し、1 つでも答えていない人は欠損にします。平均点は、項目の数が違う尺度どうしでも比べやすくなります。</p>' +
-      '<div style="max-height:46vh;overflow:auto;border:1px solid #D5E3DA"><table class="md-t0" style="width:100%;table-layout:fixed"><colgroup><col style="width:44px"><col><col style="width:64px"><col style="width:70px"></colgroup><tr><th class="md-rh">使う</th><th class="md-rh">項目</th><th class="md-rh">段階</th><th class="md-rh">向き</th></tr>' + rows + '</table></div>' +
+      '<div style="max-height:46vh;overflow:auto;border:1px solid var(--t-d5e3da)"><table class="md-t0" style="width:100%;table-layout:fixed"><colgroup><col style="width:44px"><col><col style="width:64px"><col style="width:70px"></colgroup><tr><th class="md-rh">使う</th><th class="md-rh">項目</th><th class="md-rh">段階</th><th class="md-rh">向き</th></tr>' + rows + '</table></div>' +
       '<div id="md_sc_prev" class="md-hint" style="margin-top:8px"></div>',
       '<button class="md-btn" data-act="closeModal">やめる</button><button class="md-btn md-btn-primary" data-act="scoreSave" data-arg="' + (x ? x.col : '') + '">' + (x ? '直す' : '作る') + '</button>', 640);
     function prev() {
@@ -1116,7 +1121,7 @@
   function guideDialog() {
     var usable = S.P.vars.filter(function (x) { return x.type !== 'empty'; });
     function opts(f, sel) { return '<option value="">（選ぶ）</option>' + usable.filter(f || function () { return true; }).map(function (x) { return '<option value="' + x.col + '"' + (sel === x.col ? ' selected' : '') + '>' + esc(x.label) + '〔' + esc(tname(x)) + '〕</option>'; }).join(''); }
-    function checks(name, f) { return '<div style="max-height:30vh;overflow:auto;border:1px solid #D5E3DA;padding:4px 8px">' + usable.filter(f).map(function (x) { return '<label style="display:block;padding:2px 0"><input type="checkbox" data-g' + name + '="' + x.col + '"> ' + esc(x.label) + ' <span class="md-hint">〔' + esc(tname(x)) + '〕</span></label>'; }).join('') + '</div>'; }
+    function checks(name, f) { return '<div style="max-height:30vh;overflow:auto;border:1px solid var(--t-d5e3da);padding:4px 8px">' + usable.filter(f).map(function (x) { return '<label style="display:block;padding:2px 0"><input type="checkbox" data-g' + name + '="' + x.col + '"> ' + esc(x.label) + ' <span class="md-hint">〔' + esc(tname(x)) + '〕</span></label>'; }).join('') + '</div>'; }
     var goals = GUIDE_GOALS.map(function (g, i) { return '<label style="display:block;padding:3px 0"><input type="radio" name="md_g_goal" value="' + g[0] + '"' + (i === 1 ? ' checked' : '') + '> <b>' + esc(g[1]) + '</b> <span class="md-hint">' + esc(g[2]) + '</span></label>'; }).join('');
     var d = modal('解析の選び方', '<div class="md-sec-title">1. 知りたいこと</div>' + goals +
       '<div class="md-sec-title" style="margin-top:10px">2. 質問</div><div id="md_g_q"></div>' +
@@ -1153,6 +1158,27 @@
     });
     drawQ();
   }
+  // 設定の画面が開いていれば、中身を描き直す（スクロールの位置は保つ）
+  function refreshSettings() {
+    var b = document.getElementById('md_set_body'); if (!b) return;
+    var box = b.closest('.md-modal-body') || b.parentElement, top = box ? box.scrollTop : 0;
+    b.innerHTML = A.settingsHtml(); if (box) box.scrollTop = top;
+  }
+  // カスタム設定の中身を、設定の画面から直接変える（なければ初期設定をもとに作る）
+  function setCustom(key, val) {
+    var c = A.customGet(), base = A.baseProject();
+    if (!c) { var st = A.clone(base.settings); delete st.autoSave; c = { v: 1, settings: st, report: A.clone(base.report), figDefault: null, tstyleDefault: null }; }
+    c.settings = c.settings || {}; c.report = c.report || {};
+    if (key === 'alpha') c.settings.alpha = +val;
+    else if (key === 'lead0') c.settings.lead0 = val === 'true';
+    else if (key === 'tables' || key === 'holm') c.report[key] = val === 'true';
+    else if (key === 'palette') { c.figDefault = c.figDefault || {}; if (val) c.figDefault.palette = val; else delete c.figDefault.palette; delete c.figDefault.colorMode; }
+    else if (key === 'design') { c.tstyleDefault = Object.assign(c.tstyleDefault || A.tableDefaults(), T_PRESET[val] || {}, { design: val }); }
+    c.savedAt = new Date().toISOString();
+    if (!A.customSet(c)) { A.toast('この端末に保存できませんでした。', true); return; }
+    refreshSettings();
+  }
+  A.refreshSettings = refreshSettings;
   // 今の設定からカスタム設定を作る。図と表の書式は、選んでいる図・表があればそれを、なければ「これからの既定」を使う
   function customFromNow() {
     var tab = A.curTab(), fig = tab && tab.figs && tab.figs.length ? A.curFig() : null, set = A.clone(S.P.settings);

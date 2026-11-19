@@ -6,7 +6,9 @@
   var paper = '<path d="M8 4h12l6 6v18H8z" fill="' + W + '"/><path d="M20 4v6h6"/>';
   var axes = '<path d="M5 5v22h23"/>';
   var P = {
-    csv: sheet + '<path d="M22 20v9M18 25l4 4 4-4" stroke="' + ADD + '" stroke-width="2.2"/>',
+    // CSV を開く：小さめの表と、右下の白い丸の中の下向き矢印（矢印が表の線と重ならないようにする）
+    csv: '<rect x="3" y="4" width="20" height="16" fill="' + W + '"/><rect x="3" y="4" width="20" height="5" fill="' + G + '"/><path d="M3 9h20M3 14.500h20M9.700 4v16M16.300 4v16"/>' +
+      '<circle cx="24" cy="23.500" r="6.500" fill="' + W + '" stroke="' + ADD + '"/><path d="M24 19.500v7M21 23.800l3 3 3-3" stroke="' + ADD + '" stroke-width="2.2"/>',
     open: '<path d="M4 9h8l3 3h13v14H4z" fill="' + Y + '"/><path d="M4 26l4-10h23l-3 10" fill="' + W + '"/>',
     save: '<path d="M5 5h18l4 4v18H5z" fill="' + G + '"/><rect x="10" y="5" width="11" height="7" fill="' + W + '"/><rect x="9" y="17" width="14" height="10" fill="' + W + '"/>',
     saveas: '<path d="M5 5h18l4 4v18H5z" fill="' + G + '"/><rect x="10" y="5" width="11" height="7" fill="' + W + '"/><path d="M14 25l2-6 9-9 4 4-9 9z" fill="' + W + '"/>',

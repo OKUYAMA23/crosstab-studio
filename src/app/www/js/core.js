@@ -28,6 +28,15 @@
     P.figDefault = c.figDefault ? clone(c.figDefault) : null; P.tstyleDefault = c.tstyleDefault ? clone(c.tstyleDefault) : null;
     return P;
   }
+  // アプリの色：緑（初期）・青・赤。端末に保存し、html の data-theme で切り替える（css/theme.css）
+  function theme() { try { var t = localStorage.getItem('cts-theme'); return t === 'blue' || t === 'red' ? t : 'green'; } catch (e) { return 'green'; } }
+  function setTheme(t) {
+    try { localStorage.setItem('cts-theme', t); } catch (e) {}
+    if (t && t !== 'green') document.documentElement.setAttribute('data-theme', t); else document.documentElement.removeAttribute('data-theme');
+    var m = document.querySelector('meta[name="theme-color"]'), c = { green: '#217346', blue: '#2B579A', red: '#A4373A' }[t] || '#217346';
+    if (m) m.setAttribute('content', c);
+  }
+  if (theme() !== 'green') setTheme(theme());                       // 起動時：ブラウザの上端の色も合わせる
   function newProject() { return defMode() === 'custom' ? applyDefaults(baseProject(), customGet()) : baseProject(); }
   S.P = newProject();
 
@@ -451,7 +460,7 @@
   }
 
   window.App = window.App || {};
-  Object.assign(window.App, { baseProject: baseProject, customGet: customGet, customSet: customSet, defMode: defMode, setDefMode: setDefMode, applyDefaults: applyDefaults, loadUrl: loadUrl, sheetCsvUrl: sheetCsvUrl, xlsxIn: xlsxIn, compVars: compVars, compDefs: compDefs, errLog: errLog, clearErrLog: clearErrLog, logErr: logErr, S: S, MAX_TABS: MAX_TABS, TYPE_NAMES: TYPE_NAMES, $: $, esc: esc, clone: clone, toast: toast, busy: busy, api: api, apiData: apiData, zip: zip, safeName: safeName,
+  Object.assign(window.App, { theme: theme, setTheme: setTheme, baseProject: baseProject, customGet: customGet, customSet: customSet, defMode: defMode, setDefMode: setDefMode, applyDefaults: applyDefaults, loadUrl: loadUrl, sheetCsvUrl: sheetCsvUrl, xlsxIn: xlsxIn, compVars: compVars, compDefs: compDefs, errLog: errLog, clearErrLog: clearErrLog, logErr: logErr, S: S, MAX_TABS: MAX_TABS, TYPE_NAMES: TYPE_NAMES, $: $, esc: esc, clone: clone, toast: toast, busy: busy, api: api, apiData: apiData, zip: zip, safeName: safeName,
     v: v, def: def, tabById: tabById, slotCols: slotCols, sameChoices: sameChoices, setItems: setItems, defaultCatsMany: defaultCatsMany, curTab: curTab, curFig: curFig, isCat: isCat, defaultCats: defaultCats, setSlot: setSlot, autoName: autoName, newTab: newTab, newFig: newFig, tabReady: tabReady,
     buildReq: buildReq, markDirty: markDirty, schedule: schedule, scheduleAll: scheduleAll, syncResults: syncResults, commit: commit, undo: undo, redo: redo, fixSel: fixSel, tableDefaults: tableDefaults,
     pickFile: pickFile, saveBlob: saveBlob, baseName: baseName, loadCsv: loadCsv, handleFile: handleFile, newProject: newProject,

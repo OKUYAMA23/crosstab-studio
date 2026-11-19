@@ -1,22 +1,24 @@
 <!DOCTYPE html>
 <html lang="ja"><head><meta charset="utf-8"><title>CrossTab Studio（起動中）</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='5' fill='%23217346'/%3E%3Cpath d='M7 9h18M7 16h18M7 23h18M13 6v20M20 6v20' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/theme.css">
+<script>try{var t=localStorage.getItem('cts-theme');if(t&&t!=='green')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
 <style>
-html,body{height:100%;margin:0;background:#F4F9F6;font-family:Arial,'Yu Gothic Medium','Yu Gothic',Meiryo,sans-serif;color:#1F4030}
+html,body{height:100%;margin:0;background:var(--t-f4f9f6);font-family:Arial,'Yu Gothic Medium','Yu Gothic',Meiryo,sans-serif;color:var(--t-1f4030)}
 .box{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
-h1{font-size:26px;margin:6px 0 0;color:#1E2F26} p{margin:0;font-size:13px;color:#567565}
-.bar{width:340px;height:4px;background:#DDEFE3;margin-top:16px;overflow:hidden;position:relative}
-.bar i{display:block;height:100%;width:0;background:#217346;transition:width .4s}
+h1{font-size:26px;margin:6px 0 0;color:var(--t-1e2f26)} p{margin:0;font-size:13px;color:var(--t-567565)}
+.bar{width:340px;height:4px;background:var(--t-ddefe3);margin-top:16px;overflow:hidden;position:relative}
+.bar i{display:block;height:100%;width:0;background:var(--t-217346);transition:width .4s}
 .bar b{position:absolute;top:0;bottom:0;width:30%;background:rgba(255,255,255,.55);animation:sweep 1.2s linear infinite}
 @keyframes sweep{from{left:-30%}to{left:100%}}
-.row{display:flex;align-items:center;gap:10px;font-size:13px;color:#1F4030;min-height:20px}
-.spin{width:14px;height:14px;border:2px solid #C6E0CF;border-top-color:#217346;border-radius:50%;animation:spin .8s linear infinite}
+.row{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--t-1f4030);min-height:20px}
+.spin{width:14px;height:14px;border:2px solid var(--t-c6e0cf);border-top-color:var(--t-217346);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.sec{font-family:Consolas,monospace;color:#567565}
-.steps{margin-top:6px;font-size:13px;color:#567565;line-height:1.9;min-width:340px}
-.steps div::before{content:'○ ';color:#9DB3A7}.steps div.done{color:#1F4030}.steps div.done::before{content:'● ';color:#217346}
-.steps div.now{color:#1F4030;font-weight:700}.steps div.now::before{content:'◐ ';color:#217346}
-.note{max-width:460px;text-align:center;line-height:1.6;color:#1F4030;display:none;margin-top:8px}
+.sec{font-family:Consolas,monospace;color:var(--t-567565)}
+.steps{margin-top:6px;font-size:13px;color:var(--t-567565);line-height:1.9;min-width:340px}
+.steps div::before{content:'○ ';color:var(--t-9db3a7)}.steps div.done{color:var(--t-1f4030)}.steps div.done::before{content:'● ';color:var(--t-217346)}
+.steps div.now{color:var(--t-1f4030);font-weight:700}.steps div.now::before{content:'◐ ';color:var(--t-217346)}
+.note{max-width:460px;text-align:center;line-height:1.6;color:var(--t-1f4030);display:none;margin-top:8px}
 .note.err{color:#C00000}
 </style></head><body><div class="box">
 <svg viewBox="0 0 32 32" width="76" height="76"><rect width="32" height="32" rx="5" fill="#217346"/><path d="M7 9h18M7 16h18M7 23h18M13 6v20M20 6v20" stroke="#fff" stroke-width="2"/></svg>

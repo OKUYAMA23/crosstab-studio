@@ -13,7 +13,7 @@
 /* 作業ウィンドウ：画面の下半分。上半分の図を見ながら設定できるように、図の上には重ねない */
 .md-phone .md-main { flex-direction: column; }
 .md-phone .md-center { flex: 1 1 auto; min-height: 120px; }
-.md-phone .md-pane { position: static !important; box-shadow: none !important; width: auto !important; height: 46vh; flex: none; border-left: 0; border-top: 2px solid var(--rule-d, #9DB3A7); }
+.md-phone .md-pane { position: static !important; box-shadow: none !important; width: auto !important; height: 46vh; flex: none; border-left: 0; border-top: 2px solid var(--rule-d, var(--t-9db3a7)); }
 .md-phone .md-pane-head { min-height: 40px; }
 .md-phone .md-pane-head button { min-width: 36px; min-height: 32px; }
 /* 中央：余白を詰める。表は横に送れるようにする */
@@ -34,8 +34,8 @@
 .md-phone .md-an-btns button { min-width: 34px; min-height: 30px; }
 /* 作業ウィンドウを開くボタン（タイトルバーの右端） */
 .md-pane-open { display: none; }
-.md-phone .md-pane-open { display: inline-flex; align-items: center; margin-left: auto; height: 26px; padding: 0 10px; border: 1px solid var(--rule-d, #9DB3A7); border-radius: 3px; background: #FFF; color: var(--ink-ui, #1F4030); font-size: 13px; }
-.md-phone .md-pane-open.on { background: var(--accent, #217346); border-color: var(--accent, #217346); color: #FFF; }
+.md-phone .md-pane-open { display: inline-flex; align-items: center; margin-left: auto; height: 26px; padding: 0 10px; border: 1px solid var(--rule-d, var(--t-9db3a7)); border-radius: 3px; background: #FFF; color: var(--ink-ui, var(--t-1f4030)); font-size: 13px; }
+.md-phone .md-pane-open.on { background: var(--accent, var(--t-217346)); border-color: var(--accent, var(--t-217346)); color: #FFF; }
 .md-phone .md-tabs .md-pane-toggle { display: none; }
 /* 設問を選ぶ欄：見出しの下に、選ぶ欄を横いっぱいに置く（横に並べると、長い設問名が読めないほど狭くなるため） */
 .md-phone .md-qrow { grid-template-columns: minmax(0, 1fr); gap: 4px; margin-bottom: 10px; }

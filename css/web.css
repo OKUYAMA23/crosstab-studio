@@ -1,17 +1,17 @@
 /* iPad 版の追加分 */
 html { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
 /* 起動中の表示 */
-#md_boot { position: fixed; inset: 0; z-index: 5000; background: #F4F9F6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: #1F4030; }
-#md_boot h1 { font-size: 26px; margin: 6px 0 0; color: #1E2F26; }
-#md_boot p { margin: 0; font-size: 13px; color: #567565; }
-.md-boot-bar { width: 340px; max-width: 80vw; height: 4px; background: #DDEFE3; margin-top: 14px; }
-.md-boot-bar i { display: block; height: 100%; width: 0; background: #217346; transition: width .3s; }
+#md_boot { position: fixed; inset: 0; z-index: 5000; background: var(--t-f4f9f6); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: var(--t-1f4030); }
+#md_boot h1 { font-size: 26px; margin: 6px 0 0; color: var(--t-1e2f26); }
+#md_boot p { margin: 0; font-size: 13px; color: var(--t-567565); }
+.md-boot-bar { width: 340px; max-width: 80vw; height: 4px; background: var(--t-ddefe3); margin-top: 14px; }
+.md-boot-bar i { display: block; height: 100%; width: 0; background: var(--t-217346); transition: width .3s; }
 .md-boot-row { display: flex; gap: 10px; align-items: center; font-size: 13px; min-height: 20px; }
-.md-boot-sec { font-family: Menlo, Consolas, monospace; color: #567565; }
-.md-boot-steps { font-size: 13px; color: #567565; line-height: 1.9; min-width: 300px; }
-.md-boot-steps div::before { content: '○ '; color: #9DB3A7; } .md-boot-steps div.done { color: #1F4030; } .md-boot-steps div.done::before { content: '● '; color: #217346; }
-.md-boot-steps div.now { color: #1F4030; font-weight: 700; } .md-boot-steps div.now::before { content: '◐ '; color: #217346; }
-.md-boot-note { max-width: 460px; text-align: center; font-size: 13px; color: #1F4030; min-height: 20px; }
+.md-boot-sec { font-family: Menlo, Consolas, monospace; color: var(--t-567565); }
+.md-boot-steps { font-size: 13px; color: var(--t-567565); line-height: 1.9; min-width: 300px; }
+.md-boot-steps div::before { content: '○ '; color: var(--t-9db3a7); } .md-boot-steps div.done { color: var(--t-1f4030); } .md-boot-steps div.done::before { content: '● '; color: var(--t-217346); }
+.md-boot-steps div.now { color: var(--t-1f4030); font-weight: 700; } .md-boot-steps div.now::before { content: '◐ '; color: var(--t-217346); }
+.md-boot-note { max-width: 460px; text-align: center; font-size: 13px; color: var(--t-1f4030); min-height: 20px; }
 #md_boot.err .md-boot-msg { color: #C00000; }
 
 /* 指で操作するとき */
@@ -40,11 +40,11 @@ html { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
 .md-app { height: 100vh; height: 100dvh; }
 /* 新しい版の知らせ */
 #md_update { position: fixed; left: 50%; top: 6px; transform: translateX(-50%); z-index: 4000; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center;
-  max-width: calc(100vw - 16px); background: #FFF; border: 1px solid var(--accent, #217346); border-radius: 4px; box-shadow: 0 2px 10px rgba(31,64,48,.25); padding: 6px 10px; font-size: 13px; color: var(--ink, #1E2F28); }
+  max-width: calc(100vw - 16px); background: #FFF; border: 1px solid var(--accent, var(--t-217346)); border-radius: 4px; box-shadow: 0 2px 10px rgba(31,64,48,.25); padding: 6px 10px; font-size: 13px; color: var(--ink, var(--t-1e2f28)); }
 .md-touch .md-th-e { right: -12px; width: 24px; }
 .md-touch .md-th-s { bottom: -12px; height: 24px; }
 .md-touch .md-th-se { right: -12px; bottom: -12px; width: 24px; height: 24px; border-width: 2px; }
 /* 利用の確認の画面（ほかのすべての画面より手前） */
-#md_lock { position: fixed; inset: 0; z-index: 9000; background: #F4F8F5; display: flex; align-items: center; justify-content: center; padding: 20px; }
-.md-lock-box { max-width: 460px; text-align: center; color: var(--ink, #1E2F28); } .md-lock-box h1 { font-size: 22px; margin: 12px 0 10px; }
+#md_lock { position: fixed; inset: 0; z-index: 9000; background: var(--t-f4f8f5); display: flex; align-items: center; justify-content: center; padding: 20px; }
+.md-lock-box { max-width: 460px; text-align: center; color: var(--ink, var(--t-1e2f28)); } .md-lock-box h1 { font-size: 22px; margin: 12px 0 10px; }
 .md-lock-box p { line-height: 1.7; margin: 8px 0; } .md-lock-box .md-btn { margin-top: 10px; padding: 8px 18px; } .md-lock-note { color: var(--ink-sub, #555); font-size: 12px; }
