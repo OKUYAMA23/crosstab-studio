@@ -1,0 +1,44 @@
+1	Single choice
+2	Ordinal
+3	Multiple choice
+4	Numeric
+5	Free text (not used)
+6	Date-time (not used)
+7	No responses
+8	Tabulation and test report
+9	 ({0} more)
+10	 s elapsed
+11	Calculating
+12	Untitled
+13	Cannot connect to R, which performs the calculations. Restart the app.
+14	Loading data
+15	The data could not be loaded.
+16	Other
+17	 ({0})
+18	, 
+19	 ← {0} independent variables
+20	Up to {0} analyses are allowed. Delete analyses you no longer need.
+21	Calculating analyses
+22	The data were replaced ({0} responses). All analyses were recalculated.
+23	Loaded ({0} responses, {1} columns).
+24	The project file is corrupted.
+25	The project could not be opened.
+26	This is not a CrossTab Studio project.
+27	Opened project “{0}” ({1} analyses).
+28	There is no data to save. Load a CSV first.
+29	Saving the project
+30	Could not save.
+31	Saved project “{0}”.
+32	Could not save automatically: 
+33	Opening the project
+34	CrossTab Studio project
+35	The project was exported to a file. Use it to move the project to another computer.
+36	The workbook has {0} sheets. Loading the first sheet, “{1}”. To use another sheet, make it the first sheet and save again.
+37	Enter a URL (starting with https://).
+38	This is a Google Forms URL. Enter the URL of the spreadsheet opened with “Link to Sheets” on the form's “Responses” tab.
+39	Set the spreadsheet sharing to “Anyone with the link (Viewer)”, or use a URL created with “File → Share → Publish to web” as CSV.
+40	The spreadsheet could not be loaded. It may not be shared, or the network is unavailable. 
+41	The spreadsheet could not be loaded ({0}). 
+42	A sign-in page or similar was returned instead of CSV. 
+43	Loading responses from the spreadsheet
+44	Google Sheets responses_

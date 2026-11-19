@@ -3,11 +3,11 @@
 // プロジェクトは端末のブラウザの中（IndexedDB）に保存する。
 (function () {
   'use strict';
-  var R_FILES = ['data.R', 'stats.R', 'analyses.R', 'analyses2.R', 'excel.R', 'rexport.R', 'server.R', 'web_json.R', 'web_server.R'];
+  var R_FILES = ['i18n.R', 'i18n_en.R', 'data.R', 'stats.R', 'analyses.R', 'analyses2.R', 'excel.R', 'rexport.R', 'server.R', 'web_json.R', 'web_server.R'];
   var realFetch = window.fetch.bind(window), webR = null, rVersion = null, rYear = null, bootErr = null;
   var bootStep = function () {};
   window.CTS_WEB = true;
-  window.CTS_VERSION = '0.9.6';
+  window.CTS_VERSION = '0.9.7';
 
   // ---------------- R（webR）を起動する
   // ホーム画面のアプリとして開いたときは、先に一式を端末に保存する（2 回目からは通信なしで起動できる）
@@ -16,19 +16,19 @@
     try {
       var sw = navigator.serviceWorker, updating = false;
       sw.addEventListener('message', function (e) {
-        var d = e.data || {}; if (d.type === 'cts-cache') bootStep(0, (updating ? '新しい版を読み込んでいます（' : 'アプリをこの端末に保存しています（') + d.done + ' / ' + d.total + '）');
+        var d = e.data || {}; if (d.type === 'cts-cache') bootStep(0, (updating ? _t('新しい版を読み込んでいます（') : _t('アプリをこの端末に保存しています（')) + d.done + ' / ' + d.total + _t('）'));
       });
       var had = !!sw.controller, reg = await sw.register('sw.js');
       // 保存済みの版で開いたときは、R を起動する前に新しい版があるかを確かめる。
       // あれば読み込み画面のまま新しい版を保存し、すぐに読み込み直す（古い版の画面を出してから切り替える二度手間をなくす）
       if (had) {
-        bootStep(0, '新しい版がないか確かめています');
-        var found = await bootUpdate(sw, reg, function () { updating = true; bootStep(0, '新しい版を読み込んでいます'); });
+        bootStep(0, _t('新しい版がないか確かめています'));
+        var found = await bootUpdate(sw, reg, function () { updating = true; bootStep(0, _t('新しい版を読み込んでいます')); });
         if (found) { location.reload(); await new Promise(function () {}); }
       }
       watchUpdate(sw, reg, had);
       if (had) return;
-      bootStep(0, 'アプリをこの端末に保存しています（初回だけ 20 MB ほど）');
+      bootStep(0, _t('アプリをこの端末に保存しています（初回だけ 20 MB ほど）'));
       await sw.ready;
       if (!sw.controller) await new Promise(function (res) { sw.addEventListener('controllerchange', res, { once: true }); setTimeout(res, 5000); });
     } catch (e) { /* 保存できない場所（Claude のページなど）では、そのまま起動する */ }
@@ -64,11 +64,11 @@
     if (!S || !S.data) { location.reload(); return; }
     if (document.getElementById('md_update')) return;
     var bar = document.createElement('div'); bar.id = 'md_update';
-    bar.innerHTML = '<span>新しい版を用意しました。更新すると切り替わります。</span><button class="md-btn md-btn-primary md-btn-sm">更新する</button><button class="md-btn md-btn-sm" data-later>あとで</button>';
+    bar.innerHTML = _t('<span>新しい版を用意しました。更新すると切り替わります。</span><button class="md-btn md-btn-primary md-btn-sm">更新する</button><button class="md-btn md-btn-sm" data-later>あとで</button>');
     document.body.appendChild(bar);
     var go = bar.querySelector('.md-btn-primary');
     go.onclick = function () {
-      if (S.dirty && !go.dataset.sure) { go.dataset.sure = '1'; go.textContent = '保存していない変更は消えます。更新する'; return; }
+      if (S.dirty && !go.dataset.sure) { go.dataset.sure = '1'; go.textContent = _t('保存していない変更は消えます。更新する'); return; }
       location.reload();
     };
     bar.querySelector('[data-later]').onclick = function () { bar.remove(); };
@@ -76,11 +76,11 @@
   var ready = (async function () {
     try {
       await ensureOffline();
-      bootStep(1, '計算に使う R を読み込んでいます（初回は 20 MB ほどの読み込みがあります）');
+      bootStep(1, _t('計算に使う R を読み込んでいます（初回は 20 MB ほどの読み込みがあります）'));
       var mod = await import(new URL('webr/webr.js', document.baseURI).href);
       webR = new mod.WebR({ baseUrl: new URL('webr/', document.baseURI).href, channelType: mod.ChannelType.PostMessage, interactive: false });
       await webR.init();
-      bootStep(2, '集計と検定の部品を読み込んでいます');
+      bootStep(2, _t('集計と検定の部品を読み込んでいます'));
       try { webR.FS.mkdir('/cts'); } catch (e) {}
       for (var j = 0; j < R_FILES.length; j++) {
         var src = await (await realFetch('R/' + R_FILES[j] + '.txt', { cache: 'no-cache' })).text();
@@ -88,7 +88,7 @@
       }
       await webR.evalRVoid('for (f in c(' + R_FILES.map(function (f) { return '"' + f + '"'; }).join(',') + ')) eval(parse(file = file.path("/cts", f), encoding = "UTF-8", keep.source = FALSE), envir = globalenv())');
       rVersion = await webR.evalRString('paste(R.version$major, R.version$minor, sep = ".")'); rYear = await webR.evalRString('R.version$year');
-      bootStep(3, '画面を用意しています');
+      bootStep(3, _t('画面を用意しています'));
       return true;
     } catch (e) { bootErr = e; bootStep(-1, String(e && e.message || e)); throw e; }
   })();
@@ -157,30 +157,30 @@
   async function projApi(path, qs, bytes, body) {
     if (path === '/api/proj/save') {
       var nm = projName(new URLSearchParams(qs).get('name'));
-      if (!nm) return jsonResp({ ok: false, message: 'プロジェクトの名前を入れてください。' });
+      if (!nm) return jsonResp({ ok: false, message: _t('プロジェクトの名前を入れてください。') });
       var rec = { name: nm, saved: Date.now(), text: new TextDecoder().decode(bytes) };
       try { var d = await db(); if (d) await store('readwrite', function (os) { return os.put(rec); }); else memStore[nm] = rec; }
-      catch (e) { return jsonResp({ ok: false, message: 'この端末に保存できませんでした（' + e.message + '）。「ファイルに書き出す」で保存してください。' }); }
-      return jsonResp({ ok: true, name: nm, folder: 'この端末のブラウザの中' });
+      catch (e) { return jsonResp({ ok: false, message: _t('この端末に保存できませんでした（{0}）。「ファイルに書き出す」で保存してください。', e.message) }); }
+      return jsonResp({ ok: true, name: nm, folder: _t('この端末のブラウザの中') });
     }
     if (path === '/api/proj/list') {
       var all = [];
       try { var d2 = await db(); all = d2 ? await store('readonly', function (os) { return os.getAll(); }) : Object.values(memStore); } catch (e) { all = Object.values(memStore); }
       all.sort(function (a, b) { return b.saved - a.saved; });
-      return jsonResp({ ok: true, folder: 'この端末のブラウザの中', items: all.map(function (r) { return { name: r.name, saved: stamp(r.saved), size: r.text.length }; }) });
+      return jsonResp({ ok: true, folder: _t('この端末のブラウザの中'), items: all.map(function (r) { return { name: r.name, saved: stamp(r.saved), size: r.text.length }; }) });
     }
     var b = body ? JSON.parse(body) : {}, key = projName(b.name);
     if (path === '/api/proj/load') {
       var r2 = null;
       try { var d3 = await db(); r2 = d3 ? await store('readonly', function (os) { return os.get(key); }) : memStore[key]; } catch (e) {}
-      if (!r2) return jsonResp({ ok: false, message: 'プロジェクト「' + key + '」が見つかりません。' });
+      if (!r2) return jsonResp({ ok: false, message: _t('プロジェクト「{0}」が見つかりません。', key) });
       return new Response(r2.text, { headers: { 'Content-Type': 'application/json; charset=utf-8' } });
     }
     if (path === '/api/proj/delete') {
       try { var d4 = await db(); if (d4) await store('readwrite', function (os) { return os.delete(key); }); else delete memStore[key]; } catch (e) {}
       return jsonResp({ ok: true });
     }
-    return jsonResp({ ok: false, message: '見つかりません。' }, 404);
+    return jsonResp({ ok: false, message: _t('見つかりません。') }, 404);
   }
 
   // ---------------- /api/… の要求を横取りする
@@ -199,14 +199,14 @@
     var i = u.indexOf('?'), path = i >= 0 ? u.slice(0, i) : u, qs = i >= 0 ? u.slice(i + 1) : '';
     var bytes = await bodyBytes(opt.body), isJson = !/octet-stream/.test((opt.headers && opt.headers['Content-Type']) || '') && typeof opt.body === 'string';
     if (path === '/api/ping') {
-      if (!rVersion) throw new Error(bootErr ? 'R を起動できませんでした' : 'R を起動しています');
+      if (!rVersion) throw new Error(bootErr ? _t('R を起動できませんでした') : _t('R を起動しています'));
       return jsonResp({ ok: true, app: 'CrossTabStudio', version: '0.5.0-web', r: rVersion, ryear: rYear });
     }
     if (path === '/api/bye') return jsonResp({ ok: true });
     if (path.indexOf('/api/proj/') === 0) return projApi(path, qs, bytes, isJson ? opt.body : null);
     if (path === '/api/load') bytes = toUtf8Bytes(bytes);
     try { return await callR(path, qs, bytes, isJson ? opt.body : null); }
-    catch (e) { return jsonResp({ ok: false, message: '計算の途中でエラーが起きました（' + (e && e.message || e) + '）。' }); }
+    catch (e) { return jsonResp({ ok: false, message: _t('計算の途中でエラーが起きました（{0}）。', e && e.message || e) }); }
   };
   var realBeacon = navigator.sendBeacon ? navigator.sendBeacon.bind(navigator) : null;
   try { navigator.sendBeacon = function (u, d) { if (String(u).indexOf('/api/') === 0) return true; return realBeacon ? realBeacon(u, d) : false; }; } catch (e) {}

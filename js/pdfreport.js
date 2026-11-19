@@ -33,16 +33,16 @@
     var inp = X.hb_subset_input_create_or_fail(), us = X.hb_subset_input_unicode_set(inp);
     chars.forEach(function (c) { X.hb_set_add(us, c.codePointAt(0)); });
     var sub = X.hb_subset_or_fail(face, inp); X.hb_subset_input_destroy(inp);
-    if (!sub) { X.hb_face_destroy(face); X.free(p); throw new Error('字体を小さくできませんでした。'); }
+    if (!sub) { X.hb_face_destroy(face); X.free(p); throw new Error(_t('字体を小さくできませんでした。')); }
     var rb = X.hb_face_reference_blob(sub), off = X.hb_blob_get_data(rb, 0), len = X.hb_blob_get_length(rb);
     var out = new Uint8Array(X.memory.buffer).slice(off, off + len);
     X.hb_blob_destroy(rb); X.hb_face_destroy(sub); X.hb_face_destroy(face); X.free(p);
     return out;
   }
   function loadScript(src) {
-    return new Promise(function (res, rej) { var s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = function () { rej(new Error(src + ' を読み込めませんでした。')); }; document.head.appendChild(s); });
+    return new Promise(function (res, rej) { var s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = function () { rej(new Error(src + _t(' を読み込めませんでした。'))); }; document.head.appendChild(s); });
   }
-  async function getBuf(url) { var r = await fetch(url); if (!r.ok) throw new Error(url + ' を読み込めませんでした（' + r.status + '）。'); return r.arrayBuffer(); }
+  async function getBuf(url) { var r = await fetch(url); if (!r.ok) throw new Error(url + _t(' を読み込めませんでした（{0}）。', r.status)); return r.arrayBuffer(); }
   // TTC（複数の字体をまとめたファイル。MS 明朝など）から、PostScript 名の合う字体の番号を探す
   function ttcIndex(b, ps) {
     var dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
@@ -322,7 +322,7 @@
     if (H * s <= avail) { await B.svg(svg, { maxScale: 0.72 }); return; }
     var body = t.rows.slice(1), per = Math.max(3, Math.floor((t.rows.length) * avail / (H * s)) - 3), k = 0;
     for (var i = 0; i < body.length; i += per, k++) {
-      var part = Object.assign({}, t, { caption: t.caption + (k ? '（続き）' : ''), rows: [t.rows[0]].concat(body.slice(i, i + per)), note: i + per >= body.length ? t.note : '' });
+      var part = Object.assign({}, t, { caption: t.caption + (k ? _t('（続き）') : ''), rows: [t.rows[0]].concat(body.slice(i, i + per)), note: i + per >= body.length ? t.note : '' });
       if (t.bold) part.bold = [t.bold[0]].concat(t.bold.slice(1 + i, 1 + i + per));
       if (t.total) part.total = { row: !!(t.total.row && i + per >= body.length) };
       await B.svg(A.tableSvgDoc(part, ts), { maxScale: 0.72 }); B.gap(6);
@@ -349,14 +349,14 @@
     return compose(doc, fontSet(F2, latinHas), true);
   }
   async function compose(doc, FS, final) {
-    doc.setTitle(S.P.title || 'CrossTab Studio 報告書'); doc.setCreator('CrossTab Studio'); doc.setProducer('CrossTab Studio'); try { doc.setLanguage('ja-JP'); } catch (e) {}
+    doc.setTitle(S.P.title || _t('CrossTab Studio 報告書')); doc.setCreator('CrossTab Studio'); doc.setProducer('CrossTab Studio'); try { doc.setLanguage('ja-JP'); } catch (e) {}
     var B = new Builder(doc, FS), items = A.repItems(), lang = S.P.settings.figLang, figNo = 0;
     var fontOver = { fontJa: FAMILY, fontEn: FAMILY }, serifOver = { fontJa: 'CTSMincho', fontEn: 'CTSTimes' };   // 図はゴシック、表は明朝＋Times
     B.newPage();
-    B.text(S.P.title || '報告書', { size: 17, bold: true, lh: 26 });
+    B.text(S.P.title || _t('報告書'), { size: 17, bold: true, lh: 26 });
     B.text(A.repMeta(), { size: 9, color: '#404040', lh: 15 });
     B.gap(4); B.rule(0.8, '#000000'); B.gap(8);
-    if (!items.length) { B.text('☑ を付けた解析がありません。', { size: 10.5 }); }
+    if (!items.length) { B.text(_t('☑ を付けた解析がありません。'), { size: 10.5 }); }
     var tsBase = Object.assign({}, (S.P.tabs[0] && S.P.tabs[0].tstyle) || {}, serifOver);
     if (items.some(function (x) { return x.ok; })) {
       var sum = A.summaryTable();            // 解析の名前は各節の見出しにあるので、一覧では番号だけにして読める大きさを保つ
@@ -370,10 +370,10 @@
       B.text(x.no + '. ' + x.tab.name, { size: 12.5, bold: true, lh: 20, keep: 1 });
       B.text(x.ok ? x.res.test : A.def(x.tab.type).name, { size: 9, color: '#404040', lh: 15 });
       B.gap(3);
-      if (!x.ok) { B.text(x.res ? (x.res.message || '計算できませんでした。') : '列がまだ選ばれていません。', { size: 10.5 }); B.gap(12); continue; }
+      if (!x.ok) { B.text(x.res ? (x.res.message || _t('計算できませんでした。')) : _t('列がまだ選ばれていません。'), { size: 10.5 }); B.gap(12); continue; }
       if (x.res.method) {                                            // 方法を書く解析（テキストマイニング）は、方法と結果を分ける
-        B.text('方法', { size: 10.5, bold: true, lh: 17, keep: 2 }); B.text(x.res.method, { size: 10.5, lh: 18.5, keep: 3 }); B.gap(4);
-        B.text('結果', { size: 10.5, bold: true, lh: 17, keep: 2 });
+        B.text(_t('方法'), { size: 10.5, bold: true, lh: 17, keep: 2 }); B.text(x.res.method, { size: 10.5, lh: 18.5, keep: 3 }); B.gap(4);
+        B.text(_t('結果'), { size: 10.5, bold: true, lh: 17, keep: 2 });
       }
       if (x.text) B.text(x.text, { size: 10.5, lh: 18.5, keep: 3 });
       B.gap(8);
@@ -388,7 +388,7 @@
           figNo++;
           await B.svg(r.svg, { below: 22 });
           B.gap(4);
-          B.text('図 ' + figNo + '　' + x.tab.name + (x.tab.figs.length > 1 ? '（' + (k + 1) + '）' : ''), { size: 9, align: 'center', lh: 15 });
+          B.text(_t('図 {0}　', figNo) + x.tab.name + (x.tab.figs.length > 1 ? _t('（{0}）', k + 1) : ''), { size: 9, align: 'center', lh: 15 });
           B.gap(10);
         }
       }
@@ -405,16 +405,16 @@
     return final ? new Blob([await doc.save()], { type: 'application/pdf' }) : null;
   }
   async function reportPdf() {
-    A.busy(true, 'PDF を作っています（初回は字体を読み込みます）');
+    A.busy(true, _t('PDF を作っています（初回は字体を読み込みます）'));
     try { return await buildPdf(); } finally { A.busy(false); }
   }
   async function savePdf() {
-    if (!S.data) { A.toast('先に CSV ファイルを入れてください。', true); return; }
+    if (!S.data) { A.toast(_t('先に CSV ファイルを入れてください。'), true); return; }
     askLocalFonts();
     try {
       var blob = await reportPdf();
-      if (await A.saveBlob(blob, A.baseName() + '_報告書.pdf', 'PDF', '.pdf')) A.toast('報告書を PDF で保存しました。');
-    } catch (e) { A.toast(e && e.name === 'AbortError' ? '保存をやめました。' : 'PDF を作れませんでした（' + (e && e.message || e) + '）。', true); }
+      if (await A.saveBlob(blob, A.baseName() + _t('_報告書.pdf'), 'PDF', '.pdf')) A.toast(_t('報告書を PDF で保存しました。'));
+    } catch (e) { A.toast(e && e.name === 'AbortError' ? _t('保存をやめました。') : _t('PDF を作れませんでした（{0}）。', e && e.message || e), true); }
   }
   A.reportPdf = reportPdf; A.savePdf = savePdf; A.askLocalFonts = askLocalFonts;
 })();

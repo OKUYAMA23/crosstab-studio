@@ -1,0 +1,120 @@
+1	Home
+2	Data
+3	Analysis
+4	Figure
+5	Table
+6	Export
+7	MS Gothic
+8	MS PGothic
+9	Yu Gothic
+10	Meiryo
+11	BIZ UDGothic
+12	MS Mincho
+13	Yu Mincho
+14	Hiragino Sans
+15	Hiragino Mincho
+16	Shows frequent words in larger letters.
+17	Shows frequent words as bars, in order of the number of responses containing them.
+18	Connects words that appear together in the same responses.
+19	Shows the distribution of a numeric value as bars of frequencies in each bin.
+20	A map that places options with similar response patterns close together.
+21	Shows proportions as a pie. With several groups or questions, one pie is drawn for each.
+22	Compares the proportions of responses by group with 100% bars. The basic figure for a cross-tabulation.
+23	Places the bars of each response side by side by group.
+24	Compares counts with stacked bars.
+25	Keeps the table layout and shades larger values more darkly. A color bar shows how colors correspond to values.
+26	A bar chart of each option.
+27	Connects values with lines to show change over time.
+28	Shows the mean (point) and 95% confidence interval (line) for each group. The basic figure for comparing means (t-test, ANOVA).
+29	Compares distributions of numeric values with boxes and whiskers.
+30	Shows the relationship between two numeric values as points.
+31	Right
+32	Bottom
+33	Top
+34	Inside (top right)
+35	Inside (top left)
+36	Free position
+37	None
+38	Grid
+39	Draws lines around every cell.
+40	Three-line
+41	A table with only thick top and bottom lines and a line under the header. Common in papers.
+42	Striped
+43	Shades every other row.
+44	No lines
+45	Only a line under the header.
+46	Filled header
+47	Fills the header row with a dark color.
+48	Row %
+49	Column %
+50	Count
+51	Residual
+52	Choose a color.
+53	: 
+54	Total
+55	Values in parentheses are percentages of the {0} total.
+56	row
+57	column
+58	▲: significantly more than expected  ▽: significantly fewer (cells where the absolute adjusted standardized residual exceeds {0}{1}).
+59	, Bonferroni-corrected
+60	Because the overall test is not significant, cell marks (▲▽) are not shown.
+61	Adjusted standardized residual
+62	Row (%)
+63	Column (%)
+64	 (count{0})
+65	 and row %
+66	 and column %
+67	Expected frequencies (counts if there were no association)
+68	When many cells are below 5, Fisher's exact test is more appropriate.
+69	Cells whose absolute value exceeds {0} differ significantly from the expected value.
+70	Saving…
+71	Unsaved changes
+72	Auto-saved
+73	Saved
+74	@オンにすると、変更するたびに数秒後にプロジェクトを自動で上書き保存します。=>When on, the project is saved automatically a few seconds after each change. || 自動保存=>Auto-save || 上書き保存=>Save || アンケートの集計と検定=>Survey tabulation and statistical tests
+75	On
+76	Off
+77	There are unsaved changes. Press to save (Ctrl+S).
+78	Saves the project (Ctrl+S).
+79	  
+80	@開く・保存などのファイルの操作=>File operations such as open and save || ファイル=>File || 右の作業ウィンドウを開く・閉じる=>Open or close the task pane on the right || 作業ウィンドウ=>Task pane
+81	File
+82	Open CSV
+83	Selects and loads a response CSV file or an Excel file (.xlsx; first sheet) (Ctrl+O).
+84	Open project
+85	Opens a project from the list of saved projects. No CSV is needed.
+86	Save
+87	Saves the data, analyses, and figure and table settings together (Ctrl+S).
+88	Save as
+89	Saves the project under another name.
+90	Edit
+91	Undo
+92	Undoes the last action (Ctrl+Z).
+93	Redo
+94	Redoes the undone action (Ctrl+Y).
+95	Start analysis
+96	New analysis
+97	Choose an analysis type to start your first analysis.
+98	Choose an analysis type to add a new analysis at the bottom.
+99	Up
+100	Moves the selected analysis up one place. You can also drag the heading to reorder.
+101	Down
+102	Moves the selected analysis down one place.
+103	Collapse all
+104	Collapses all analyses into a list of names. Significant analyses have names in bold red.
+105	Expand all
+106	Expands all analyses.
+107	Rename
+108	Renames the selected analysis (F2). The name is also used for figure file names.
+109	Duplicate
+110	Creates another analysis with the same settings as the selected one.
+111	Delete
+112	Deletes the selected analysis (can be undone).
+113	Export all
+114	Exports the figures, Excel file and reports of the analyses marked with ☑ to a folder you choose.
+115	Import
+116	Replace
+117	Replaces the data with a new CSV (or Excel file) that has more responses. Analysis settings carry over for columns with the same questions.
+118	From URL
+119	Loads the Google Forms response spreadsheet from its URL (sharing must be set).
+120	Refresh

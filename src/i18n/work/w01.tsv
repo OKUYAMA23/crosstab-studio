@@ -1,0 +1,8 @@
+1	The project was exported to a file. It can also be opened in the desktop version.
+2	@プロジェクトの名前=>Project name || データ（CSV の中身）・解析・図と表の設定をまとめて、この端末（ブラウザの中）に保存します。同じ名前があるときは上書きします。=>Saves the data (the CSV contents), analyses, and figure and table settings together on this device (in the browser). A project with the same name is overwritten.
+3	on this device (in the browser).
+4	Saves the project as a single file (.prj). It can be opened on other devices and in the desktop version.
+5	@CSV ファイルを選ぶ=>Choose a CSV file || Google フォームの回答（スプレッドシートの「ファイル → ダウンロード → カンマ区切り形式（.csv）」）をそのまま入れられます。Excel ファイル（.xlsx）も、1 枚目のシートを読み込めます。1 行目が質問、2 行目以降が回答の表です。=>You can load Google Forms responses directly (from the spreadsheet, “File → Download → Comma-separated values (.csv)”). Excel files (.xlsx) can also be loaded (first sheet). The table should have questions in the first row and responses from the second row on. || ファイルを選ぶ=>Choose a file || Google スプレッドシートの URL から=>From a Google Sheets URL || データはこの端末の中だけで処理され、外部には送信されません。=>The data are processed only on this device and are never sent anywhere.
+6	Choose the response file with “Open CSV”.
+7	“Save” stores the data (the CSV contents), analyses, and figure and table settings on this device (in the browser) as one project. They are lost if the browser data are cleared, so also save important ones with “Export to file”. Next time, open it with “Open project” without the CSV.
+8	All tabulation and tests are calculated with R{0} running in this device's browser. Data are never sent anywhere.

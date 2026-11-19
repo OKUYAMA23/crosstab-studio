@@ -1,0 +1,119 @@
+1	You can also drag the legend in the figure. Dragging it to the right, top or bottom edge places it outside the figure; elsewhere it stays where you put it.
+2	<div class="md-sub">Position</div>{0}<div class="md-sub">Swatch shape</div>
+3	Japanese font
+4	Latin font
+5	Values
+6	Sizes are in pixels. Letters and numbers use the Latin font, and Japanese text uses the Japanese font. Text that does not fit is shortened with “…” so that it does not overlap.
+7	Axes and frame
+8	Bar outline
+9	Colors
+10	Width
+11	Height
+12	Bar width (%)
+13	Enlarge automatically so that text and bars do not overlap
+14	Drag the right edge, bottom edge or bottom-right corner of the figure to resize it. Saved images keep the shape and size shown on screen.
+15	Show value labels
+16	Content
+17	Same as axis
+18	Percent (%)
+19	Count
+20	Both percent and count
+21	Decimal places of percent
+22	“Both” writes the percent and count on two lines. Labels are omitted where the slice is too small.
+23	“Both” writes labels like “45.0% (9)”. On a count axis, it is “9 (45.0%)”. Labels that do not fit are omitted automatically.
+24	Transparent background
+25	Reusing formats
+26	@文字・線・色・大きさの設定を、これから作る図の最初の状態にします。=>Makes the text, line, color and size settings the initial state of figures created from now on. || これからの図の既定にする=>Use as default for new figures || 文字・線・色・凡例・目盛りの設定を、すべての図にそろえます。=>Applies the text, line, color, legend and tick settings to all figures. || すべての図にそろえる=>Apply to all figures || 最初の状態に戻す=>Reset
+27	<div class="md-sub">How colors are chosen</div>
+28	From a palette
+29	Choose one palette from the list, and its colors are used in series order.
+30	By series
+31	Choose any color for each series. Series without a chosen color keep the palette color.
+32	Figure color
+33	Colors and names by response
+34	Colors and names by series
+35	Names by response
+36	Names by series
+37	Choose the color of this series.
+38	Switches to “By series” and lets you choose the color of this series.
+39	Chosen color
+40	Palette color
+41	" data-tip="Name shown in the legend. Leave blank to restore the original name. Original name: 
+42	@選んだ色を消して、すべての系列を配色の色に戻します。=>Clears the chosen colors and returns all series to the palette colors. || すべて配色の色に戻す=>Reset all to palette colors
+43	<button class="md-btn md-btn-sm" data-act="clearLegNames" style="margin-top:4px;margin-left:4px">Restore names</button>
+44	Click a swatch to choose a color. You can also click a color in the figure's legend.
+45	Sequential or diverging palettes suit ordinal responses, and qualitative palettes suit different kinds of responses. For black-and-white printing, use “Black-and-white patterns”.
+46	Once results are available, you can adjust the table here.
+47	Choosing a design resets the lines and colors to that design's standard. You can then change the settings below.
+48	Table content
+49	Add higher/lower marks (▲▽)
+50	Expected frequency table
+51	Residual table
+52	@<div class="md-sub">配色</div>=><div class="md-sub">Colors</div> || カラーバーの位置=>Color bar position || カラーバーの形=>Color bar shape
+53	Colors cells according to the size of their values, with a color bar showing how colors correspond to values. Residuals use diverging colors centered on 0.
+54	Text size
+55	Text color
+56	Table width (px)
+57	Row height (px)
+58	You can also drag the right edge, bottom edge or bottom-right corner of the table. It cannot be smaller than its contents. Set 0 to fit the contents.
+59	<button class="md-btn md-btn-sm" data-act="tblSizeAuto">Fit to contents</button>
+60	Lines
+61	<div class="md-sub">Line type</div>
+62	Line color
+63	Header and stripe colors
+64	Header fill
+65	Fill color of the header row (and header column in the grid design).
+66	Header text
+67	Stripe color
+68	Color applied to every other row in the “Striped” design.
+69	@この表のデザインを、これから作る解析の表の最初の状態にします。=>Makes this table design the initial state of tables in analyses created from now on. || これからの表の既定にする=>Use as default for new tables || この表のデザインを、すべての解析の表にそろえます。=>Applies this table design to the tables of all analyses. || すべての表にそろえる=>Apply to all tables || 最初の状態に戻す=>Reset
+70	Analyses to export (☑)
+71	</span><span class="md-n">Fig. 
+72	No analyses yet.
+73	@すべて選ぶ=>Select all || すべて外す=>Clear all
+74	For the analyses marked with ☑, exports the items you choose to a folder you select.
+75	@・図：「解析の名前_図1.png」のように、解析ごとに 1 から番号を付けます。画面に出ている形と大きさのままです。=>• Figures: numbered from 1 for each analysis, like “analysis name_Fig1.png”, with the shape and size shown on screen. || ・Excel ファイル：CSV をシートにし、その右側に Excel の関数で解析を再現します（値の貼り付けはしません）。=>• Excel file: the CSV as a sheet, with the analyses reproduced to its right using Excel functions (no pasted values). || ・R のコード：解析を R の標準の関数で計算し直すスクリプトと、そのデータです。=>• R code: a script that recalculates the analyses with standard R functions, and its data. || ・報告書：すべての解析の文と表を、PDF・Word・テキストのいずれかにまとめます。=>• Report: the text and tables of all analyses as PDF, Word or text.
+76	>Export all</button>
+77	Report contents
+78	Include each analysis's tables
+79	Add Holm-adjusted p values to the summary
+80	Adjusted p values address the problem that repeated testing increases chance significant results.
+81	Text of the selected analysis
+82	The text can be edited. The standard text is generated from the results in a fixed pattern. It does not include a discussion (why the results came out this way), so add that yourself.
+83	">Reset text</button>
+84	>Default (Gray)</option>
+85	p notation
+86	Report tables
+87	Include
+88	Do not include
+89	Include in summary (Holm)
+90	Figure colors
+91	Table design
+92	Default settings (when starting new)
+93	Standard
+94	Custom
+95	@カスタム設定の中身=>Custom settings || 開いている画面の設定と、選んでいる図・表の書式（字体・大きさなども含む）を、まとめてカスタム設定にします。=>Saves the current settings and the format of the selected figure and table (including fonts and sizes) as custom settings. || 今の設定と図・表の書式をまとめて取り込む=>Capture current settings and formats || 開いているプロジェクトに当てはめる=>Apply to the open project || 書き出す=>Export || 読み込む=>Import || 消す=>Delete
+96	 (last changed {0}/{1}/{2} {3}:{4})
+97	 (none yet; choosing here creates them)
+98	Custom settings are saved on this device, so they remain after updates. They are not deleted while “Standard” is selected. When you open a saved project, the project's settings are used. To use them on another device, import the exported file.
+99	Green (default)
+100	Blue
+101	Red
+102	App color
+103	Color of the window frame (title, ribbon, task pane and buttons). Figure and table colors do not change. Saved on this device, so it remains after updates.
+104	<div class="md-hint" style="margin:10px 0 0;font-weight:700;color:var(--ink-ui)">Settings of the open project</div>
+105	Changing the significance level changes the decisions and standard texts of all analyses.
+106	Automatic text in figures
+107	Increasing the image resolution does not change the size when pasted into Word or PowerPoint (the resolution is written into the image). Option names are shown as they are in the data.
+108	Screen zoom
+109	About the calculations
+110	All tabulation and tests are calculated with R{0} on this computer. Data are never sent anywhere.
+111	<button class="md-btn" data-act="about">View methods</button>
+112	Feedback and bug reports
+113	Bug reports, comments and requests are accepted on GitHub.
+114	<button class="md-btn" data-act="feedback">How to report</button>
+115	Analysis {0}: 
+116	 (of {0})</span>
+117	  {0} responses</span>
+118	Calculation: R 
+119	<b style="color:#C00000">Cannot connect to R</b>

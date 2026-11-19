@@ -14,7 +14,7 @@ fmt_p <- function(p, lead0 = TRUE, with_p = TRUE) {
   if (!lead0) s <- sub("^0", "", s)
   if (with_p) paste("p", op, s) else if (op == "<") paste("<", s) else s
 }
-q <- function(s) paste0("「", s, "」")
+q <- function(s) paste0(tr_("「"), s, tr_("」"))
 A <- function(x) I(x)   # JSON で必ず配列にする
 mat <- function(m) { m <- unname(as.matrix(m)); storage.mode(m) <- "double"; m }
 
@@ -26,10 +26,10 @@ opt <- function(req, name, default) {
 slot_labels <- function(slot) vapply(slot$cats, function(c) as.character(c$label), "")
 
 slot_factor <- function(df, slot) {
-  if (is.null(slot) || is.null(slot$col)) stop_user("列が選ばれていません。右の作業ウィンドウで列を選んでください。")
-  if (slot$col < 1 || slot$col > ncol(df)) stop_user("選んだ列がデータにありません。列を選び直してください。")
+  if (is.null(slot) || is.null(slot$col)) stop_user(tr_("列が選ばれていません。右の作業ウィンドウで列を選んでください。"))
+  if (slot$col < 1 || slot$col > ncol(df)) stop_user(tr_("選んだ列がデータにありません。列を選び直してください。"))
   x <- df[[slot$col]]
-  if (length(slot$cats) == 0) stop_user(q(slot$label), " の選択肢がすべて外されています。「選択肢の設定」で 1 つ以上にチェックを入れてください。")
+  if (length(slot$cats) == 0) stop_user(q(slot$label), tr_(" の選択肢がすべて外されています。「選択肢の設定」で 1 つ以上にチェックを入れてください。"))
   lev <- unique(slot_labels(slot))
   keys <- character(0); vals <- character(0)
   for (c in slot$cats) for (v in unlist(c$values)) { keys <- c(keys, v); vals <- c(vals, as.character(c$label)) }
@@ -38,9 +38,9 @@ slot_factor <- function(df, slot) {
 
 # 複数回答：行＝回答者、列＝選択肢の TRUE/FALSE 行列（無回答の行は NA）
 slot_multi <- function(df, slot) {
-  if (is.null(slot) || is.null(slot$col)) stop_user("複数回答の列が選ばれていません。")
+  if (is.null(slot) || is.null(slot$col)) stop_user(tr_("複数回答の列が選ばれていません。"))
   x <- df[[slot$col]]
-  if (length(slot$cats) == 0) stop_user(q(slot$label), " の選択肢がすべて外されています。")
+  if (length(slot$cats) == 0) stop_user(q(slot$label), tr_(" の選択肢がすべて外されています。"))
   lev <- unique(slot_labels(slot))
   keys <- character(0); vals <- character(0)
   for (c in slot$cats) for (v in unlist(c$values)) { keys <- c(keys, v); vals <- c(vals, as.character(c$label)) }
@@ -67,12 +67,12 @@ score_method <- function(res, body) {
   used <- unlist(lapply(body$slots, function(s) c(s$col, unlist(s$cols))))
   txt <- character(0)
   for (d in body$computed) if (as.integer(d$col) %in% used) {
-    rev <- unlist(d$reverse); its <- vapply(d$items, function(s) paste0("「", s$label, "」", if (s$col %in% rev) "（逆転）" else ""), "")
+    rev <- unlist(d$reverse); its <- vapply(d$items, function(s) paste0(tr_("「"), s$label, tr_("」"), if (s$col %in% rev) tr_("（逆転）") else ""), "")
     ks <- unique(vapply(Filter(function(s) identical(s$type, "ordinal"), d$items), function(s) length(s$cats), 1L))
-    sc <- if (length(ks)) sprintf("順序のある項目は選択肢の並びの先頭を高い点とし（%s）、", paste(sprintf("%d 段階の項目は %d〜1 点", ks, ks), collapse = "、")) else ""
-    txt <- c(txt, sprintf("「%s」は、%sの %d 項目の%s点とした。%s%sすべての項目に回答した人だけを対象とした。",
-      d$name, paste(its, collapse = "・"), length(its), if (identical(d$method, "sum")) "合計" else "平均", sc,
-      if (length(rev)) "逆転項目は点数を反対にしてから計算した。" else ""))
+    sc <- if (length(ks)) sprintf(tr_("順序のある項目は選択肢の並びの先頭を高い点とし（%s）、"), paste(sprintf(tr_("%d 段階の項目は %d〜1 点"), ks, ks), collapse = tr_("、"))) else ""
+    txt <- c(txt, sprintf(tr_("「%s」は、%sの %d 項目の%s点とした。%s%sすべての項目に回答した人だけを対象とした。"),
+      d$name, paste(its, collapse = tr_("・")), length(its), tolower(if (identical(d$method, "sum")) tr_("合計") else tr_("平均")), sc,
+      if (length(rev)) tr_("逆転項目は点数を反対にしてから計算した。") else ""))
   }
   if (length(txt)) res$method <- paste(c(txt, res$method), collapse = "\n")
   res
@@ -147,12 +147,11 @@ modal_sentence <- function(tab, colLabel) {
   mi <- apply(tab, 1, which.max)
   if (length(unique(mi)) == 1) {
     c1 <- colnames(tab)[mi[1]]
-    paste0(q(colLabel), "で最も多い回答は、いずれの群でも", q(c1), "であった（",
-           paste0(rownames(tab), " ", fmt_pct(rp[cbind(seq_len(nrow(tab)), mi)]), "%", collapse = "、"), "）。")
+    trf("%sで最も多い回答は、いずれの群でも%sであった（%s）。", q(colLabel), q(c1),
+        paste0(rownames(tab), " ", fmt_pct(rp[cbind(seq_len(nrow(tab)), mi)]), "%", collapse = tr_("、")))
   } else {
-    paste0(q(colLabel), "で最も多い回答は、",
-           paste0(rownames(tab), "では", q(colnames(tab)[mi]), "（", vapply(seq_len(nrow(tab)), function(i) fmt_pct(rp[i, mi[i]]), ""), "%）", collapse = "、"),
-           "であった。")
+    trf("%sで最も多い回答は、%sであった。", q(colLabel),
+        paste(trf("%sでは%s（%s%%）", rownames(tab), q(colnames(tab)[mi]), vapply(seq_len(nrow(tab)), function(i) fmt_pct(rp[i, mi[i]]), "")), collapse = tr_("、")))
   }
 }
 
@@ -161,23 +160,23 @@ resid_sentence <- function(xt, tab) {
   if (is.null(xt$resid)) return("")
   R <- xt$resid; rp <- prop.table(tab, 1)
   idx <- which(R > xt$crit, arr.ind = TRUE)
-  basis <- paste0("|調整済み標準化残差| > ", fmt_num(xt$crit, 2), if (identical(xt$residMode, "bonf")) "、ボンフェローニ法で補正" else "")
-  if (nrow(idx) == 0) return(paste0("ただし、基準（", basis, "）を超えるセルはなかった。"))
+  basis <- paste0(tr_("|調整済み標準化残差| > "), fmt_num(xt$crit, 2), if (identical(xt$residMode, "bonf")) tr_("、ボンフェローニ法で補正") else "")
+  if (nrow(idx) == 0) return(trf("ただし、基準（%s）を超えるセルはなかった。", basis))
   idx <- idx[order(-R[idx]), , drop = FALSE]
   more <- nrow(idx) > 6
   if (more) idx <- idx[1:6, , drop = FALSE]
   parts <- vapply(seq_len(nrow(idx)), function(k) {
     i <- idx[k, 1]; j <- idx[k, 2]
-    paste0(rownames(tab)[i], "では", q(colnames(tab)[j]), "（", fmt_pct(rp[i, j]), "%）")
+    trf("%sでは%s（%s%%）", rownames(tab)[i], q(colnames(tab)[j]), fmt_pct(rp[i, j]))
   }, "")
-  paste0("残差分析（", basis, "）では、", paste(parts, collapse = "、"), "の割合が期待される値より有意に高かった",
-         if (more) "（残差の大きい順に 6 件を記載）。" else "。")
+  trf("残差分析（%s）では、%sの割合が期待される値より有意に高かった%s", basis, paste(parts, collapse = tr_("、")),
+      if (more) tr_("（残差の大きい順に 6 件を記載）。") else tr_("。"))
 }
 
 median_label <- function(score, lev) {
   m <- stats::median(score); k <- length(lev)
   if (m == floor(m)) return(q(lev[k + 1 - m]))
-  paste0(q(lev[k + 1 - ceiling(m)]), "と", q(lev[k + 1 - floor(m)]), "の間")
+  trf("%sと%sの間", q(lev[k + 1 - ceiling(m)]), q(lev[k + 1 - floor(m)]))
 }
 
 n_info <- function(total, used) list(total = total, used = used, excluded = total - used)

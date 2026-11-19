@@ -1,0 +1,140 @@
+1	Independent variables %s are completely determined by other independent variables (multicollinearity), so the coefficients cannot be calculated. Remove one of them.
+2	Some independent variables have VIF above 10 (%s). The independent variables are strongly correlated with each other (multicollinearity), so the coefficients may be unstable.
+3	The number of respondents per independent variable is 
+4	. At least 10 is the usual guideline.
+5	A multiple regression analysis (forced entry) was conducted with %s as the dependent variable and %s as the independent variables (n = %d). 
+6	The model was %s (%s, %s), with R² = %s (adjusted R² = %s). 
+7	statistically significant
+8	not statistically significant
+9	The statistically significant independent variables were %s. 
+10	 (β = 
+11	No independent variable was statistically significant. 
+12	Explains or predicts a numeric value (or ordinal score) from several questions. Gives the influence of each independent variable (standardized coefficient β) and the explanatory power of the whole model (R²).
+13	Dependent variable (value to explain)
+14	e.g., study time, satisfaction
+15	Independent variables (select several)
+16	e.g., grade, gender, commuting time
+17	The dependent variable of logistic regression must have two options. 
+18	 options. Combine them in “Option settings” or uncheck options to make two.
+19	All included respondents gave the same answer for the dependent variable, so the analysis cannot be performed.
+20	Regression coefficients (predicting the probability of 
+21	)
+22	The odds ratio shows how many times the odds of answering 
+23	 change when the independent variable increases by 1 (for dummy variables, compared with the reference option). Confidence intervals use the Wald method.
+24	 as the reference.
+25	Likelihood-ratio χ²
+26	Accuracy (%)
+27	n of %s
+28	Likelihood-ratio χ²(
+29	Odds ratio (95% CI)
+30	The calculation was unstable. The outcome may be completely separated by the values of an independent variable (complete separation). Combine options or remove that independent variable.
+31	Some independent variables have VIF above 10 (%s). The independent variables are strongly correlated with each other, so the coefficients may be unstable.
+32	The number of respondents in the smaller outcome divided by the number of independent variables (EPV) is 
+33	. At least 10 is the usual guideline.
+34	A logistic regression analysis (forced entry) was conducted with whether %1$s was %2$s as the dependent variable and %3$s as the independent variables (n = %4$d; %5$s: %6$d). 
+35	The model was %s (likelihood-ratio test %s, %s), with Nagelkerke R² = %s and a classification accuracy of %s%%. 
+36	 (odds ratio = 
+37	Explains or predicts a two-option response (e.g., whether the student belongs to a club) from several questions. Gives the odds ratio for each independent variable.
+38	Dependent variable (two-option response)
+39	e.g., yes / no. Predicts the probability of the first option
+40	The character encoding could not be detected. Save the CSV again as UTF-8.
+41	Excel workbooks (.xlsx) and ZIP files cannot be read here. Download the spreadsheet as “CSV” and load that file.
+42	The file is empty. Load a CSV that contains responses.
+43	The file could not be read as CSV (
+44	). Use a file saved from Google Sheets with “File → Download → Comma-separated values (.csv)”.
+45	There are no response rows. Load a CSV with questions in the first row and responses from the second row on.
+46	There are no response rows.
+47	Original response
+48	Combined name
+49	Score
+50	Respondents
+51	χ² (goodness of fit)
+52	 \ 
+53	Cramér's V
+54	Yates
+55	χ² (Yates' correction)
+56	p (chi-square test)
+57	p (Fisher's exact test)
+58	Odds ratio (sample value ad/bc)
+59	The app's odds ratio is the conditional maximum likelihood estimate, so it differs slightly from the sample value.
+60	Fisher's exact test for tables larger than 2×2 cannot be reproduced with Excel functions, so p is not included (use the value calculated by R in the app).
+61	Fisher's exact test for tables larger than 2×2
+62	Group number
+63	Rank
+64	Group: 
+65	Score: 
+66	Rank sum
+67	Tie correction term Σ(t³−t)
+68	U (first group)
+69	U (smaller)
+70	Z (with continuity correction)
+71	Effect size r
+72	H (uncorrected)
+73	Effect size ε²
+74	Rank sum (first group)
+75	Tie correction term
+76	Adjusted p (Holm)
+77	Value of response 1
+78	Value of response 2
+79	Rank of response 1
+80	Rank of response 2
+81	ρ (rank correlation coefficient)
+82	Score difference (response 1 − response 2)
+83	Absolute difference (excluding 0)
+84	n (answered both)
+85	Number with non-zero differences
+86	V (sum of ranks of positive differences)
+87	exact
+88	p (exact binomial test)
+89	χ² (with continuity correction)
+90	 proportion (%)
+91	Overall proportion
+92	Mean score
+93	χ² (trend)
+94	χ² statistic
+95	Cannot be reproduced in Excel
+96	Because the tests for some options cannot be reproduced with Excel functions, the Holm adjustment is not included.
+97	Tests for some options of a multiple-choice question (Fisher's exact test with three or more groups)
+98	Question \ Response
+99	Score (common to all questions)
+100	Rank: 
+101	n (answered all questions)
+102	χ² (Friedman)
+103	Squared deviation
+104	Class
+105	Lower limit (inclusive)
+106	Upper limit (exclusive)
+107	Only the last class includes its upper limit.
+108	Student
+109	Mean difference (
+110	Pooled SD
+111	SE of the difference
+112	Pooled SD (for effect size)
+113	df (Welch)
+114	Critical t (two-sided 5%)
+115	95% CI upper
+116	Effect size Hedges' g
+117	Welch
+118	Grand mean
+119	Between-group sum of squares
+120	Within-group sum of squares
+121	Sum of weights Σ(n/s²)
+122	Weighted mean
+123	Correction term
+124	df2 (Welch)
+125	F (Welch)
+126	Effect size η²
+127	The p values of the multiple comparisons use the studentized range distribution and cannot be obtained with Excel functions (use the values calculated by R in the app).
+128	p of multiple comparisons after ANOVA
+129	95% CI of the difference, lower
+130	95% CI of the difference, upper
+131	Effect size dz
+132	Regression line intercept
+133	Regression line slope
+134	Score (common to all items)
+135	Reverse-scored items (
+136	 − score): 
+137	Correlation with the rest
+138	α if deleted
+139	n (answered all items)
+140	Cronbach's α

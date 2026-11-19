@@ -1,0 +1,130 @@
+1	Discordant pairs
+2	Because fewer than 25 respondents gave discordant answers, the exact binomial test was used.
+3	A continuity correction is applied.
+4	The proportions answering %3$s on %1$s and %2$s were compared within the same respondents (n = %4$d). 
+5	The proportions were %1$s%% and %2$s%%, and the %3$s showed that the difference was %4$s (%5$s, %6$s). 
+6	Compares two yes/no questions within the same respondents (e.g., are there many who said “yes” to A but “no” to B?).
+7	Response 1 (two options)
+8	Response 2 (same two options)
+9	For the trend test, 
+10	 must have two options. Combine them in “Option settings” (currently 
+11	The trend test requires that 
+12	 have at least three levels with responses (currently 
+13	 levels). Use the chi-square test for two levels.
+14	 has only one kind of response, so the test cannot be run.
+15	Cochran–Armitage trend test
+16	The levels are given equally spaced scores 1, 2, 3, … in their order.
+17	For each level of %1$s, the proportion answering %3$s on %2$s was calculated (n = %4$d). 
+18	The proportions were %s. 
+19	The Cochran–Armitage trend test showed that the linear trend in the proportions across levels was %s (%s, %s). 
+20	Trend test for proportions (Cochran–Armitage)
+21	Tests whether the proportion of “yes” consistently increases (or decreases) as the level rises.
+22	Two-option response
+23	Levels (ordinal)
+24	No one answered all three questions. Check the question combination or the filter.
+25	Both the rows and the columns need at least two options with responses. Check the option settings or the filter.
+26	The strata need at least two options with responses. To analyze without strata, use the chi-square test.
+27	Too few respondents per stratum to compute the Cochran–Mantel–Haenszel test. Combine strata or options.
+28	Cochran–Mantel–Haenszel test
+29	Strata
+30	Chi-square test by stratum
+31	Overall (no strata)
+32	df
+33	Expected < 5 (%)
+34	The stratum-specific tests are chi-square tests without Yates' correction. Because the test is repeated for each stratum, treat the stratum-specific p values as reference only.
+35	Common odds ratio
+36	Common odds ratio = 
+37	Common (Mantel–Haenszel)
+38	95% CI lower
+39	Upper
+40	The odds ratio is the odds of answering %3$s in %1$s relative to %2$s. Stratum-specific values add 0.5 to every cell so that they can be computed even with zero cells.
+41	Homogeneity of odds ratios (Breslow–Day test with Tarone's correction)
+42	Difference between strata
+43	The common odds ratio adjusted for strata was %s (95%% CI [%s, %s]). 
+44	The Breslow–Day test indicated that the odds ratios differed between strata (χ²(%s) = %s, %s). Because the strength of the association differs by stratum, the stratum-specific results should be emphasized over the common odds ratio. 
+45	The Breslow–Day test did not indicate that the odds ratios differed between strata (χ²(%s) = %s, %s). 
+46	The CMH test for 2×2 tables is computed without a continuity correction.
+47	Because the rows or columns have three or more options, the generalized CMH test (general association) is used. The common odds ratio is reported only for 2×2 tables.
+48	Stratum “%s” could not be tested separately because only one option had responses.
+49	”, “
+50	Strata with one or fewer respondents (%s) were excluded from the CMH test.
+51	The association between %3$s and %4$s was examined with stratification by %1$s (%2$d strata; valid responses n = %5$d). 
+52	Without stratification, the chi-square test %s (χ²(%s) = %s, %s); the strata with a significant association in the stratum-specific tests were %s
+53	showed a significant association
+54	showed no significant association
+55	%s. 
+56	none. 
+57	The Cochran–Mantel–Haenszel test showed that, after adjusting for %s, the association between the two was %s (%s, %s). 
+58	Stratified cross-tabulation (CMH test)
+59	Splits the cross-tabulation into strata by a third question (e.g., grade) and tests whether the two questions are associated after adjusting for the strata (Cochran–Mantel–Haenszel test).
+60	Strata (question to split by)
+61	e.g., grade, club
+62	This analysis type (
+63	) is not registered.
+64	The same question (
+65	) is selected in two fields. This analysis examines the relationship between two questions, so select a different question.
+66	No responses match the filter. Check the filter.
+67	The analysis was limited to respondents whose answer to %1$s was %2$s (n = %3$d). 
+68	Scores for %1$s were assigned from the %2$s end (%3$d to 1 points). 
+69	%s: %s. 
+70	includes %d responses converted to numbers (e.g., units or full-width characters corrected)
+71	%d responses that could not be read as numbers were excluded
+72	 to 
+73	 (inclusive)
+74	 (exclusive)
+75	 has fewer than two responses that can be read as numbers.
+76	Overall
+77	Summary statistics
+78	The SD divides by n − 1 (unbiased). Quartiles use R's default (type 7).
+79	 (classes)
+80	Frequencies by value.
+81	Classes are “from (inclusive) to (exclusive)”; only the last class includes its upper limit.
+82	For %s (n = %d), the mean was %s (SD = %s), the median %s (Q1 %s, Q3 %s), the minimum %s, and the maximum %s. 
+83	The means by %s were %s. 
+84	 (SD = 
+85	The distribution was right-skewed (skewness %s), and because the mean is sensitive to outlying values, the median is also reported. 
+86	The distribution was left-skewed (skewness %s), and because the mean is sensitive to outlying values, the median is also reported. 
+87	The figure can be switched between “Histogram” and “Box plot”.
+88	Gives the mean, SD, median and frequency distribution of a numeric question (age, time, counts, etc.) with a histogram. Can also compare groups.
+89	Numeric question
+90	e.g., age, study time per day
+91	Groups (optional)
+92	Select to summarize by group
+93	Histogram bins
+94	Automatic (one bin per value for integers with a narrow range)
+95	Sturges' formula
+96	Freedman–Diaconis rule
+97	One bin per (integer) value
+98	How the number of bars is chosen. With much data, the Freedman–Diaconis rule gives finer bins.
+99	Means by group
+100	: M = 
+101	The t-test compares two groups. 
+102	 groups. Reduce it to two in “Option settings”, or use one-way ANOVA.
+103	Each group needs at least two respondents (
+104	, 
+105	Student's t-test
+106	Welch's t-test
+107	Hedges' g
+108	Mean difference
+109	very small
+110	small
+111	large
+112	The means of %2$s were compared between the two groups of %1$s (%3$s). 
+113	The %s showed that the difference in means was %s (%s, mean difference = %s, 95%% CI %s). 
+114	The mean was higher in %1$s than in %2$s, with a %3$s effect size. 
+115	Welch's t-test does not assume equal variances in the two groups. To assume equal variances, switch to Student's t-test in the options.
+116	The effect size g is the mean difference divided by the pooled SD, with a small-sample correction (|g| of 0.2: small, 0.5: medium, 0.8: large as rules of thumb).
+117	The scores of ordinal responses are averaged. If the intervals between options cannot be regarded as equal, the Mann–Whitney U test is more appropriate.
+118	t-test (comparing two means)
+119	Tests whether the mean of a numeric value (or ordinal score) differs between two groups. Also gives the effect size and the confidence interval of the difference.
+120	Value to compare
+121	A numeric value or an ordinal question
+122	Assume equal variances (Student's t-test)
+123	Usually, Welch's t-test (the default), which does not assume equal variances, is used.
+124	One-way ANOVA compares three or more groups. For two groups, use the t-test.
+125	Some groups have one or fewer respondents (
+126	). Combine or exclude them in “Option settings”.
+127	Welch's one-way ANOVA
+128	Multiple comparisons (Tukey method)
+129	Multiple comparisons (Games–Howell method)
+130	Adjusted p

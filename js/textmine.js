@@ -11,7 +11,15 @@
     'でも から ので って とか など なんか もっと とても すごく ちょっと 特に 特 なし 特になし 自分 人 時 方 的 等 私 僕 俺 皆 みんな 今 中 上 下 前 後 他 何 気 事 物 所 点 化 性 さん ' +
     'ください ところ という といった について による により として そう どう こう ああ いう いっ 言う くる いく 行く 来る みる 見る あり なり し さ れる られる せる たい だろう でしょう まし ' +
     'なかっ かっ くれ もらう あげ すぎ ぐらい くらい ほど まで より だけ しか ばかり 及び また さらに しかし ただ そして 今後 今回 回答 わから わかり 分から 分かり 少し 多く 多い あまり 色々 いろいろ ' +
-    'ほしい 欲しい 必要 大切 大事 よく 良く 無い みたい だけど だけ しまう しまい ほう ほうが 出る 出 行き 行っ 変わっ 変 たち 達 いつ いつも ずっと やっぱり やはり すごい とき 場合').split(/\s+/));
+    'ほしい 欲しい 必要 大切 大事 よく 良く 無い みたい だけど だけ しまう しまい ほう ほうが 出る 出 行き 行っ 変わっ 変 たち 達 いつ いつも ずっと やっぱり やはり すごい とき 場合 ' +
+    // 英語の回答のための語（冠詞・代名詞・前置詞・接続詞・助動詞・よく使う動詞や副詞など）
+    'a an the and or but if so as of at by for from in into on onto to with without about above below over under up down out off than then too very ' +
+    'i me my mine myself we us our ours you your yours he him his she her hers it its they them their theirs this that these those who whom whose which what ' +
+    'is am are was were be been being have has had having do does did doing done will would shall should can could may might must ' +
+    "not no nor yes don't doesn't didn't isn't aren't wasn't weren't can't cannot couldn't won't wouldn't i'm i've i'd i'll it's that's there's " +
+    'there here when where why how all any both each few more most other some such only own same just also again further once ever never ' +
+    'get got make made go going went think thought feel felt like really much many lot lots thing things something anything nothing way well good ' +
+    'one two because while during before after since until through between however although though etc').split(/\s+/));
   function tokenize(text, compound, stop) {
     var s = String(text || '').normalize('NFKC').toLowerCase().trim(); if (!s) return [];
     var segs = [];
@@ -37,7 +45,7 @@
   A.prepReq = async function (tab, req) {
     if (req.type !== 'textmine') return req;
     var d = await A.apiData('/api/coltext', { t: req.slots.t, g: req.slots.g || null, filter: req.filter });
-    if (!d.ok) throw new Error(d.message || '自由記述を読み込めませんでした。');
+    if (!d.ok) throw new Error(d.message || _t('自由記述を読み込めませんでした。'));
     var o = req.opts || {}, compound = o.compound !== false, stop = new Set(String(o.stop || '').split(/[、,，\s]+/).map(function (w) { return w.normalize('NFKC').toLowerCase().trim(); }).filter(Boolean));
     var docs = d.text.map(function (t) { return tokenize(t, compound, stop); });
     var out = Object.assign({}, req, { docs: docs, seg: SEG ? 'icu' : 'chartype', nstop: STOP.size, stopUser: Array.from(stop) });   // 報告書の「方法」に書くため

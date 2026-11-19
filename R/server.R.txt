@@ -1,7 +1,7 @@
 # server.R ― 画面（ブラウザ）と R をつなぐ小さなローカルサーバー。127.0.0.1 だけで待ち受ける。
 
 APP_ID <- "CrossTabStudio"
-APP_VERSION <- "0.9.6"
+APP_VERSION <- "0.9.7"
 STORE <- new.env()          # 読み込んだデータ（id → data.frame）
 STATE <- new.env()
 STATE$last_ping <- Sys.time(); STATE$had_client <- FALSE; STATE$bye_at <- NULL
@@ -63,8 +63,9 @@ route <- function(req) {
     STATE$last_ping <- Sys.time(); STATE$had_client <- TRUE; STATE$bye_at <- NULL
     return(json_resp(list(ok = TRUE, app = APP_ID, version = APP_VERSION, r = paste(R.version$major, R.version$minor, sep = "."), ryear = R.version$year)))
   }
-  if (!same_origin(req)) return(json_resp(list(ok = FALSE, message = "この要求は受け付けられません。"), 403L))
+  if (!same_origin(req)) return(json_resp(list(ok = FALSE, message = tr_("この要求は受け付けられません。")), 403L))
   STATE$last_ping <- Sys.time()
+  LANG <<- if (identical(query(req)$lang, "en")) "en" else "ja"
   if (path == "/api/bye") { STATE$bye_at <- Sys.time(); return(json_resp(list(ok = TRUE))) }
   if (path == "/api/registry") return(json_resp(list(ok = TRUE, analyses = unname(registry_json()))))
   if (path == "/api/load" && method == "POST") {
@@ -78,15 +79,15 @@ route <- function(req) {
     return(json_resp(list(ok = TRUE, dataId = id, nrow = nrow(df), ncol = ncol(df), vars = describe_data(df),
                           rows = rows, rowsShown = lim)))
   }
-  if (method != "POST") return(json_resp(list(ok = FALSE, message = "見つかりません。"), 404L))
+  if (method != "POST") return(json_resp(list(ok = FALSE, message = tr_("見つかりません。")), 404L))
   # ---- プロジェクトの置き場（アプリのフォルダーの projects）
   if (path == "/api/proj/save") {
     qp <- query(req); nm <- proj_name(qp$name); raw <- read_body(req)
-    if (!nzchar(nm)) stop_user("プロジェクトの名前を入れてください。")
+    if (!nzchar(nm)) stop_user(tr_("プロジェクトの名前を入れてください。"))
     dir.create(PROJECT_DIR, showWarnings = FALSE, recursive = TRUE)
     f <- file.path(PROJECT_DIR, paste0(nm, ".prj")); tmp <- paste0(f, ".tmp")
     writeBin(raw, tmp)
-    if (!file.copy(tmp, f, overwrite = TRUE)) { unlink(tmp); stop_user("プロジェクトを保存できませんでした。フォルダーに書き込めるか確かめてください（", PROJECT_DIR, "）。") }
+    if (!file.copy(tmp, f, overwrite = TRUE)) { unlink(tmp); stop_user(tr_("プロジェクトを保存できませんでした。フォルダーに書き込めるか確かめてください（"), PROJECT_DIR, tr_("）。")) }
     unlink(tmp); unlink(sub("\\.prj$", ".ctsproj", f))   # 古い拡張子の同じ名前のファイルは消す（一覧に 2 つ並ばないように）
     return(json_resp(list(ok = TRUE, name = nm, folder = normalizePath(PROJECT_DIR, winslash = "/", mustWork = FALSE))))
   }
@@ -98,13 +99,13 @@ route <- function(req) {
   }
   if (path == "/api/proj/load" || path == "/api/proj/delete") {
     b <- read_json(req); f <- file.path(PROJECT_DIR, paste0(proj_name(b$name), ".prj")); if (!file.exists(f)) f <- sub("\\.prj$", ".ctsproj", f)
-    if (!file.exists(f)) stop_user("プロジェクト「", b$name, "」が見つかりません。")
+    if (!file.exists(f)) stop_user(tr_("プロジェクト「"), b$name, tr_("」が見つかりません。"))
     if (path == "/api/proj/delete") { file.remove(f); return(json_resp(list(ok = TRUE))) }
     return(list(status = 200L, headers = list("Content-Type" = "application/json; charset=utf-8", "Cache-Control" = "no-store"), body = readBin(f, "raw", file.info(f)$size)))
   }
   body <- read_json(req)
   df <- get_data(body$dataId)
-  if (is.null(df)) return(json_resp(list(ok = FALSE, noData = TRUE, message = "データが読み込まれていません。")))
+  if (is.null(df)) return(json_resp(list(ok = FALSE, noData = TRUE, message = tr_("データが読み込まれていません。"))))
   if (length(body$computed)) df <- add_computed(df, body$computed)   # 画面で作った尺度得点の列
   if (path == "/api/varinfo") {
     x <- df[[body$col]]
@@ -118,12 +119,12 @@ route <- function(req) {
   }
   if (path == "/api/analyze") return(json_resp(score_method(run_analysis(df, body), body)))
   if (path == "/api/excel") return(json_resp(c(list(ok = TRUE), build_excel(df, body$items))))
-  if (path == "/api/rscript") { r <- build_rscript(df, body$items, if (is.null(body$dataName)) "解析用データ.csv" else body$dataName, APP_VERSION, if (is.null(body$date)) "" else body$date); return(json_resp(list(ok = TRUE, script = r$script, data = csv_text(rscript_data(df, r$numcols))))) }
+  if (path == "/api/rscript") { r <- build_rscript(df, body$items, if (is.null(body$dataName)) tr_("解析用データ.csv") else body$dataName, APP_VERSION, if (is.null(body$date)) "" else body$date); return(json_resp(list(ok = TRUE, script = r$script, data = csv_text(rscript_data(df, r$numcols))))) }
   if (path == "/api/padjust") {
     p <- vapply(body$p, function(v) if (is.null(v)) NA_real_ else as.numeric(v), 0)
     return(json_resp(list(ok = TRUE, p = A(stats::p.adjust(p, method = "holm")))))
   }
-  json_resp(list(ok = FALSE, message = "見つかりません。"), 404L)
+  json_resp(list(ok = FALSE, message = tr_("見つかりません。")), 404L)
 }
 
 handle <- function(req) {
@@ -131,7 +132,7 @@ handle <- function(req) {
     user_error = function(e) json_resp(list(ok = FALSE, userError = TRUE, message = conditionMessage(e))),
     error = function(e) {
       message("[error] ", req$PATH_INFO, " : ", conditionMessage(e))
-      json_resp(list(ok = FALSE, message = paste0("計算の途中でエラーが起きました（", conditionMessage(e), "）。列の組み合わせを変えてもう一度試してください。")))
+      json_resp(list(ok = FALSE, message = paste0(tr_("計算の途中でエラーが起きました（"), conditionMessage(e), tr_("）。列の組み合わせを変えてもう一度試してください。"))))
     })
 }
 
@@ -145,7 +146,7 @@ start_app <- function(www, ports = 47815:47824, idle_exit = TRUE, log = function
     srv <- tryCatch(httpuv::startServer("127.0.0.1", p, app), error = function(e) NULL)
     if (!is.null(srv)) { port <- p; break }
   }
-  if (is.null(srv)) stop("使えるポートがありません（", min(ports), "〜", max(ports), "）。")
+  if (is.null(srv)) stop(tr_("使えるポートがありません（"), min(ports), tr_("〜"), max(ports), tr_("）。"))
   log("listening ", port)
   list(server = srv, port = port)
 }

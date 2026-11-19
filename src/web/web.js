@@ -16,8 +16,8 @@
       catch (e) {
         var c = e && e.code;
         if (c === 'declined') return false;
-        if (c === 'rate_limited') { A.toast('ほかの保存の確認が開いています。閉じてからもう一度押してください。', true); return false; }
-        A.toast('この画面では保存できませんでした（' + (c || (e && e.message) || '不明') + '）。', true); return false;
+        if (c === 'rate_limited') { A.toast(_t('ほかの保存の確認が開いています。閉じてからもう一度押してください。'), true); return false; }
+        A.toast(_t('この画面では保存できませんでした（{0}）。', c || (e && e.message) || _t('不明')), true); return false;
       }
     }
     // Claude の外（ふつうの Safari など）で開いたとき
@@ -36,19 +36,19 @@
     if (!box) return;
     if (n < 0) {
       box.classList.add('err');
-      box.querySelector('.md-boot-msg').textContent = 'R を起動できませんでした。ページを読み込み直してください。（' + msg + '）';
+      box.querySelector('.md-boot-msg').textContent = _t('R を起動できませんでした。ページを読み込み直してください。（{0}）', msg);
       clearInterval(timer); return;
     }
     for (var k = 1; k <= 3; k++) { var el = box.querySelector('[data-step="' + k + '"]'); if (el) el.className = k < n ? 'done' : k === n ? 'now' : ''; }
     box.querySelector('.md-boot-msg').textContent = msg;
   }
   window.CTS_BOOT.onStep(setStep);
-  setStep(1, '計算に使う R を読み込んでいます（初回は 20 MB ほどの読み込みがあります）');
+  setStep(1, _t('計算に使う R を読み込んでいます（初回は 20 MB ほどの読み込みがあります）'));
   timer = setInterval(function () {
     var s = Math.floor((Date.now() - t0) / 1000), p = Math.min(92, 6 + 86 * (1 - Math.exp(-s / 12)));
-    box.querySelector('.md-boot-sec').textContent = s + ' 秒';
+    box.querySelector('.md-boot-sec').textContent = s + _t(' 秒');
     box.querySelector('.md-boot-bar i').style.width = p + '%';
-    if (s > 40) box.querySelector('.md-boot-note').textContent = '回線が遅いと 1 分以上かかることがあります。2 回目からは速くなります。';
+    if (s > 40) box.querySelector('.md-boot-note').textContent = _t('回線が遅いと 1 分以上かかることがあります。2 回目からは速くなります。');
   }, 300);
   // 縦向きなど幅が狭いときは、作業ウィンドウを閉じた状態で始める（開くと図の上に重なる）
   if (window.innerWidth <= 1000) { S.ui.pane = false; A.render(); }
@@ -71,7 +71,7 @@
       var d = await r.json();
       if (d && d.active === false) {
         var el = document.createElement('div'); el.id = 'md_lock';
-        el.innerHTML = '<div class="md-lock-box"><img src="icons/icon-192.png" width="64" height="64" alt=""><h1>公開を終了しました</h1><p>' + String(d.message || 'このアプリの公開は終了しました。').replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }) + '</p></div>';
+        el.innerHTML = _t('<div class="md-lock-box"><img src="icons/icon-192.png" width="64" height="64" alt=""><h1>公開を終了しました</h1><p>') + String(d.message || _t('このアプリの公開は終了しました。')).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }) + '</p></div>';
         document.body.appendChild(el);
       }
     } catch (e) { /* 通信できないときは何もしない */ }

@@ -1,0 +1,120 @@
+1	Removes ☑ from all analyses.
+2	Selected figure
+3	Saves the selected figure as a PNG image with the shape and size shown on screen.
+4	Save as SVG
+5	Saves the selected figure as SVG (a format that stays sharp when enlarged).
+6	Copy figure
+7	Copies the selected figure as an image.
+8	Report
+9	View report
+10	Shows a report that combines the text and tables of the analyses marked with ☑.
+11	Save as Word
+12	Saves the report as a Word file (.docx). Text uses MS Mincho / Times New Roman, tables are Word tables (editable later), and figures are inserted as images.
+13	Save as text
+14	Saves the report as a single text file (.txt).
+15	Include tables
+16	Includes each analysis's tables in the report.
+17	Adjusted p
+18	Adds Holm-adjusted p values to the list to account for repeated testing.
+19	Reset texts
+20	Returns all edited texts to the standard texts generated from the results.
+21	Verification
+22	Save as Excel
+23	Saves a sheet with the data and the analyses marked with ☑ reproduced with Excel functions.
+24	R code
+25	Saves, as a ZIP, an R script (.R) that recalculates the analyses marked with ☑ with standard R functions, together with its data (CSV). Running it in R lets you compare the results with the “App values”.
+26	Project
+27	Export to file
+28	Saves the project as a single file (.prj) wherever you like. Use it to move the project to another computer.
+29	Decisions and notation
+30	Significance level
+31	5% (0.05)
+32	1% (0.01)
+33	10% (0.10)
+34	The criterion for judging results “significant”. Used for all analyses.
+35	p notation
+36	How p values are written. Follow the style required by the journal or your supervisor.
+37	Automatic text
+38	Japanese
+39	English
+40	Language of the text added to figures automatically, such as axis titles.
+41	Image resolution
+42	Standard
+43	2× (for documents)
+44	4× (for print)
+45	Resolution when saving images. The pasted size stays the same as on screen.
+46	Display
+47	Zoom
+48	Changes the size of the whole screen.
+49	Information
+50	About
+51	Shows the statistical methods used and information about R, which performs the calculations.
+52	Feedback & bugs
+53	Shows how to report bugs or send comments and requests (uses GitHub).
+54	A screen with the analyses listed from top to bottom.
+55	The loaded data (questions and responses).
+56	A report combining the analyses marked with ☑.
+57	<span class="md-sheet-count">{0} analyses
+58	  {0} significant
+59	<div class="md-projlist"><div class="md-sec-title">Saved projects</div>
+60	" data-tip="Opens this project. No CSV is needed."><b>
+61	<button class="md-link" data-act="openProject">See other projects</button>
+62	@ここに CSV ファイルをドロップ=>Drop a CSV file here || Google フォームの回答（スプレッドシートの「ファイル → ダウンロード → カンマ区切り形式（.csv）」）をそのまま入れられます。Excel ファイル（.xlsx）も、1 枚目のシートを読み込めます。1 行目が質問、2 行目以降が回答の表です。=>You can load Google Forms responses directly (from the spreadsheet, “File → Download → Comma-separated values (.csv)”). Excel files (.xlsx) can also be loaded (first sheet). The table should have questions in the first row and responses from the second row on. || ファイルを選ぶ=>Choose a file || Google スプレッドシートの URL から=>From a Google Sheets URL || データはこのパソコンの中だけで処理され、外部には送信されません。=>The data are processed only on this computer and are never sent anywhere.
+63	@直した {0} 件・読めない {1} 件=>{0} corrected, {1} unreadable || 確かめる=>Check
+64	 ({0} manual fixes)
+65	">Back to options</button>
+66	">Back to options</button></div>
+67	@単位や全角文字を直して、数値として読み直します。ヒストグラムや平均の比較に使えるようになります。=>Corrects units and full-width characters and reads the values again as numbers. They can then be used for histograms and comparisons of means. || 数値として読む=>Read as numbers
+68	@表示名（図・表・報告書に使う名前）=>Display name (used in figures, tables and reports) || 質問文=>Question text || 種類=>Type || 回答数=>Responses || 選択肢=>Options || <th>列</th>=><th>Column</th>
+69	 (reversed)
+70	, 
+71	Total: 
+72	Mean: 
+73	@尺度得点（{0}）=>Scale score ({0}) || 直す=>Edit || 消す=>Delete
+74	Mean
+75	 rows shown (of {0}).
+76	<button class="md-btn" data-act="moreRows">Show 500 more</button>
+77	Up to {0} rows can be shown. Analyses use all responses.
+78	Select columns
+79	Cannot be calculated
+80	  significant
+81	  not significant
+82	@データを読み込みました（回答 {0} 件、{1} 列）=>Data loaded ({0} responses, {1} columns) || {2}として読み取りました。=>Detected column types: {2}.  || 列の読み取り方を確かめる=>Check how the columns were read || 解析を始める=>Start analysis || 解析の種類を選ぶと、この画面に解析の欄ができます。その欄で設問を選ぶと、すぐに結果が出ます。=>Choose an analysis type to add an analysis section to this screen. Select questions in that section and the results appear immediately. || 解析を足すと、この画面の下へ順に並びます。見出しの ∨ で畳めます。=>New analyses are added below in order. Collapse them with ∨ in the heading.
+83	 columns
+84	">＋ New analysis</button></div></div>
+85	Expands this analysis.
+86	Collapses this analysis.
+87	 data-tip="Include when exporting all.">
+88	A significant result.
+89	Right-click to rename. Drag the heading to reorder.">
+90	:-1" data-tip="Move up one place."
+91	:1" data-tip="Move down one place."
+92	" data-tip="Rename, duplicate, delete, etc.">⋯</button></span></div>
+93	@1 つ上へ=>Up one || 1 つ下へ=>Down one || この設問を外します。=>Removes this question.
+94	" data-tip="Treats this as a reverse-worded item (reverse-scored item) and reverses its scores.">Reverse</button>
+95	＋ Add question
+96	(not used; select a question to use it)
+97	(select the first question)
+98	  〔{0}〕</option>
+99	@選んだ設問と同じ選択肢の設問（◎ の付いたもの）を、すべて追加します。=>Adds all questions with the same options as the selected question (marked ◎). || 同じ選択肢の設問をすべて追加（{0} 個）=>Add all questions with the same options ({0})
+100	<div class="md-hint" style="margin:6px 0 0">Select at least one more question to compare. ◎ marks questions with the same options as the selected question.</div>
+101	 data-tip="Same question as the other field. Select a different question."
+102	@2 つの設問の役割（行と列など）を入れ替えます。=>Swaps the roles of the two questions (rows and columns, etc.). || 2 つの設問を入れ替える=>Swap the two questions
+103	@</b>　{0}=></b>  {0} || 設問を選ぶと、すぐに結果（p 値・表・図・報告書の文）が出ます。選択肢の名前やまとめ方、除外、絞り込みは、右の作業ウィンドウで設定できます。=>Select questions to see the results (p value, tables, figures and report text) immediately. Option names, combining, exclusion and filters can be set in the task pane on the right.
+104	<div class="md-empty">Calculating.</div>
+105	Could not be calculated.
+106	Significant (p < {0})
+107	Not significant (p ≥ {0})
+108	@無回答、またはチェックを外した選択肢を選んだ人です。=>Respondents with no answer or who chose an unchecked option. || 除外 {0} 人=>Excluded {0}
+109	">Switch to Fisher's exact test</button></li></ul>
+110	@<div class="md-block-head">表<=><div class="md-block-head">Table< || デザインごとコピーします。Excel や Word に貼り付けられます。=>Copies with the design. You can paste it into Excel or Word. || コピー=>Copy || CSV で保存=>Save as CSV
+111	@ドラッグで表の幅と行の高さを変えます。ダブルクリックで元の大きさに戻します。=>Drag to change the table width and row height. Double-click to restore the original size. || ドラッグで表の幅を変えます。=>Drag to change the table width. || ドラッグで行の高さを変えます。=>Drag to change the row height.
+112	@<div class="md-block-head">図<=><div class="md-block-head">Figures< || 別の種類の図をもう 1 つ足します。=>Adds another figure of a different type. || ＋ 図を追加=>＋ Add figure
+113	<div class="md-figrow"><div class="md-figcap">Figure 
+114	  <span class="md-figsize">
+115	">Copy</button><button class="md-btn md-btn-sm" data-act="figPngAt" data-arg="
+116	">Save as image</button>
+117	" data-tip="Deletes this figure (can be undone).">Delete</button></span></div>
+118	@ドラッグで大きさを変えます。=>Drag to resize. || ドラッグで幅を変えます。=>Drag to change the width. || ドラッグで高さを変えます。=>Drag to change the height.
+119	<div class="md-hint" style="margin:0">No figures. Add one with “＋ Add figure”.</div>
+120	@報告書の文（定型文）=>Report text (standard text) || コピー=>Copy

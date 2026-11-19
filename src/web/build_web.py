@@ -12,7 +12,7 @@ for f in ['bridge.js', 'touch.js', 'web.js', 'phone.js']: shutil.copy(WEB + '/' 
 import re as _re
 VERSION = _re.search(r"v: '([0-9.]+)'", open(ROOT + '/app/www/js/changelog.js', encoding='utf-8').read()).group(1)
 _b = open(OUT + '/js/bridge.js', encoding='utf-8').read().replace('__CTS_VERSION__', VERSION); open(OUT + '/js/bridge.js', 'w', encoding='utf-8').write(_b)
-for f in ['data.R', 'stats.R', 'analyses.R', 'analyses2.R', 'excel.R', 'rexport.R', 'server.R']: shutil.copy(ROOT + '/app/R/' + f, OUT + '/R/' + f)
+for f in ['i18n.R', 'i18n_en.R', 'data.R', 'stats.R', 'analyses.R', 'analyses2.R', 'excel.R', 'rexport.R', 'server.R']: shutil.copy(ROOT + '/app/R/' + f, OUT + '/R/' + f)
 for f in ['web_json.R', 'web_server.R']: shutil.copy(WEB + '/' + f, OUT + '/R/' + f)
 # webR：この一式で使うもの（npm の webr 0.6.1。配布元の整合性ハッシュと一致することを確かめたもの）だけを入れる
 # 置き場（Claude のページ）が .so と拡張子なしのファイルを置けないため、.so は .so.wasm に名前を変え、webR の worker の
@@ -48,9 +48,9 @@ html = open(ROOT + '/app/www/index.html', encoding='utf-8').read()
 html = html.replace('<link rel="stylesheet" href="css/app.css">', '<link rel="stylesheet" href="css/app.css">\n<link rel="stylesheet" href="css/web.css">\n<link rel="stylesheet" href="css/phone.css">')
 html = html.replace('<title>CrossTab Studio</title>', '<title>CrossTab Studio</title>\n<link rel="manifest" href="manifest.webmanifest">\n<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">\n<link rel="icon" type="image/png" href="icons/icon-192.png">\n<meta name="theme-color" content="#217346">\n<meta name="apple-mobile-web-app-capable" content="yes">\n<meta name="mobile-web-app-capable" content="yes">\n<meta name="apple-mobile-web-app-title" content="CrossTab">\n<meta name="apple-mobile-web-app-status-bar-style" content="default">')
 boot = '''<div id="md_boot"><img src="icons/icon-192.png" width="76" height="76" alt="">
-<h1>CrossTab Studio</h1><p>アンケートの集計と検定</p><div class="md-boot-bar"><i></i></div>
-<div class="md-boot-row"><span class="md-boot-msg">起動しています</span><span class="md-boot-sec"></span></div>
-<div class="md-boot-steps"><div data-step="1">計算に使う R を読み込んでいます</div><div data-step="2">集計と検定の部品を読み込んでいます</div><div data-step="3">画面を用意しています</div></div>
+<h1>CrossTab Studio</h1><p data-i18n>アンケートの集計と検定</p><div class="md-boot-bar"><i></i></div>
+<div class="md-boot-row"><span class="md-boot-msg" data-i18n>起動しています</span><span class="md-boot-sec"></span></div>
+<div class="md-boot-steps"><div data-step="1" data-i18n>計算に使う R を読み込んでいます</div><div data-step="2" data-i18n>集計と検定の部品を読み込んでいます</div><div data-step="3" data-i18n>画面を用意しています</div></div>
 <div class="md-boot-note"></div></div>
 '''
 html = html.replace('<div class="md-app">', boot + '<div class="md-app">', 1)

@@ -1,0 +1,120 @@
+1	<button data-act="closeModal" data-tip="Close (Esc)">×</button></div><div class="md-modal-body">
+2	@どれを使えばよいか迷ったら：質問を選んで探す=>Not sure which to use? Find by choosing questions
+3	@解析の名前や目的で探す（例：フィッシャー、複数回答、順序）=>Search by analysis name or purpose (e.g., Fisher, multiple choice, ordinal)
+4	<div class="md-empty">No matching analyses. Try different words.</div>
+5	Loading new data
+6	@<p>解析が {0} 個あります。「{1}」をどのように読み込みますか。</p>=><p>There are {0} analyses. How do you want to load “{1}”?</p> || 回答が増えた同じアンケートなら「解析を残して差し替える」を選ぶと、同じ質問の列に解析の設定を引き継いで、すべて計算し直します。=>If it is the same survey with more responses, choose “Keep analyses and replace” to carry the analysis settings over to the columns with the same questions and recalculate everything.
+7	@やめる=>Cancel || 新しく始める=>Start new || 解析を残して差し替える=>Keep analyses and replace
+8	@プロジェクトの名前=>Project name || データ（CSV の中身）・解析・図と表の設定をまとめて、アプリのフォルダーの「projects」に保存します。同じ名前があるときは上書きします。=>Saves the data (the CSV contents), analyses, and figure and table settings together in the “projects” folder of the app. A project with the same name is overwritten.
+9	@やめる=>Cancel || 保存=>Save
+10	@保存：{0}　{1} KB=>Saved: {0}  {1} KB || このプロジェクトを削除します。=>Deletes this project. || 削除=>Delete
+11	<div class="md-empty">No saved projects yet. Projects saved with “Save” appear here.</div>
+12	<p class="md-hint" style="margin-top:10px">Location: 
+13	@ファイルから開く…=>Open from file… || 閉じる=>Close
+14	Deleted project “{0}”.
+15	Really delete
+16	@テーマの色=>Theme colors || 白〜黒=>White to black || 論文誌風の色=>Journal-style colors || 色覚に配慮した色=>Colorblind-friendly colors || その他の色…=>More colors…
+17	Back to palette color
+18	_Fig
+19	PNG image
+20	The figure was saved as an image ({0} × {1}, same shape as on screen{2}).
+21	, transparent background
+22	The figure was copied. You can paste it into Word or PowerPoint.
+23	The figure could not be copied. Use “Save as image” instead.
+24	The table was copied. You can paste it into Excel or Word.
+25	Could not copy. Use “Save as CSV” instead.
+26	_table.csv
+27	The table was saved as CSV.
+28	There is no table.
+29	The Excel file could not be created.
+30	analysis_data.csv
+31	The R code could not be created.
+32	analysis.R
+33	Not reproduced with Excel functions: {0}. 
+34	Analyses that could not be written: {0}. 
+35	Preparing the export
+36	Converting figures to images ({0} / {1})
+37	Creating the R code
+38	_analysis.R
+39	Creating the Excel file
+40	_analysis.xlsx
+41	_report.pdf
+42	_report.docx
+43	_report.txt
+44	There is nothing to export.
+45	Saving files ({0} / {1})
+46	 files were exported to “{0}”. 
+47	_export.zip
+48	 files were saved together as one ZIP file. 
+49	Export was canceled.
+50	Could not export ({0}).
+51	" placeholder="(excluded)"></td></tr>
+52	@<p>「{0}」の回答のうち、そのままでは数値として読めなかったものです。値を直すと、その回答をした人すべてに当てはめます。=><p>Responses to “{0}” that could not be read as numbers as they were. A corrected value is applied to everyone who gave that response. || 空欄にした回答は解析から除外します。=>Responses left blank are excluded from the analysis.
+53	@<div class="md-sub">自動で直した回答（{0} 件）</div>=><div class="md-sub">Automatically corrected responses ({0})</div> || 全角数字・単位（歳・時間など）・「約」「くらい」を外し、「3～4」のような範囲は中央の値にしました。=>Full-width digits, units (years, hours, etc.) and words such as “about” were removed, and ranges such as “3–4” were set to their midpoint. || <th>回答</th>=><th>Response</th> || <th>件数</th>=><th>Count</th> || <th>使う値</th>=><th>Value used</th>
+54	@<div class="md-sub">数値として読めなかった回答（{0} 件）</div>=><div class="md-sub">Responses that could not be read as numbers ({0})</div> || 値を入れると、その値として使います。空欄のままなら除外します。=>Enter a value to use it; leave blank to exclude. || <th>回答</th>=><th>Response</th> || <th>件数</th>=><th>Count</th> || <th>使う値</th>=><th>Value used</th>
+55	Check numeric responses
+56	@やめる=>Cancel || 最初の状態に戻す=>Reset || この値で使う=>Use these values
+57	Some values are not numbers ({0}). Enter numbers or leave them blank.
+58	The numeric responses were corrected. Analyses using this column will be recalculated.
+59	The figure was deleted. Undo with Ctrl+Z.
+60	Save project
+61	Export project to file
+62	Settings
+63	About this app
+64	Start analysis: choose an analysis type
+65	New analysis: choose an analysis type
+66	Change analysis type
+67	Up to {0} analyses are allowed.
+68	 (copy)
+69	Deleted “{0}”. Undo with Ctrl+Z.
+70	These two columns are of different types, so they cannot be swapped.
+71	No color
+72	Sequential
+73	Diverging
+74	Auto (white only when inside the figure)
+75	Auto-save was turned off. This setting is also stored in the project the next time you save.
+76	Auto-save was turned on. Changes will be saved to “{0}” a few seconds after each edit.
+77	Name of the project to auto-save
+78	This format will be used for new figures.
+79	The formats of all figures were matched ({0}).
+80	SVG image
+81	The figure was saved as SVG.
+82	_table.png
+83	The table was saved as an image.
+84	The table could not be converted to an image ({0}).
+85	This design will be used for tables in new analyses.
+86	The designs of all tables were matched ({0}).
+87	The text was copied.
+88	All texts were returned to the standard texts.
+89	Reading “{0}” as numbers. Corrected and unreadable responses can be reviewed with “Check”.
+90	Text
+91	The report was saved as text.
+92	The full report text was copied.
+93	None of the analyses marked with ☑ have results.
+94	_Rcode.zip
+95	The R code (analysis.R) and data (analysis_data.csv) were saved as a ZIP. Extract them and run the script in the same folder to compare the R results with the “App values”.
+96	Excel workbook
+97	The Excel file was saved.
+98	None of the analyses marked with ☑ have results. Check the boxes in the analysis headings.
+99	@<p>☑ を付けた <b>{0} 件</b>の解析を書き出します。</p>=><p>Exports the <b>{0} analyses</b> marked with ☑.</p> || 図（PNG、{1} 個）　名前は「解析の名前_図1.png」=>Figures (PNG, {1})  named “analysis name_Fig1.png” || Excel ファイル（データと、関数で再現した解析）=>Excel file (data and analyses reproduced with functions) || R のコード（解析を R の標準の関数で計算し直すスクリプトと、そのデータ）=>R code (a script that recalculates the analyses with standard R functions, and its data) || 報告書（PDF。文・表・図をすべて含む）=>Report (PDF, with text, tables and figures) || 報告書（Word。表は Word の表で、あとから直せる）=>Report (Word, with editable Word tables) || 報告書（テキスト。文と表だけ）=>Report (text, text and tables only)
+100	In the next screen, choose the destination folder. Files with the same names are overwritten.
+101	Folders cannot be chosen in this environment, so everything is saved as one ZIP file.
+102	@やめる=>Cancel
+103	Choose a folder and export
+104	Save as ZIP
+105	Load from Google Sheets
+106	@回答のスプレッドシートの URL=>URL of the response spreadsheet || Google フォームの「回答」タブ →「スプレッドシートにリンク」で開いたスプレッドシートの URL を貼ります。読み込むには、次のどちらかが必要です。=>Paste the URL of the spreadsheet opened from the Google Form's “Responses” tab → “Link to Sheets”. To load it, one of the following is needed. || 共有を「リンクを知っている全員（閲覧者）」にする=>Set sharing to “Anyone with the link (Viewer)” || 「ファイル → 共有 → ウェブに公開」で、シートと CSV を選んで公開し、その URL を使う=>Use “File → Share → Publish to web”, choose the sheet and CSV, publish, and use that URL || どちらも、URL を知っている人なら誰でも回答を見られる状態になります。個人を特定できる回答（氏名・メールアドレスなど）を含むときは、この方法を使わず、CSV をダウンロードして入れてください。=>Either way, anyone who knows the URL can see the responses. If the responses identify individuals (names, e-mail addresses, etc.), do not use this method; download the CSV and load it instead. || URL はプロジェクトに残すので、あとで「最新に更新」を押すだけで、増えた回答を読み込み直せます（解析の設定は残ります）。=>The URL is kept in the project, so later you can just press “Refresh” to load new responses (analysis settings are kept).
+107	@やめる=>Cancel || 読み込む=>Load
+108	Enter a URL.
+109	Replace the data with the responses in this spreadsheet, keeping the analyses?\n(Choose “Cancel” to start new.)
+110	Loaded responses from the spreadsheet ({0}).
+111	The data were not loaded from a URL.
+112	Updated to the latest responses ({0}; {1}{2} since last time).
+113	<button class="md-btn md-btn-primary" data-act="closeModal">Close</button>
+114	There are no custom settings yet. Adjust the settings and then press “Capture current settings and formats”.
+115	New projects will use the custom settings.
+116	New projects will use the standard settings. The custom settings are kept.
+117	Replace the saved custom settings with the current settings?
+118	Could not save on this device (check the browser's storage settings).
+119	The current settings were saved as custom settings. They will be used when starting new projects.
+120	 were applied to the open project (decisions and notation, report, formats of new figures and tables). To give existing figures and tables the same format, use “Apply to all figures” and “Apply to all tables”.

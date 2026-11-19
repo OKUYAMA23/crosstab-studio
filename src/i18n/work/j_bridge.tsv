@@ -1,0 +1,19 @@
+1	Loading the new version (
+2	Saving the app on this device (
+3	)
+4	Checking for a new version
+5	Loading the new version
+6	Saving the app on this device (about 20 MB, first time only)
+7	<span>A new version is ready. Update to switch to it.</span><button class="md-btn md-btn-primary md-btn-sm">Update</button><button class="md-btn md-btn-sm" data-later>Later</button>
+8	Unsaved changes will be lost. Update
+9	Loading R for the calculations (about 20 MB the first time)
+10	Loading the analysis components
+11	Preparing the window
+12	Enter a project name.
+13	Could not save on this device ({0}). Save with “Export to file”.
+14	in this device's browser
+15	Project “{0}” was not found.
+16	Not found.
+17	R could not be started
+18	Starting R
+19	An error occurred during the calculation ({0}).

@@ -6,7 +6,7 @@
   function x(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function runs(text, o) {
     o = o || {};
-    var rp = '<w:rPr>' + (o.g ? '<w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:eastAsia="ＭＳ ゴシック"/>' : '') + (o.b ? '<w:b/><w:bCs/>' : '') + (o.color ? '<w:color w:val="' + o.color.replace('#', '') + '"/>' : '') + (o.sz ? '<w:sz w:val="' + Math.round(o.sz * 2) + '"/><w:szCs w:val="' + Math.round(o.sz * 2) + '"/>' : '') + '</w:rPr>';
+    var rp = '<w:rPr>' + (o.g ? _t('<w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:eastAsia="ＭＳ ゴシック"/>') : '') + (o.b ? '<w:b/><w:bCs/>' : '') + (o.color ? '<w:color w:val="' + o.color.replace('#', '') + '"/>' : '') + (o.sz ? '<w:sz w:val="' + Math.round(o.sz * 2) + '"/><w:szCs w:val="' + Math.round(o.sz * 2) + '"/>' : '') + '</w:rPr>';
     return String(text == null ? '' : text).split('\n').map(function (l, i) { return (i ? '<w:r>' + rp + '<w:br/></w:r>' : '') + '<w:r>' + rp + '<w:t xml:space="preserve">' + x(l) + '</w:t></w:r>'; }).join('');
   }
   function para(text, o) {
@@ -48,26 +48,21 @@
   function picXml(rid, id, wpx, hpx) {
     var cx = Math.round(wpx * 9525), cy = Math.round(hpx * 9525), max = 5760000;            // 図の幅は 16 cm まで
     if (cx > max) { cy = Math.round(cy * max / cx); cx = max; }
-    return '<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="' + cx + '" cy="' + cy + '"/><wp:docPr id="' + id + '" name="図 ' + id + '"/>' +
+    return '<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="' + cx + '" cy="' + cy + '"/><wp:docPr id="' + id + _t('" name="図 ') + id + '"/>' +
       '<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">' +
       '<pic:nvPicPr><pic:cNvPr id="' + id + '" name="image' + id + '.png"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="' + rid + '"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>' +
       '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="' + cx + '" cy="' + cy + '"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>';
   }
   var STYLES = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
-    '<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="ＭＳ 明朝" w:cs="Times New Roman"/><w:sz w:val="21"/><w:szCs w:val="21"/><w:lang w:val="en-US" w:eastAsia="ja-JP"/></w:rPr></w:rPrDefault>' +
-    '<w:pPrDefault><w:pPr><w:spacing w:after="80" w:line="300" w:lineRule="auto"/><w:jc w:val="both"/></w:pPr></w:pPrDefault></w:docDefaults>' +
-    '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style>' +
-    '<w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:jc w:val="left"/></w:pPr><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:eastAsia="ＭＳ ゴシック"/><w:b/><w:sz w:val="34"/></w:rPr></w:style>' +
-    '<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="240" w:after="60"/><w:jc w:val="left"/><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:eastAsia="ＭＳ ゴシック"/><w:b/><w:sz w:val="25"/></w:rPr></w:style>' +
-    '<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="80" w:after="40"/><w:outlineLvl w:val="1"/></w:pPr><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:eastAsia="ＭＳ ゴシック"/><w:b/><w:sz w:val="21"/></w:rPr></w:style>' +
+    _t('<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="ＭＳ 明朝" w:cs="Times New Roman"/><w:sz w:val="21"/><w:szCs w:val="21"/><w:lang w:val="en-US" w:eastAsia="ja-JP"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="80" w:line="300" w:lineRule="auto"/><w:jc w:val="both"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style><w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:jc w:val="left"/></w:pPr><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:eastAsia="ＭＳ ゴシック"/><w:b/><w:sz w:val="34"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="240" w:after="60"/><w:jc w:val="left"/><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:eastAsia="ＭＳ ゴシック"/><w:b/><w:sz w:val="25"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="80" w:after="40"/><w:outlineLvl w:val="1"/></w:pPr><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:eastAsia="ＭＳ ゴシック"/><w:b/><w:sz w:val="21"/></w:rPr></w:style>') +
     '<w:style w:type="paragraph" w:styleId="Caption"><w:name w:val="caption"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:jc w:val="center"/></w:pPr><w:rPr><w:sz w:val="18"/></w:rPr></w:style></w:styles>';
   var NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"';
   async function buildDocx() {
     await A.ensureHolmAsync();
     var items = A.repItems(), lang = S.P.settings.figLang, body = '', media = [], figNo = 0;
-    body += para(S.P.title || '報告書', { style: 'Title', after: 2 });
+    body += para(S.P.title || _t('報告書'), { style: 'Title', after: 2 });
     body += para(A.repMeta(), { sz: 9, color: '#404040', border: 8, after: 10 });
-    if (!items.length) body += para('☑ を付けた解析がありません。');
+    if (!items.length) body += para(_t('☑ を付けた解析がありません。'));
     if (items.some(function (y) { return y.ok; })) {
       var sum = A.summaryTable(); sum = Object.assign({}, sum, { rows: sum.rows.map(function (r) { return r.filter(function (c, j) { return j !== 1; }); }), textCols: [true] });
       body += tableBlock(sum);
@@ -76,8 +71,8 @@
       var it = items[i];
       body += para(it.no + '. ' + it.tab.name, { style: 'Heading1' });
       body += para(it.ok ? it.res.test : A.def(it.tab.type).name, { sz: 9, color: '#404040', keep: true });
-      if (!it.ok) { body += para(it.res ? (it.res.message || '計算できませんでした。') : '列がまだ選ばれていません。'); continue; }
-      if (it.res.method) body += para('方法', { style: 'Heading2' }) + para(it.res.method) + para('結果', { style: 'Heading2' });
+      if (!it.ok) { body += para(it.res ? (it.res.message || _t('計算できませんでした。')) : _t('列がまだ選ばれていません。')); continue; }
+      if (it.res.method) body += para(_t('方法'), { style: 'Heading2' }) + para(it.res.method) + para(_t('結果'), { style: 'Heading2' });
       if (it.text) body += para(it.text);
       if (S.P.report.tables) A.tablesOf(it.tab, it.res).forEach(function (t) { body += tableBlock(t); });
       if (S.P.report.figs !== false) {
@@ -86,7 +81,7 @@
           var r = Chart.render(m, it.tab.figs[k], lang), sz = svgSize(r.svg), png = await Chart.toPng(r.svg, 3);
           figNo++; var rid = 'rIdImg' + figNo; media.push({ rid: rid, name: 'image' + figNo + '.png', data: new Uint8Array(await png.arrayBuffer()) });
           body += para('', { raw: picXml(rid, figNo, sz[0], sz[1]), align: 'center', keep: true, before: 6, after: 2 });
-          body += para('図 ' + figNo + '　' + it.tab.name + (it.tab.figs.length > 1 ? '（' + (k + 1) + '）' : ''), { style: 'Caption', after: 10 });
+          body += para(_t('図 {0}　', figNo) + it.tab.name + (it.tab.figs.length > 1 ? _t('（{0}）', k + 1) : ''), { style: 'Caption', after: 10 });
         }
       }
     }
@@ -104,7 +99,7 @@
         '<Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/><Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>' +
         '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>',
       '_rels/.rels': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>',
-      'docProps/core.xml': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>' + x(S.P.title || '報告書') + '</dc:title><dc:creator>CrossTab Studio</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">' + now + '</dcterms:created><dcterms:modified xsi:type="dcterms:W3CDTF">' + now + '</dcterms:modified></cp:coreProperties>',
+      'docProps/core.xml': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>' + x(S.P.title || _t('報告書')) + '</dc:title><dc:creator>CrossTab Studio</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">' + now + '</dcterms:created><dcterms:modified xsi:type="dcterms:W3CDTF">' + now + '</dcterms:modified></cp:coreProperties>',
       'docProps/app.xml': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>CrossTab Studio</Application></Properties>',
       'word/document.xml': doc, 'word/styles.xml': STYLES, 'word/footer1.xml': footer,
       'word/settings.xml': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:settings xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:updateFields w:val="true"/><w:defaultTabStop w:val="840"/><w:compat><w:compatSetting w:name="compatibilityMode" w:uri="http://schemas.microsoft.com/office/word" w:val="15"/></w:compat></w:settings>',
@@ -115,11 +110,11 @@
     media.forEach(function (m2) { list.push({ name: 'word/media/' + m2.name, data: m2.data }); });
     return A.zip(list, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
   }
-  async function reportDocx() { A.busy(true, 'Word ファイルを作っています'); try { return await buildDocx(); } finally { A.busy(false); } }
+  async function reportDocx() { A.busy(true, _t('Word ファイルを作っています')); try { return await buildDocx(); } finally { A.busy(false); } }
   async function saveDocx() {
-    if (!S.data) { A.toast('先に CSV ファイルを入れてください。', true); return; }
-    try { var blob = await reportDocx(); if (await A.saveBlob(blob, A.baseName() + '_報告書.docx', 'Word 文書', '.docx')) A.toast('報告書を Word で保存しました。表は Word の表なので、そのまま直せます。'); }
-    catch (e) { A.toast(e && e.name === 'AbortError' ? '保存をやめました。' : 'Word ファイルを作れませんでした（' + (e && e.message || e) + '）。', true); }
+    if (!S.data) { A.toast(_t('先に CSV ファイルを入れてください。'), true); return; }
+    try { var blob = await reportDocx(); if (await A.saveBlob(blob, A.baseName() + _t('_報告書.docx'), _t('Word 文書'), '.docx')) A.toast(_t('報告書を Word で保存しました。表は Word の表なので、そのまま直せます。')); }
+    catch (e) { A.toast(e && e.name === 'AbortError' ? _t('保存をやめました。') : _t('Word ファイルを作れませんでした（{0}）。', e && e.message || e), true); }
   }
   A.reportDocx = reportDocx; A.saveDocx = saveDocx;
 })();

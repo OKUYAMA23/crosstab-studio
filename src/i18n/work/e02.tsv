@@ -1,0 +1,130 @@
+1	There are no custom settings yet.
+2	CrossTabStudio_custom_settings.json
+3	The custom settings were exported. Import them on another device under “File” → “Settings”.
+4	This is not a CrossTab Studio custom settings file.
+5	Replace the saved custom settings with the imported settings?
+6	The custom settings were imported. They will be used when starting new projects.
+7	Could not be loaded.
+8	Delete the custom settings saved on this device? This cannot be undone (you can import an exported file again).
+9	The custom settings were deleted. The standard settings will be used.
+10	“{0}” is used in {1} analyses. Deleting it clears the column selection in those analyses. Delete it?
+11	Enter a name.
+12	Select at least two items.
+13	A column with the same name exists. Use a different name.
+14	Created “{0}”. It can be selected as a numeric column in t-tests, ANOVA, correlations, etc.
+15	@不具合の報告やご意見・要望は、GitHub の「Issues」で受け付けています。送るには GitHub のアカウント（無料）が必要です。=>Bug reports, comments and requests are accepted on GitHub “Issues”. You need a (free) GitHub account to send them. || 書いた内容は誰でも読めます。=>Anyone can read what you write.  || アンケートの回答データ、名前や学校名などの個人情報は書かないでください。画面の写真を貼るときも、回答が写っていないか確かめてください。=>Do not include survey response data or personal information such as names or school names. When attaching screenshots, check that no responses are visible. || ボタンを押すと、アプリの版と端末の種類を書き込んだ状態で報告の画面が開きます。=>Pressing a button opens the report page with the app version and device type already filled in. || 不具合を報告する=>Report a bug || ご意見・要望を送る=>Send comments or requests || エラーの記録を写す=>Copy the error log || <div class="md-sub">エラーの記録</div>=><div class="md-sub">Error log</div> || アプリの中で起きたエラーを、この端末の中だけに記録しています（今 {0} 件）。外には送りません。報告するときに写して、報告の「エラーの記録」の欄に貼ると、原因を調べやすくなります。=>Errors in the app are recorded only on this device ({0} now) and are never sent. When reporting, copy the log and paste it into the “Error log” field of the report to help find the cause. || 記録を消す=>Clear the log
+16	The error log was copied. Paste it into the “Error log” field of the report.
+17	The error log was cleared.
+18	Tabulation
+19	Frequency table
+20	Counts and percentages for each option. Choosing “Test whether responses are uneven” adds a chi-square goodness-of-fit test (chisq.test). For multiple-choice questions, the percentage of respondents choosing each option (the total exceeds 100%).
+21	Frequencies of multiple questions
+22	Tabulates questions with the same options side by side. For ordinal responses, the Friedman test (friedman.test; only respondents who answered all questions) and the effect size Kendall's W can be selected.
+23	Numeric summary and histogram
+24	n, mean, SD, minimum, quartiles, median and maximum. Bins can be automatic (one per value for integers with a narrow range), Sturges' formula or the Freedman–Diaconis rule.
+25	Response timeline
+26	Counts response date-times by day, week or month, with cumulative percentages.
+27	Association between two questions
+28	Chi-square test
+29	chisq.test (no correction by default, even for 2×2 tables; Yates' correction is optional). Effect size: Cramér's V (φ for 2×2). Cells that are higher or lower than expected are identified by adjusted standardized residuals.
+30	Fisher's exact test
+31	fisher.test. For 2×2 tables, the conditional maximum likelihood odds ratio and its 95% CI. When the table is too large for exact calculation, it switches automatically to a Monte Carlo estimate (200,000 replicates).
+32	Trend test for proportions
+33	prop.trend.test (Cochran–Armitage). Levels are given equally spaced scores.
+34	Stratified cross-tabulation
+35	mantelhaen.test (no continuity correction; the generalized CMH test for tables larger than 2×2). chisq.test by stratum. For 2×2 tables, the common odds ratio (Mantel–Haenszel) with its 95% CI, and the Breslow–Day test (Tarone's correction).
+36	Comparing ordinal responses
+37	Mann–Whitney U test
+38	wilcox.test (normal approximation with corrections for ties and continuity). Effect size r = |Z| / √N.
+39	Kruskal–Wallis test
+40	kruskal.test. Effect size ε² = H / (N − 1). Multiple comparisons with pairwise.wilcox.test (Holm method).
+41	Spearman's rank correlation
+42	cor.test(method = "spearman").
+43	Comparing means
+44	t-test
+45	Welch's t-test (t.test). Student's t-test, which assumes equal variances, can also be selected. Effect size: Hedges' g. 95% CI of the mean difference.
+46	One-way ANOVA
+47	Welch's ANOVA (oneway.test) with Games–Howell multiple comparisons. Standard ANOVA assuming equal variances (Tukey method, TukeyHSD) can also be selected. Effect size: η².
+48	Paired t-test
+49	t.test(paired = TRUE). Effect size: dz (mean difference ÷ SD of the differences). 95% CI of the difference.
+50	Two responses from the same people
+51	Wilcoxon signed-rank test
+52	wilcox.test(paired = TRUE).
+53	McNemar's test
+54	mcnemar.test (with continuity correction). binom.test (exact binomial test) when there are fewer than 25 discordant pairs.
+55	Association and correlation
+56	Pearson's correlation coefficient
+57	cor.test(method = "pearson"). The 95% CI uses Fisher's z transformation. A regression line (lm) is drawn on the scatter plot.
+58	Regression analysis
+59	Multiple regression analysis
+60	lm (forced entry). Partial regression coefficients B, SE, standardized coefficients β, 95% CI, t, p and VIF. R², adjusted R² and F test. Single-choice variables are dummy-coded with the first option as the reference; ordinal responses use level scores.
+61	Logistic regression analysis
+62	glm(family = binomial). B, SE, Wald test, odds ratios with Wald 95% CIs, and VIF. Likelihood-ratio test, Cox–Snell and Nagelkerke R², AIC, and classification accuracy (predicted probability cut-off 0.5).
+63	Multiple-choice cross-tabulation
+64	chisq.test or fisher.test for each option, adjusted with p.adjust (Holm method).
+65	Scales and multivariate
+66	Scale reliability
+67	Cronbach's α and standardized α, ω coefficient (from the loadings of a one-factor factanal). Item means and SDs, ceiling and floor effects (whether mean ± SD exceeds the score range), item–rest correlations, and α if the item is deleted. Reverse-scored items are reversed before calculation.
+68	Confirmatory factor analysis
+69	Maximum likelihood (estimated with base R optim; factor variances fixed at 1 and factor correlations estimated). χ² test, CFI, TLI, RMSEA with 90% CI, SRMR, standardized loadings, SEs (from the Hessian), and ω (composite reliability) and AVE for each factor. Level scores are treated as numeric.
+70	Exploratory factor analysis
+71	Maximum likelihood (factanal). Promax rotation (with factor correlations) or varimax. With “Automatic”, the number of factors is the number of eigenvalues above 1 (Kaiser criterion).
+72	Correspondence analysis
+73	Singular value decomposition of the matrix of standardized residuals. Rows and columns are both shown in principal coordinates (symmetric map). The presence of an association is shown by the chi-square test.
+74	Free text
+75	Text mining
+76	Splits text into words with the browser's word segmentation (Intl.Segmenter), joins consecutive kanji and katakana words, and removes function words. Frequent words, and a co-occurrence network based on Jaccard coefficients (Fruchterman–Reingold layout, label propagation for groups). When a group is selected, a chi-square test is performed for each word, with Holm adjustment.
+77	  Software for tabulating and testing survey data (such as Google Forms responses). All calculations are performed with 
+78	R running in this device's browser (webR)
+79	R on this computer
+80	.</p>
+81	Data handling
+82	<li>Loaded data and results are handled only 
+83	on this device
+84	on this computer
+85	 and are never sent anywhere. The app is not connected to any AI service.</li>
+86	<li>When loading from a Google Sheets URL, the app only receives the responses from that spreadsheet and sends nothing. To load it, the spreadsheet must be shared with “Anyone with the link” or published to the web.</li>
+87	<li>Excel files (.xlsx) are loaded by converting the first sheet into a table in the same form as a CSV. Dates become text in the form “year/month/day hour:minute:second”. The converted table (CSV) is stored in the project.</li>
+88	<li>Projects are saved 
+89	on this device (in the browser). They are lost if the browser data are cleared, so also save important ones as .prj files with “Export to file”.
+90	in the “projects” folder of the app.
+91	Analyses and calculation methods
+92	R functions used and output
+93	Rules common to all analyses
+94	<li>For ordinal responses, the first option is treated as the highest when assigning ranks and scores.</li>
+95	<li>Respondents with no answer, or who chose an unchecked option, are excluded from that analysis. Numeric responses are used after correcting full-width digits, units and ranges (such as “1–2 hours”); responses that cannot be converted to numbers are excluded.</li>
+96	<li>The p value is the probability of a deviation at least as large as the one observed, assuming there is no association (no difference). A non-significant result does not prove that there is no association.</li>
+97	<li>The report also shows p values adjusted together with the Holm method for the tests marked with ☑ (can be switched in the settings).</li>
+98	<li>The lines in the “Mean and CI” figure are 95% confidence intervals of the mean based on the t distribution.</li>
+99	<li>A scale score (“Create scale score” under Data) is the mean or total of the scores of the selected items (reverse-scored items reversed). Scores are given only to respondents who answered all items. How it was created is written in the “Methods” of the analyses that use it.</li>
+100	Reproduction in Excel
+101	<p style="margin:0">The Excel file contains the data and cells in which the calculations are written with Excel functions. Results are not pasted as values; everything is a formula, so you can check how the values are calculated. The following cannot be obtained with Excel functions and are not included; use the app's values.</p>
+102	<li>p of Fisher's exact test for tables larger than 2×2</li>
+103	<li>p of multiple comparisons after ANOVA (Excel has no function for the studentized range distribution; the mean differences and t are included)</li>
+104	<li>Exploratory factor analysis (iterative computation)</li>
+105	<li>Dimensions and coordinates of the correspondence analysis (singular value decomposition; the chi-square test of association is included)</li>
+106	<li>Text mining (word segmentation)</li>
+107	<li>The generalized CMH test (tables larger than 2×2) of stratified cross-tabulation, and the CI of the common odds ratio and the Breslow–Day test (the chi-square tests by stratum, and the CMH test and common odds ratio for 2×2 tables are included)</li>
+108	<li>The ω coefficient of scale reliability, and confirmatory factor analysis (iterative computation)</li>
+109	<li>Logistic regression analysis (the coefficients require iterative computation; multiple regression is reproduced with the inverse of X'X)</li></ul>
+110	<p style="margin:4px 0 0">p values of Welch's tests with fractional degrees of freedom are calculated with BETA.DIST, because Excel's T.DIST and F.DIST truncate fractional degrees of freedom.</p>
+111	Verification with R code
+112	<p style="margin:0">“Export” → “R code” saves a script (analysis.R) that recalculates the analyses marked with ☑ with standard R functions (chisq.test, t.test, lm, etc.), together with its data (analysis_data.csv). How options are combined, filters and scale scores are also written as code in the script. For numeric columns, the values corrected by the app (such as “40 min” → 40) are added to the data. When run, “>> App values” is printed after each analysis's results. Text mining and the response timeline use the app's own processing and are not converted to code. Confirmatory factor analysis is recalculated with the lavaan package if it is installed.</p>
+113	Fonts of the report (PDF)
+114	<p style="margin:0">Body text and tables use MS Mincho for Japanese and Times New Roman for Latin characters (
+115	when font use is allowed in Chrome or Edge on a computer
+116	when they are installed on the computer
+117	). Otherwise, the similar BIZ UDMincho and Tinos are used. Headings and figures use BIZ UDPGothic.</p>
+118	Citing in papers
+119	<p style="margin:0">Because this app is not widely distributed general software, in APA style and similar you should state in the text that you used it and its version, and also list it in the references. It is also common to cite R, which performed the calculations. If the journal or institution has its own rules, follow them. Example in text: “Tabulation and statistical tests were performed with CrossTab Studio (version 
+120	).”</p>
+121	<br><span class="md-hint" style="margin:0">In text: 
+122	<p class="md-hint" style="margin:4px 0 0">Adjust the version number to the version you used (the report also ends with the version used to create it). In the SIST 02 form, change (参照 …) to the date you used the app.</p>
+123	Source code
+124	<p style="margin:0">The source code of this app is published on GitHub under the MIT License (https://github.com/OKUYAMA23/crosstab-studio). You can check how the calculations work or improve them. Bundled components follow their own licenses.</p>
+125	Components used
+126	<p style="margin:0">R (GPL)
+127	, webR (the distributed package is GPL-3.0)
+128	, httpuv and jsonlite (R packages)
+129	, pdf-lib and fontkit (MIT License), HarfBuzz (MIT License), BIZ UDPGothic, BIZ UDMincho and Tinos (SIL Open Font License 1.1).</p>
+130	Open

@@ -1,0 +1,57 @@
+1	100% stacked bar
+2	Grouped bar
+3	Stacked bar
+4	Heat table
+5	Bar chart
+6	Line chart
+7	Pie chart
+8	Mean and CI
+9	Coefficients and CI
+10	Box plot
+11	Scatter plot
+12	Histogram
+13	Correspondence map
+14	Word cloud
+15	Frequent-word bar chart
+16	Co-occurrence network
+17	Gray
+18	Green
+19	Teal
+20	Purple
+21	Orange
+22	Brown
+23	Purple to yellow. Lightness changes uniformly, so the order is readable even in black-and-white print
+24	Navy to yellow. Looks the same regardless of color vision
+25	Dark purple to pale yellow
+26	Blue–red
+27	Purple–green
+28	Brown–teal
+29	Orange–purple
+30	Eight colors that are easy to distinguish regardless of color vision
+31	Qualitative
+32	Muted colors that are easy to distinguish regardless of color vision
+33	Nature style
+34	Colors often seen in figures in Nature
+35	Science style
+36	Colors often seen in figures in Science
+37	NEJM style
+38	Colors often seen in figures in NEJM
+39	Lancet style
+40	Colors often seen in figures in The Lancet
+41	Dark colors
+42	Paired colors
+43	Pastel colors
+44	Black-and-white patterns
+45	Black and white
+46	" data-tip="Drag to move the legend. Click a swatch to change its color, or double-click a name to rename it.">
+47	: {0} ({1}%)
+48	 ({0}%)
+49	: median {0} (Q1 {1}, Q3 {2}, n = {3})
+50	 (95% CI {0}–{1})
+51	, n = 
+52	: {0} ({1}% of row{2})
+53	, residual 
+54	<g data-cbar="1" data-tip="Drag the color bar to the right of or below the figure.">
+55	–
+56	: {0} responses
+57	The image could not be created.

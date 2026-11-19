@@ -5,37 +5,37 @@
   'use strict';
   var mctx = document.createElement('canvas').getContext('2d'), uid = 0;
   var JA_ALIAS = { 'MS Gothic': 'ＭＳ ゴシック', 'MS PGothic': 'ＭＳ Ｐゴシック', 'MS Mincho': 'ＭＳ 明朝', 'Yu Gothic': '游ゴシック', 'Yu Mincho': '游明朝', 'Meiryo': 'メイリオ', 'BIZ UDGothic': 'BIZ UDゴシック', 'BIZ UDMincho': 'BIZ UD明朝' };
-  var KIND_NAMES = { stack100: '帯グラフ', group: '集合棒', stack: '積み上げ棒', heat: '色分けの表', bar: '棒グラフ', line: '折れ線グラフ', pie: '円グラフ', mean: '平均と信頼区間', coef: '係数と信頼区間', box: '箱ひげ図', scatter: '散布図', hist: 'ヒストグラム', map: '布置図', cloud: 'ワードクラウド', wbar: '頻出語の棒グラフ', net: '共起ネットワーク' };
+  var KIND_NAMES = { stack100: _k('帯グラフ'), group: _k('集合棒'), stack: _k('積み上げ棒'), heat: _k('色分けの表'), bar: _k('棒グラフ'), line: _k('折れ線グラフ'), pie: _k('円グラフ'), mean: _k('平均と信頼区間'), coef: _k('係数と信頼区間'), box: _k('箱ひげ図'), scatter: _k('散布図'), hist: _k('ヒストグラム'), map: _k('布置図'), cloud: _k('ワードクラウド'), wbar: _k('頻出語の棒グラフ'), net: _k('共起ネットワーク') };
   // 配色。ramp＝濃淡（濃い色→淡い色の段階）、div＝2 方向（低い側→中央→高い側）、cat＝多色、pat＝白黒の模様。hide＝一覧に出さない（古いプロジェクトのため残す）
   //   濃淡と 2 方向は ColorBrewer、viridis 系は matplotlib の知覚的に均等な配色、多色は論文誌でよく使われる配色（ggsci）と Paul Tol・Okabe-Ito の色覚に配慮した配色を元にした
   var PALETTES = {
-    gray: { name: 'グレー', group: '濃淡', ramp: ['#1A1A1A', '#525252', '#969696', '#D9D9D9', '#F7F7F7'] },
-    blue: { name: '青', group: '濃淡', ramp: ['#08306B', '#2171B5', '#6BAED6', '#C6DBEF', '#F7FBFF'] },
-    green: { name: '緑', group: '濃淡', ramp: ['#00441B', '#238B45', '#74C476', '#C7E9C0', '#F7FCF5'] },
-    teal: { name: '青緑', group: '濃淡', ramp: ['#014636', '#02818A', '#67A9CF', '#D0D1E6', '#FFF7FB'] },
-    purple: { name: '紫', group: '濃淡', ramp: ['#3F007D', '#6A51A3', '#9E9AC8', '#DADAEB', '#FCFBFD'] },
-    red: { name: '赤', group: '濃淡', ramp: ['#67000D', '#CB181D', '#FB6A4A', '#FCBBA1', '#FFF5F0'] },
-    orange: { name: '橙', group: '濃淡', ramp: ['#7F2704', '#D94801', '#FD8D3C', '#FDD0A2', '#FFF5EB'] },
-    brown: { name: '茶', group: '濃淡', ramp: ['#662506', '#CC4C02', '#FE9929', '#FEE391', '#FFFFE5'] },
-    viridis: { name: 'viridis', tip: '紫から黄へ。明るさが一様に変わり、白黒で印刷しても順序が読める', group: '濃淡', ramp: ['#440154', '#3B528B', '#21918C', '#5EC962', '#FDE725'], full: true },
-    cividis: { name: 'cividis', tip: '紺から黄へ。色覚の違いがあっても同じように見える', group: '濃淡', ramp: ['#00204D', '#414D6B', '#7C7B78', '#BCAF6F', '#FFEA46'], full: true },
-    magma: { name: 'magma', tip: '濃い紫から淡い黄へ', group: '濃淡', ramp: ['#2C115F', '#721F81', '#B73779', '#F1605D', '#FEB078', '#FCFDBF'], full: true },
-    rdbu: { name: '青—赤', group: '2 方向', div: ['#2166AC', '#67A9CF', '#F7F7F7', '#EF8A62', '#B2182B'] },
-    prgn: { name: '紫—緑', group: '2 方向', div: ['#762A83', '#AF8DC3', '#F7F7F7', '#7FBF7B', '#1B7837'] },
-    brbg: { name: '茶—青緑', group: '2 方向', div: ['#8C510A', '#D8B365', '#F5F5F5', '#5AB4AC', '#01665E'] },
-    puor: { name: '橙—紫', group: '2 方向', div: ['#B35806', '#F1A340', '#F7F7F7', '#998EC3', '#542788'] },
-    cud: { name: 'Okabe-Ito', tip: '色覚の違いがあっても見分けやすい 8 色', group: '多色', cat: ['#0072B2', '#E69F00', '#009E73', '#D55E00', '#56B4E9', '#CC79A7', '#F0E442', '#000000'] },
-    muted: { name: 'Paul Tol', tip: '落ち着いた色合いで、色覚の違いがあっても見分けやすい', group: '多色', cat: ['#332288', '#88CCEE', '#44AA99', '#117733', '#999933', '#DDCC77', '#CC6677', '#882255'] },
-    npg: { name: 'Nature 風', tip: 'Nature 誌の図でよく見る配色', group: '多色', cat: ['#E64B35', '#4DBBD5', '#00A087', '#3C5488', '#F39B7F', '#8491B4', '#91D1C2', '#7E6148'] },
-    aaas: { name: 'Science 風', tip: 'Science 誌の図でよく見る配色', group: '多色', cat: ['#3B4992', '#EE0000', '#008B45', '#631879', '#008280', '#BB0021', '#5F559B', '#A20056'] },
-    nejm: { name: 'NEJM 風', tip: 'NEJM 誌の図でよく見る配色', group: '多色', cat: ['#BC3C29', '#0072B5', '#E18727', '#20854E', '#7876B1', '#6F99AD', '#FFDC91', '#EE4C97'] },
-    lancet: { name: 'Lancet 風', tip: 'Lancet 誌の図でよく見る配色', group: '多色', cat: ['#00468B', '#ED0000', '#42B540', '#0099B4', '#925E9F', '#FDAF91', '#AD002A', '#ADB6B6'] },
-    tableau: { name: 'Tableau', group: '多色', cat: ['#4E79A7', '#F28E2B', '#E15759', '#76B7B2', '#59A14F', '#EDC948', '#B07AA1', '#9C755F'] },
-    dark2: { name: '濃い色', group: '多色', cat: ['#1B9E77', '#D95F02', '#7570B3', '#E7298A', '#66A61E', '#E6AB02', '#A6761D', '#666666'] },
-    paired: { name: '対の色', group: '多色', cat: ['#A6CEE3', '#1F78B4', '#B2DF8A', '#33A02C', '#FB9A99', '#E31A1C', '#FDBF6F', '#FF7F00'] },
-    office: { name: 'Office', group: '多色', hide: true, cat: ['#4472C4', '#ED7D31', '#A5A5A5', '#FFC000', '#5B9BD5', '#70AD47'] },
-    set2: { name: '淡い色', group: '多色', hide: true, cat: ['#66C2A5', '#FC8D62', '#8DA0CB', '#E78AC3', '#A6D854', '#FFD92F', '#E5C494', '#B3B3B3'] },
-    mono: { name: '白黒の模様', group: '白黒', pat: ['solid', 'white', 'diag', 'dots', 'back', 'cross', 'horiz', 'gray'] }
+    gray: { name: _k('グレー'), group: _k('濃淡'), ramp: ['#1A1A1A', '#525252', '#969696', '#D9D9D9', '#F7F7F7'] },
+    blue: { name: _k('青'), group: _k('濃淡'), ramp: ['#08306B', '#2171B5', '#6BAED6', '#C6DBEF', '#F7FBFF'] },
+    green: { name: _k('緑'), group: _k('濃淡'), ramp: ['#00441B', '#238B45', '#74C476', '#C7E9C0', '#F7FCF5'] },
+    teal: { name: _k('青緑'), group: _k('濃淡'), ramp: ['#014636', '#02818A', '#67A9CF', '#D0D1E6', '#FFF7FB'] },
+    purple: { name: _k('紫'), group: _k('濃淡'), ramp: ['#3F007D', '#6A51A3', '#9E9AC8', '#DADAEB', '#FCFBFD'] },
+    red: { name: _k('赤'), group: _k('濃淡'), ramp: ['#67000D', '#CB181D', '#FB6A4A', '#FCBBA1', '#FFF5F0'] },
+    orange: { name: _k('橙'), group: _k('濃淡'), ramp: ['#7F2704', '#D94801', '#FD8D3C', '#FDD0A2', '#FFF5EB'] },
+    brown: { name: _k('茶'), group: _k('濃淡'), ramp: ['#662506', '#CC4C02', '#FE9929', '#FEE391', '#FFFFE5'] },
+    viridis: { name: 'viridis', tip: _k('紫から黄へ。明るさが一様に変わり、白黒で印刷しても順序が読める'), group: _k('濃淡'), ramp: ['#440154', '#3B528B', '#21918C', '#5EC962', '#FDE725'], full: true },
+    cividis: { name: 'cividis', tip: _k('紺から黄へ。色覚の違いがあっても同じように見える'), group: _k('濃淡'), ramp: ['#00204D', '#414D6B', '#7C7B78', '#BCAF6F', '#FFEA46'], full: true },
+    magma: { name: 'magma', tip: _k('濃い紫から淡い黄へ'), group: _k('濃淡'), ramp: ['#2C115F', '#721F81', '#B73779', '#F1605D', '#FEB078', '#FCFDBF'], full: true },
+    rdbu: { name: _k('青—赤'), group: _k('2 方向'), div: ['#2166AC', '#67A9CF', '#F7F7F7', '#EF8A62', '#B2182B'] },
+    prgn: { name: _k('紫—緑'), group: _k('2 方向'), div: ['#762A83', '#AF8DC3', '#F7F7F7', '#7FBF7B', '#1B7837'] },
+    brbg: { name: _k('茶—青緑'), group: _k('2 方向'), div: ['#8C510A', '#D8B365', '#F5F5F5', '#5AB4AC', '#01665E'] },
+    puor: { name: _k('橙—紫'), group: _k('2 方向'), div: ['#B35806', '#F1A340', '#F7F7F7', '#998EC3', '#542788'] },
+    cud: { name: 'Okabe-Ito', tip: _k('色覚の違いがあっても見分けやすい 8 色'), group: _k('多色'), cat: ['#0072B2', '#E69F00', '#009E73', '#D55E00', '#56B4E9', '#CC79A7', '#F0E442', '#000000'] },
+    muted: { name: 'Paul Tol', tip: _k('落ち着いた色合いで、色覚の違いがあっても見分けやすい'), group: _k('多色'), cat: ['#332288', '#88CCEE', '#44AA99', '#117733', '#999933', '#DDCC77', '#CC6677', '#882255'] },
+    npg: { name: _k('Nature 風'), tip: _k('Nature 誌の図でよく見る配色'), group: _k('多色'), cat: ['#E64B35', '#4DBBD5', '#00A087', '#3C5488', '#F39B7F', '#8491B4', '#91D1C2', '#7E6148'] },
+    aaas: { name: _k('Science 風'), tip: _k('Science 誌の図でよく見る配色'), group: _k('多色'), cat: ['#3B4992', '#EE0000', '#008B45', '#631879', '#008280', '#BB0021', '#5F559B', '#A20056'] },
+    nejm: { name: _k('NEJM 風'), tip: _k('NEJM 誌の図でよく見る配色'), group: _k('多色'), cat: ['#BC3C29', '#0072B5', '#E18727', '#20854E', '#7876B1', '#6F99AD', '#FFDC91', '#EE4C97'] },
+    lancet: { name: _k('Lancet 風'), tip: _k('Lancet 誌の図でよく見る配色'), group: _k('多色'), cat: ['#00468B', '#ED0000', '#42B540', '#0099B4', '#925E9F', '#FDAF91', '#AD002A', '#ADB6B6'] },
+    tableau: { name: 'Tableau', group: _k('多色'), cat: ['#4E79A7', '#F28E2B', '#E15759', '#76B7B2', '#59A14F', '#EDC948', '#B07AA1', '#9C755F'] },
+    dark2: { name: _k('濃い色'), group: _k('多色'), cat: ['#1B9E77', '#D95F02', '#7570B3', '#E7298A', '#66A61E', '#E6AB02', '#A6761D', '#666666'] },
+    paired: { name: _k('対の色'), group: _k('多色'), cat: ['#A6CEE3', '#1F78B4', '#B2DF8A', '#33A02C', '#FB9A99', '#E31A1C', '#FDBF6F', '#FF7F00'] },
+    office: { name: 'Office', group: _k('多色'), hide: true, cat: ['#4472C4', '#ED7D31', '#A5A5A5', '#FFC000', '#5B9BD5', '#70AD47'] },
+    set2: { name: _k('淡い色'), group: _k('多色'), hide: true, cat: ['#66C2A5', '#FC8D62', '#8DA0CB', '#E78AC3', '#A6D854', '#FFD92F', '#E5C494', '#B3B3B3'] },
+    mono: { name: _k('白黒の模様'), group: _k('白黒'), pat: ['solid', 'white', 'diag', 'dots', 'back', 'cross', 'horiz', 'gray'] }
   };
   function defaults() {
     return { kind: null, orient: 'h', value: 'pct', w: 560, h: 340, fit: true, fontJa: 'MS Gothic', fontEn: 'Arial',
@@ -292,7 +292,7 @@
       if (st.legend === 'inTR') { lg.x = plot.x1 - lg.w - 8; lg.y = plot.y0 + 8; } else if (st.legend === 'inTL') { lg.x = plot.x0 + 8; lg.y = plot.y0 + 8; }
       else if (st.legend === 'free') { lg.x = Math.max(0, Math.min(W - lg.w, isNum(st.legX) ? +st.legX : W - lg.w - 12)); lg.y = Math.max(0, Math.min(H - lg.h, isNum(st.legY) ? +st.legY : top + 4)); }
       var inside = st.legend === 'inTR' || st.legend === 'inTL' || st.legend === 'free';
-      o.push('<g data-legend="1" data-box="' + [r1(lg.x), r1(lg.y), r1(lg.w), r1(lg.h)].join(',') + '" data-tip="ドラッグで凡例を動かせます。色見本をクリックすると色を、名前をダブルクリックすると名前を変えられます。">');
+      o.push('<g data-legend="1" data-box="' + [r1(lg.x), r1(lg.y), r1(lg.w), r1(lg.h)].join(',') + _t('" data-tip="ドラッグで凡例を動かせます。色見本をクリックすると色を、名前をダブルクリックすると名前を変えられます。">'));
       o.push('<rect x="' + r1(lg.x - 4) + '" y="' + r1(lg.y - 4) + '" width="' + r1(lg.w + 8) + '" height="' + r1(lg.h + 8) + '" fill="#FFFFFF" fill-opacity="0"/>');   // つかむための透明な面
       // 背景：自動（図の中に置くときだけ白を薄く敷く）・塗りなし・指定の色
       var bgFill = legFill || (st.legBg === 'none' || !inside ? null : '#FFFFFF'), padded = !!(st.legFrame || legFill), ex4 = padded ? 0 : 4;
@@ -338,7 +338,7 @@
         if (!tot) { o.push('<circle cx="' + r1(cx) + '" cy="' + r1(cy) + '" r="' + r1(R) + '" fill="none" stroke="#999999"/>'); return; }
         p.v.forEach(function (v, j) {
           if (!v) return;
-          var ang = v / tot * Math.PI * 2, b = a + ang, pc = v / tot * 100, tip = (p.title ? p.title + ' / ' : '') + dispS[j] + '：' + v + '人（' + pc.toFixed(1) + '%）';
+          var ang = v / tot * Math.PI * 2, b = a + ang, pc = v / tot * 100, tip = (p.title ? p.title + ' / ' : '') + dispS[j] + _t('：{0}人（{1}%）', v, pc.toFixed(1));
           if (ang >= Math.PI * 2 - 1e-9) o.push('<circle cx="' + r1(cx) + '" cy="' + r1(cy) + '" r="' + r1(R) + '" fill="' + fillOf(colors[j]) + '" stroke="' + sc + '" stroke-width="' + sw + '" data-tip="' + esc(tip) + '"/>');
           else o.push('<path d="M' + r1(cx) + ' ' + r1(cy) + 'L' + r1(cx + R * Math.cos(a)) + ' ' + r1(cy + R * Math.sin(a)) + 'A' + r1(R) + ' ' + r1(R) + ' 0 ' + (ang > Math.PI ? 1 : 0) + ' 1 ' + r1(cx + R * Math.cos(b)) + ' ' + r1(cy + R * Math.sin(b)) + 'Z" fill="' + fillOf(colors[j]) + '" stroke="' + sc + '" stroke-width="' + sw + '" stroke-linejoin="round" data-tip="' + esc(tip) + '"/>');
           if (st.labels) {
@@ -416,11 +416,11 @@
         var b0 = (horiz ? y0 : x0) + band * c + (band - thick) / 2, mid = b0 + thick / 2;
         if (c % skipK === 0) { if (horiz) TL(x0 - tickPad - 1, mid - (labs[c].length - 1) * lhT / 2 + st.fsTick * 0.35, labs[c], { anchor: 'end' }); else TL(mid, y1 + tickPad + st.fsTick * 0.9, labs[c], { anchor: 'middle' }); }
         if (isBox) { (kind !== 'box' ? drawMean : drawBox)(m.box[c], b0, thick, mid, pos, horiz, m.cats[c]); continue; }
-        if (isLine) { for (var s0 = 0; s0 < ns; s0++) { (lines[s0] = lines[s0] || []).push([mid, pos(val(c, s0)), m.cats[c] + (ns > 1 ? ' / ' + dispS[s0] : '') + '：' + m.count[c][s0] + (mode === 'count' ? '' : '（' + pctOf(c, s0).toFixed(1) + '%）')]); } continue; }
+        if (isLine) { for (var s0 = 0; s0 < ns; s0++) { (lines[s0] = lines[s0] || []).push([mid, pos(val(c, s0)), m.cats[c] + (ns > 1 ? ' / ' + dispS[s0] : '') + _t('：') + m.count[c][s0] + (mode === 'count' ? '' : _t('（{0}%）', pctOf(c, s0).toFixed(1)))]); } continue; }
         var acc = 0;
         for (var s = 0; s < ns; s++) {
           var v = val(c, s), cnt = m.count[c][s], pc = pctOf(c, s), isPat = /^pat:/.test(colors[s]) && !/pat:(solid|white|gray)/.test(colors[s]);
-          var tip = m.cats[c] + (ns > 1 ? ' / ' + dispS[s] : '') + '：' + cnt + '人（' + pc.toFixed(1) + '%）';
+          var tip = m.cats[c] + (ns > 1 ? ' / ' + dispS[s] : '') + _t('：{0}人（{1}%）', cnt, pc.toFixed(1));
           var lab = labelText(cnt, pc, mode === 'count'), lwid = tw(lab, st.fsLabel, st), a, b2, t0, tt;
           if (stacked) { a = pos(acc); b2 = pos(acc + v); acc += v; t0 = b0; tt = thick; } else { a = pos(Math.max(sc.min, 0)); b2 = pos(v); tt = thick / ns; t0 = b0 + tt * s; }
           var segLen = Math.abs(b2 - a), ink = colors[s] === 'pat:solid' ? '#FFFFFF' : inkOn(colors[s]);
@@ -454,7 +454,7 @@
       else { drawBottomTitle(bL, (x0 + x1) / 2, 'cTitle', cTitle); drawSideTitle(sL, (y0 + y1) / 2, 'vTitle', vTitle); }
     }
     function drawBox(b, b0, thick, mid, pos, horiz, name) {
-      var s = b.stats, col = seriesColors(['box'], st)[0], w = Math.max(0.5, st.lwAxis), tip = name + '：中央値 ' + s[2] + '（第1四分位 ' + s[1] + '、第3四分位 ' + s[3] + '、n = ' + b.n + '）';
+      var s = b.stats, col = seriesColors(['box'], st)[0], w = Math.max(0.5, st.lwAxis), tip = name + _t('：中央値 {0}（第1四分位 {1}、第3四分位 {2}、n = {3}）', s[2], s[1], s[3], b.n);
       var p = s.map(pos), c1 = b0 + thick * 0.25, c2 = b0 + thick * 0.75;
       function dot(cx, cy) { o.push('<circle cx="' + r1(cx) + '" cy="' + r1(cy) + '" r="2.5" fill="none" stroke="#000000" stroke-width="' + w + '"/>'); }
       if (horiz) {
@@ -469,7 +469,7 @@
     function drawMean(b, b0, thick, mid, pos, horiz, name) {
       if (!isNum(b.mean)) return;
       var col = seriesColors(['mean'], st)[0], w = Math.max(0.75, st.lwAxis), cap = Math.min(thick * 0.3, 10), ci = isNum(b.lo) && isNum(b.hi), r = Math.max(3.5, Math.min(7, thick * 0.12));
-      var tip = name + '：' + (m.coef || '平均') + ' ' + fmtV(b.mean) + (ci ? '（95% 信頼区間 ' + fmtV(b.lo) + '～' + fmtV(b.hi) + '）' : '') + (b.n ? '、n = ' + b.n : '');
+      var tip = name + _t('：') + (m.coef || _t('平均')) + ' ' + fmtV(b.mean) + (ci ? _t('（95% 信頼区間 {0}～{1}）', fmtV(b.lo), fmtV(b.hi)) : '') + (b.n ? _t('、n = ') + b.n : '');
       var pm = pos(b.mean), fill = /^pat:/.test(col) ? '#000000' : col;
       if (ci) {
         var pl = pos(b.lo), ph = pos(b.hi);
@@ -505,7 +505,7 @@
         TL(x0 - 8, y0 + cellH * (i + 0.5) - (rl[i].length - 1) * lhT / 2 + st.fsTick * 0.35, rl[i], { anchor: 'end' });
         for (var j = 0; j < nc; j++) {
           var fill = heatColor(st, by, tOf(V[i][j])), ink = inkOn(fill), cx = x0 + cellW * (j + 0.5), cy = y0 + cellH * (i + 0.5), cnt = m.count[i][j], pr = rowTot[i] ? cnt / rowTot[i] * 100 : 0;
-          rect(x0 + cellW * j, y0 + cellH * i, cellW, cellH, fill, m.cats[i] + ' / ' + m.series[j] + '：' + cnt + '人（行の ' + pr.toFixed(1) + '%' + (m.resid ? '、残差 ' + m.resid[i][j].toFixed(2) : '') + '）');
+          rect(x0 + cellW * j, y0 + cellH * i, cellW, cellH, fill, m.cats[i] + ' / ' + m.series[j] + _t('：{0}人（行の {1}%{2}）', cnt, pr.toFixed(1), m.resid ? _t('、残差 ') + m.resid[i][j].toFixed(2) : ''));
           if (!st.labels) continue;
           var l1 = String(cnt), l2 = by === 'resid' ? m.resid[i][j].toFixed(2) : by === 'count' ? '' : '(' + V[i][j].toFixed(dec) + '%)';
           if (st.value === 'count' || !l2) { if (tw(l1, st.fsLabel, st) < cellW - 2 && cellH > st.fsLabel) T(cx, cy + st.fsLabel * 0.35, l1, { size: st.fsLabel, anchor: 'middle', fill: ink }); }
@@ -517,7 +517,7 @@
       // カラーバー（色と値の対応）。smooth：なめらかな帯、step：5 段階
       var steps = st.barShape === 'step' ? 5 : 24, vert = st.bar === 'right', bx, byy, bl, bt = 14, k, ticksV = by === 'resid' ? [lo, 0, hiV] : [lo, (lo + hiV) / 2, hiV];
       if (vert) { bx = x1 + 16; byy = y0; bl = Math.min(y1 - y0, 220); } else { bl = Math.min(x1 - x0, 260); bx = x0 + (x1 - x0 - bl) / 2; byy = y1 + 12; }
-      o.push('<g data-cbar="1" data-tip="ドラッグでカラーバーを図の右か下に動かせます。">');
+      o.push(_t('<g data-cbar="1" data-tip="ドラッグでカラーバーを図の右か下に動かせます。">'));
       o.push(vert ? '<rect x="' + r1(bx - 4) + '" y="' + r1(byy - 4) + '" width="' + r1(W - bx) + '" height="' + r1(bl + 8) + '" fill="#FFFFFF" fill-opacity="0"/>' : '<rect x="' + r1(bx - 4) + '" y="' + r1(byy - 4) + '" width="' + r1(bl + 8) + '" height="' + r1(H - byy + 4) + '" fill="#FFFFFF" fill-opacity="0"/>');
       for (k = 0; k < steps; k++) {
         var tc = (k + 0.5) / steps, f2 = heatColor(st, by, tc);
@@ -583,7 +583,7 @@
         var xa = px(E[k]), xb = px(E[k + 1]), wBin = xb - xa, inner = wBin * bwFrac, off = (wBin - inner) / 2, sw = inner / ns;
         for (var s2 = 0; s2 < ns; s2++) {
           var c = C[k][s2] || 0; if (!c) continue;
-          var lab = (m.intBins ? fmtTick(E[k] + 0.5) : fmtTick(E[k]) + '〜' + fmtTick(E[k + 1])) + (ns > 1 ? '（' + m.series[s2] + '）' : '') + '：' + c;
+          var lab = (m.intBins ? fmtTick(E[k] + 0.5) : fmtTick(E[k]) + _t('〜') + fmtTick(E[k + 1])) + (ns > 1 ? _t('（{0}）', m.series[s2]) : '') + _t('：') + c;
           rect(xa + off + sw * s2, py(c), sw, py(0) - py(c), colors[s2], lab);
           if (st.labels && ns === 1 && sw >= tw(String(c), st.fsLabel, st) * 0.9) T(xa + off + sw * (s2 + 0.5), py(c) - 3, String(c), { size: st.fsLabel, anchor: 'middle' });
         }
@@ -605,7 +605,7 @@
           if (placed.some(function (q) { return b[0] < q[2] && b[2] > q[0] && b[1] < q[3] && b[3] > q[1]; })) continue;
           placed.push(b); done = true;
           var col = pal[i % pal.length]; if (/^pat:/.test(col)) col = '#333333';
-          T(x + 1, y, m.words[i], { size: Math.round(fs * 10) / 10, fill: col, bold: t > 0.45, tip: m.words[i] + '：' + m.n[i] + ' 件の回答' });
+          T(x + 1, y, m.words[i], { size: Math.round(fs * 10) / 10, fill: col, bold: t > 0.45, tip: m.words[i] + _t('：{0} 件の回答', m.n[i]) });
         }
       }
     }
@@ -636,7 +636,7 @@
       ed.forEach(function (e) { var a = nd[e.a], b = nd[e.b]; line(px(a.x), py(a.y), px(b.x), py(b.y), 0.6 + 2.4 * e.w / wmax, '#9E9E9E'); });
       nd.forEach(function (p) {
         var r = 4 + (rMax - 4) * Math.sqrt(p.n / mx), col = p.c <= 8 ? pal[(p.c - 1) % pal.length] : '#D9D9D9'; if (/^pat:/.test(col)) col = '#BDBDBD';
-        o.push('<circle cx="' + r1(px(p.x)) + '" cy="' + r1(py(p.y)) + '" r="' + r1(r) + '" fill="' + col + '" fill-opacity="0.85" stroke="#FFFFFF" stroke-width="1" data-tip="' + esc(p.label + '：' + p.n + ' 件の回答') + '"/>');
+        o.push('<circle cx="' + r1(px(p.x)) + '" cy="' + r1(py(p.y)) + '" r="' + r1(r) + '" fill="' + col + '" fill-opacity="0.85" stroke="#FFFFFF" stroke-width="1" data-tip="' + esc(p.label + _t('：{0} 件の回答', p.n)) + '"/>');
       });
       nd.forEach(function (p) { T(px(p.x), py(p.y) + st.fsTick * 0.35, p.label, { size: st.fsTick, anchor: 'middle', halo: true }); });
     }
@@ -711,9 +711,9 @@
       img.onload = function () {
         var c = document.createElement('canvas'); c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
         var g = c.getContext('2d'); g.scale(scale, scale); g.drawImage(img, 0, 0); URL.revokeObjectURL(url);
-        c.toBlob(function (b) { if (!b) return reject(new Error('画像にできませんでした。')); b.arrayBuffer().then(function (ab) { resolve(new Blob([withDpi(new Uint8Array(ab), 96 * scale)], { type: 'image/png' })); }); }, 'image/png');
+        c.toBlob(function (b) { if (!b) return reject(new Error(_t('画像にできませんでした。'))); b.arrayBuffer().then(function (ab) { resolve(new Blob([withDpi(new Uint8Array(ab), 96 * scale)], { type: 'image/png' })); }); }, 'image/png');
       };
-      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('画像にできませんでした。')); };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error(_t('画像にできませんでした。'))); };
       img.src = url;
     });
   }

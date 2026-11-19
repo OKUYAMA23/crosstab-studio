@@ -22,18 +22,22 @@ h1{font-size:26px;margin:6px 0 0;color:var(--t-1e2f26)} p{margin:0;font-size:13p
 .note.err{color:#C00000}
 </style></head><body><div class="box">
 <svg viewBox="0 0 32 32" width="76" height="76"><rect width="32" height="32" rx="5" fill="#217346"/><path d="M7 9h18M7 16h18M7 23h18M13 6v20M20 6v20" stroke="#fff" stroke-width="2"/></svg>
-<h1>CrossTab Studio</h1><p>アンケートの集計と検定</p>
+<h1>CrossTab Studio</h1><p data-i18n>アンケートの集計と検定</p>
 <div class="bar"><i id="b"></i><b></b></div>
-<div class="row"><span class="spin" id="spin"></span><span id="msg">起動しています</span><span class="sec" id="sec"></span></div>
+<div class="row"><span class="spin" id="spin"></span><span id="msg" data-i18n>起動しています</span><span class="sec" id="sec"></span></div>
 <div class="steps">
-  <div id="s1" class="done">起動画面を開きました</div>
-  <div id="s2" class="now">計算に使う R を起動しています</div>
-  <div id="s3">集計と検定の部品を読み込んでいます</div>
-  <div id="s4">画面を用意しています</div>
+  <div id="s1" class="done" data-i18n>起動画面を開きました</div>
+  <div id="s2" class="now" data-i18n>計算に使う R を起動しています</div>
+  <div id="s3" data-i18n>集計と検定の部品を読み込んでいます</div>
+  <div id="s4" data-i18n>画面を用意しています</div>
 </div>
 <div class="note" id="note"></div>
 </div>
 <script>
+  // 起動画面の言語：ブラウザの言語が日本語以外なら英語にする（起動画面はアプリと保存場所が違うため、アプリの設定は使えない）
+  var EN = {"アンケートの集計と検定": "Survey tabulation and statistical tests", "起動しています": "Starting", "起動画面を開きました": "Opened the start screen", "計算に使う R を起動しています": "Starting R for the calculations", "集計と検定の部品を読み込んでいます": "Loading the analysis components", "画面を用意しています": "Preparing the window", "準備ができました": "Ready", " 秒": " s", "R を起動しています": "Starting R", "部品を読み込んでいます": "Loading components", "もう少しで準備ができます": "Almost ready", "時間がかかっています。初めての起動では、R や部品の準備に数分かかることがあります。そのままお待ちください。": "This is taking a while. The first start can take a few minutes while R and its components are prepared. Please wait.", "起動できていない可能性があります。この窓を閉じて、フォルダーの中の CrossTabStudio_debug.bat を実行すると、原因が表示されます。": "The app may have failed to start. Close this window and run CrossTabStudio_debug.bat in the app folder to see the cause."}, LANG_EN = !/^ja\b/i.test(navigator.language || 'ja');
+  function _t(s) { return LANG_EN && EN[s] ? EN[s] : s; }
+  if (LANG_EN) { document.documentElement.lang = 'en'; [].forEach.call(document.querySelectorAll('[data-i18n]'), function (e) { e.textContent = _t(e.textContent); }); }
 (function () {
   // R の準備ができたか（127.0.0.1 の 47815〜47824 番）を 0.4 秒ごとに確かめる。
   // 段階と経過秒数を出して、止まっていないことが分かるようにする（段階は経過時間からの目安）。
@@ -44,17 +48,17 @@ h1{font-size:26px;margin:6px 0 0;color:var(--t-1e2f26)} p{margin:0;font-size:13p
   function show(p, m) { $('b').style.width = p + '%'; if (m) $('msg').textContent = m; }
   function go(p) {
     if (done) return;
-    done = true; step(5); show(100, '準備ができました'); $('spin').style.display = 'none'; $('note').style.display = 'none';
+    done = true; step(5); show(100, _t('準備ができました')); $('spin').style.display = 'none'; $('note').style.display = 'none';
     setTimeout(function () { location.replace('http://127.0.0.1:' + p + '/'); }, 300);
   }
   function tick() {
     if (done) return;
     var s = (Date.now() - t0) / 1000;
-    $('sec').textContent = Math.floor(s) + ' 秒';
-    show(Math.min(92, 8 + 84 * (1 - Math.exp(-s / 7))), s < 3 ? 'R を起動しています' : s < 7 ? '部品を読み込んでいます' : 'もう少しで準備ができます');
+    $('sec').textContent = Math.floor(s) + _t(' 秒');
+    show(Math.min(92, 8 + 84 * (1 - Math.exp(-s / 7))), s < 3 ? _t('R を起動しています') : s < 7 ? _t('部品を読み込んでいます') : _t('もう少しで準備ができます'));
     step(s < 3 ? 2 : s < 7 ? 3 : 4);
-    if (s > 30) { $('note').style.display = 'block'; $('note').className = 'note'; $('note').textContent = '時間がかかっています。初めての起動では、R や部品の準備に数分かかることがあります。そのままお待ちください。'; }
-    if (s > 180) { $('note').className = 'note err'; $('note').textContent = '起動できていない可能性があります。この窓を閉じて、フォルダーの中の CrossTabStudio_debug.bat を実行すると、原因が表示されます。'; }
+    if (s > 30) { $('note').style.display = 'block'; $('note').className = 'note'; $('note').textContent = _t('時間がかかっています。初めての起動では、R や部品の準備に数分かかることがあります。そのままお待ちください。'); }
+    if (s > 180) { $('note').className = 'note err'; $('note').textContent = _t('起動できていない可能性があります。この窓を閉じて、フォルダーの中の CrossTabStudio_debug.bat を実行すると、原因が表示されます。'); }
     // 1) R が同じフォルダーに書く ready.js を読む（ブラウザの設定に左右されない）
     var sc = document.createElement('script');
     sc.src = 'ready.js?t=' + Date.now();

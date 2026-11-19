@@ -1,0 +1,121 @@
+1	Collapse
+2	Move up
+3	Move down
+4	The type of a scale score column cannot be changed.
+5	Place on the right
+6	Place below
+7	Place above
+8	Put on the right
+9	Put below
+10	Moving legend: placed where dropped
+11	Moving legend: 
+12	Rename this series
+13	Change this series's color
+14	Remove legend frame
+15	Frame the legend
+16	Hide legend
+17	White background
+18	Hide value labels
+19	Show legend
+20	Delete this figure
+21	<div class="md-welcome"><div class="md-welcome-h">Welcome</div>
+22	@アンケートの回答（CSV ファイル）を読み込むと、集計・検定・図・報告書までを作れます。データはこの端末の中だけで処理され、外部には送られません。=>Load survey responses (a CSV file) to create tabulations, statistical tests, figures and reports. The data are processed only on this device and are never sent anywhere. || まずは画面の「ファイルを選ぶ」から、回答の CSV を開いてください。=>To begin, open your response CSV with “Choose a file” on the screen. || バージョン =>Version 
+23	<button class="md-btn md-btn-primary" id="md_chg_ok">Get started</button>
+24	<p>Updated to a new version ({0}). Changes since version {1}, which you were using on this device{2}:</p></div>
+25	 ({0} versions, newest first)
+26	<button class="md-btn md-btn-primary" id="md_chg_ok">OK</button>
+27	At least two ordinal (or numeric) questions are needed. Check the column types under “Data”.
+28	Scale score 
+29	 levels
+30	> Reverse</label></td></tr>
+31	Edit scale score
+32	@尺度に含める項目に ☑ を付けます。逆の向きに聞いた項目（例：「海は好きではない」）には「逆転」を付けると、点数を反対にしてから計算します。すべての項目に答えた人だけ得点を出し、1 つでも答えていない人は欠損にします。平均点は、項目の数が違う尺度どうしでも比べやすくなります。=>Check ☑ for the items to include in the scale. For items worded in the opposite direction (e.g., “I do not like the ocean”), check “Reverse” to reverse their scores before calculation. Scores are given only to respondents who answered all items; anyone who skipped an item is missing. The mean score makes scales with different numbers of items easier to compare. || >名前<=>Name< || >計算<=>Calculation< || > 平均点<=> Mean score< || > 合計点<=> Total score< || >使う<=>Use< || >項目<=>Item< || >段階<=>Levels< || >向き<=>Direction<
+33	<button class="md-btn" data-act="closeModal">Cancel</button><button class="md-btn md-btn-primary" data-act="scoreSave" data-arg="
+34	Save
+35	Create
+36	Select items to see how they are scored.
+37	Scoring (example: “{0}”): {1}. The first option gets the highest score. Reverse-scored items are the opposite.
+38	 Note: items with different numbers of levels are mixed ({0}). Adding them as they are gives more weight to items with more levels.
+39	 ({0} items selected)
+40	Summarize the results of one question
+41	Counts, percentages, means, etc.
+42	Examine the relationship between two questions or differences between groups
+43	e.g., whether preferences differ by gender, whether study time is related to commuting time
+44	Compare two questions answered by the same people
+45	e.g., before and after, frequency of use of two services
+46	Treat several questions measuring the same thing together
+47	e.g., four items measuring “liking” (a scale)
+48	Explain or predict one value from several questions
+49	e.g., explain study time by grade, gender and commuting time
+50	Select a question.
+51	Numeric questions are summarized with the mean, SD, median and a histogram.
+52	Date-time columns are summarized by the number of responses per day, week or month.
+53	Free text is summarized by frequent words and words used together.
+54	Gives counts and percentages for each option.
+55	This column has “No responses”, so it cannot be tabulated.
+56	Select two questions.
+57	Select a different question.
+58	Compares two questions answered on the same ordinal options within the same respondents.
+59	Treats levels as scores (first option highest) and tests the difference in means.
+60	The two questions have different numbers of levels ({0} and {1}). Use questions answered with the same options.
+61	Tests the difference in means between two values from the same respondents (before and after, etc.).
+62	Compares two yes/no questions within the same respondents (are there many who said “yes” to A but “no” to B?).
+63	Treating levels as scores, means can be compared if they are on the same scale as the numeric value. Two values in different units cannot be compared.
+64	There is no within-respondent analysis for this combination ({0} and {1}). It works for two-option, ordinal or numeric pairs.
+65	Tabulate date-time columns one at a time with “Response timeline”.
+66	Compares the words in the free text across the groups of the other question.
+67	Free text can be combined with single-choice or ordinal questions.
+68	Compares, for each option of the multiple-choice question, the proportion choosing it by group.
+69	Multiple-choice questions can be compared using a single-choice or ordinal question as the groups.
+70	Measures the strength of the linear relationship between two numeric values (correlation coefficient r) and draws a scatter plot.
+71	With outliers or skewed distributions, use the rank-based correlation.
+72	Tests the difference in means between two groups.
+73	With outliers or skewed distributions, compare by ranks.
+74	 groups: tests the difference in means and also shows which pairs differ.
+75	The group question has only one option.
+76	Tests with a rank correlation whether the numeric value increases (or decreases) as the level rises.
+77	Treats levels as groups and compares the means of the groups.
+78	First, look at the means, medians and histograms by group.
+79	Tests whether one question tends to be higher (or lower) when the other is higher.
+80	Tests whether the response combinations are associated, without using the order of the levels.
+81	Tests whether ordinal responses differ between two groups.
+82	Tests whether the proportion of one option increases (or decreases) as the level rises.
+83	 groups: tests whether ordinal responses differ.
+84	Tests with a cross-tabulation whether the response combinations are associated.
+85	Makes a cross-tabulation and tests whether the two questions are associated. Residuals show which cells are higher or lower.
+86	Use when many cells have few respondents (expected frequency below 5). Also gives the odds ratio for 2×2 tables.
+87	Shows the relationship between two questions with many options as a single map.
+88	Checks whether the association remains when splitting into strata by a third question (e.g., grade). The stratifying question is chosen after creating the analysis.
+89	Select at least two questions.
+90	Checks how well questions measuring the same thing hang together (Cronbach's α). Check this before creating a scale score.
+91	Makes the mean (or total) score of the items a new column for use in t-tests, correlations, etc.
+92	Shows the response distribution of each item in one 100% stacked bar chart.
+93	Looks for common underlying factors behind many items. Use when there are many items.
+94	When the grouping of items into factors is already defined (e.g., a published scale), tests whether it fits the data. For two or more factors, split the items after creating the analysis.
+95	Tabulates questions answered with the same options side by side.
+96	Only “Ordinal” questions can be treated as a scale. Check the types under “Data”.
+97	Select the value to explain (dependent variable).
+98	Select at least one question to use for the explanation (independent variable).
+99	Explains a numeric value (or ordinal score) from several questions. Gives the influence of each independent variable (β) and the explanatory power (R²).
+100	Explains a two-option response from several questions. Gives the odds ratio for each independent variable.
+101	The dependent variable of logistic regression must have two options. After creating it, combine options in “Option settings” or uncheck options to make two.
+102	Numeric, ordinal and single-choice questions can be used as the dependent variable.
+103	<option value="">(select)</option>
+104	〔{0}〕</option>
+105	 <span class="md-hint">〔{0}〕</span></label>
+106	Choosing an analysis
+107	@1. 知りたいこと=>1. What you want to know || 2. 質問=>2. Questions || 3. 合う解析=>3. Suitable analyses
+108	<button class="md-btn" data-act="closeModal">Close</button>
+109	<label class="md-field">Question<select id="md_g_a">
+110	First (question used for groups)
+111	First
+112	</select></label><label class="md-field">Second<select id="md_g_b">
+113	@説明したい値（目的変数）=>Value to explain (dependent variable) || 説明に使う質問（説明変数）=>Questions used for the explanation (independent variables)
+114	Recommended: 
+115	Create this analysis
+116	<p class="md-hint">Select questions to see suitable analyses here.</p>
+117	Could not save on this device.
+118	 (home screen app)
+119	 / screen 
+120	Web version
+121	Desktop version

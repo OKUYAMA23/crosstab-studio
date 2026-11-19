@@ -2,14 +2,18 @@
 (function () {
   'use strict';
   var A = window.App, S = A.S, esc = A.esc, $ = A.$;
-  var RTABS = [['home', 'ホーム'], ['data', 'データ'], ['analysis', '解析'], ['figure', '図'], ['table', '表'], ['export', '書き出し']];
-  var FONTS_JA = [['MS Gothic', 'MS ゴシック'], ['MS PGothic', 'MS P ゴシック'], ['Yu Gothic', '游ゴシック'], ['Meiryo', 'メイリオ'], ['BIZ UDGothic', 'BIZ UD ゴシック'], ['MS Mincho', 'MS 明朝'], ['Yu Mincho', '游明朝'], ['Hiragino Sans', 'ヒラギノ角ゴ'], ['Hiragino Mincho ProN', 'ヒラギノ明朝']];
+  var RTABS, FONTS_JA, KIND_TIPS, LEG_POS, T_DESIGNS, HEAT_BY;
   var FONTS_EN = ['Arial', 'Helvetica', 'Calibri', 'Segoe UI', 'Verdana', 'Times New Roman', 'Cambria'];
   var JA_ALIAS = { 'MS Gothic': 'ＭＳ ゴシック', 'MS PGothic': 'ＭＳ Ｐゴシック', 'MS Mincho': 'ＭＳ 明朝', 'Yu Gothic': '游ゴシック', 'Yu Mincho': '游明朝', 'Meiryo': 'メイリオ' };
-  var KIND_TIPS = { cloud: 'よく出た語ほど大きな文字で並べます。', wbar: 'よく出た語を、出現した回答数の多い順に棒で示します。', net: '同じ回答に一緒に出る語どうしを線で結びます。', hist: '数値の分布を、区切った範囲ごとの度数の棒で表します。', map: '似た回答をする選択肢どうしが近くに来るように並べた図です。', pie: '割合を円で表します。グループや設問が複数あるときは、1 つずつ円を並べます。', stack100: 'グループごとに、回答の割合を 100% の帯で比べます。クロス集計の基本の図です。', group: '回答ごとの棒をグループ別に並べます。', stack: '人数を積み上げた棒で比べます。', heat: '表の形のまま、値が大きいセルを濃くします。カラーバーで色と値の対応を示します。', bar: '選択肢ごとの棒グラフです。', line: '時間の流れに沿った変化を線で結んで示します。', mean: '群ごとの平均（点）と 95% 信頼区間（線）を示します。平均の比較（t 検定・分散分析）の基本の図です。', box: '数値の分布を箱とひげで比べます。', scatter: '2 つの数値の関係を点で表します。' };
-  var LEG_POS = [['right', '右'], ['bottom', '下'], ['top', '上'], ['inTR', '図の中（右上）'], ['inTL', '図の中（左上）'], ['free', '自由な位置'], ['none', 'なし']];
-  var T_DESIGNS = [['grid', '格子', 't_grid', 'すべてのセルを線で囲みます。'], ['three', '三線', 't_three', '上下の太い線と見出しの下の線だけの表です。論文でよく使われます。'], ['stripe', '縞', 't_stripe', '1 行おきに薄い色を付けます。'], ['plain', '線なし', 't_plain', '見出しの下の線だけにします。'], ['head', '見出し塗り', 't_head', '見出しの行を濃い色で塗ります。']];
-  var HEAT_BY = [['none', 'なし'], ['row', '行の割合'], ['col', '列の割合'], ['count', '人数'], ['resid', '残差']];
+  function mkConsts() {
+    RTABS = [['home', _t('ホーム')], ['data', _t('データ')], ['analysis', _t('解析')], ['figure', _t('図')], ['table', _t('表')], ['export', _t('書き出し')]];
+    FONTS_JA = [['MS Gothic', _t('MS ゴシック')], ['MS PGothic', _t('MS P ゴシック')], ['Yu Gothic', _t('游ゴシック')], ['Meiryo', _t('メイリオ')], ['BIZ UDGothic', _t('BIZ UD ゴシック')], ['MS Mincho', _t('MS 明朝')], ['Yu Mincho', _t('游明朝')], ['Hiragino Sans', _t('ヒラギノ角ゴ')], ['Hiragino Mincho ProN', _t('ヒラギノ明朝')]];
+    KIND_TIPS = { cloud: _t('よく出た語ほど大きな文字で並べます。'), wbar: _t('よく出た語を、出現した回答数の多い順に棒で示します。'), net: _t('同じ回答に一緒に出る語どうしを線で結びます。'), hist: _t('数値の分布を、区切った範囲ごとの度数の棒で表します。'), map: _t('似た回答をする選択肢どうしが近くに来るように並べた図です。'), pie: _t('割合を円で表します。グループや設問が複数あるときは、1 つずつ円を並べます。'), stack100: _t('グループごとに、回答の割合を 100% の帯で比べます。クロス集計の基本の図です。'), group: _t('回答ごとの棒をグループ別に並べます。'), stack: _t('人数を積み上げた棒で比べます。'), heat: _t('表の形のまま、値が大きいセルを濃くします。カラーバーで色と値の対応を示します。'), bar: _t('選択肢ごとの棒グラフです。'), line: _t('時間の流れに沿った変化を線で結んで示します。'), mean: _t('群ごとの平均（点）と 95% 信頼区間（線）を示します。平均の比較（t 検定・分散分析）の基本の図です。'), box: _t('数値の分布を箱とひげで比べます。'), scatter: _t('2 つの数値の関係を点で表します。') };
+    LEG_POS = [['right', _t('右')], ['bottom', _t('下')], ['top', _t('上')], ['inTR', _t('図の中（右上）')], ['inTL', _t('図の中（左上）')], ['free', _t('自由な位置')], ['none', _t('なし')]];
+    T_DESIGNS = [['grid', _t('格子'), 't_grid', _t('すべてのセルを線で囲みます。')], ['three', _t('三線'), 't_three', _t('上下の太い線と見出しの下の線だけの表です。論文でよく使われます。')], ['stripe', _t('縞'), 't_stripe', _t('1 行おきに薄い色を付けます。')], ['plain', _t('線なし'), 't_plain', _t('見出しの下の線だけにします。')], ['head', _t('見出し塗り'), 't_head', _t('見出しの行を濃い色で塗ります。')]];
+    HEAT_BY = [['none', _t('なし')], ['row', _t('行の割合')], ['col', _t('列の割合')], ['count', _t('人数')], ['resid', _t('残差')]];
+  }
+  mkConsts(); window.CTS_ONLANG.push(mkConsts);
 
   // ---------------- 部品
   function attrs(o) { return Object.keys(o).map(function (k) { return o[k] === false || o[k] === null || o[k] === undefined ? '' : (o[k] === true ? ' ' + k : ' ' + k + '="' + esc(o[k]) + '"'); }).join(''); }
@@ -40,7 +44,7 @@
   function fText(label, path, o) { o = o || {}; var val = get(path); return '<label class="md-field"><span>' + esc(label) + '</span><input type="text"' + attrs({ 'data-set': path, 'data-type': o.type, value: val === null || val === undefined ? '' : val, placeholder: o.ph, list: o.list }) + '></label>'; }
   function fSelect(label, path, list, type) { return '<label class="md-field"><span>' + esc(label) + '</span><select' + attrs({ 'data-set': path, 'data-type': type }) + '>' + options(list, get(path)) + '</select></label>'; }
   function fCheck(label, path) { return '<label class="md-check"><input type="checkbox"' + attrs({ 'data-set': path, 'data-type': 'bool', checked: !!get(path) }) + '>' + esc(label) + '</label>'; }
-  function fColor(label, path, tip) { var c = get(path); return '<label class="md-field"><span>' + esc(label) + '</span><button class="md-colbtn" data-act="pickPath" data-arg="' + path + '" data-tip="' + esc(tip || '色を選びます。') + '"><i style="background:' + (c || 'transparent') + '"></i>' + esc(c || 'なし') + '</button></label>'; }
+  function fColor(label, path, tip) { var c = get(path); return '<label class="md-field"><span>' + esc(label) + '</span><button class="md-colbtn" data-act="pickPath" data-arg="' + path + '" data-tip="' + esc(tip || _t('色を選びます。')) + '"><i style="background:' + (c || 'transparent') + '"></i>' + esc(c || _t('なし')) + '</button></label>'; }
   // 絵で選ぶタイル
   function tiles(path, list, cur) {
     cur = cur === undefined ? get(path) : cur;
@@ -68,9 +72,9 @@
     var groups = {}, order = [];
     Object.keys(Chart.PALETTES).forEach(function (k) { var p = Chart.PALETTES[k]; if (only && only.indexOf(p.group) < 0) return; if (p.hide && cur !== k) return; if (!groups[p.group]) { groups[p.group] = []; order.push(p.group); } groups[p.group].push(k); });
     return order.map(function (g) {
-      return '<div class="md-pal-g">' + esc(g) + '</div><div class="md-pals">' + groups[g].map(function (k) {
+      return '<div class="md-pal-g">' + esc(_t(g)) + '</div><div class="md-pals">' + groups[g].map(function (k) {
         var P = Chart.PALETTES[k], sw = Chart.swatches(k, P.cat ? Math.min(8, P.cat.length) : P.pat ? 6 : 7, seed);
-        return '<button class="md-palbtn' + (cur === k ? ' on' : '') + '" data-radio="' + path + '" data-val="' + k + '" data-tip="' + esc(P.name + (P.tip ? '：' + P.tip : '')) + '"><span class="md-palsw">' + sw.map(function (c) { return '<i style="background:' + patCss(c) + '"></i>'; }).join('') + '</span><span class="md-palname">' + esc(P.name) + '</span></button>';
+        return '<button class="md-palbtn' + (cur === k ? ' on' : '') + '" data-radio="' + path + '" data-val="' + k + '" data-tip="' + esc(_t(P.name) + (P.tip ? _t('：') + _t(P.tip) : '')) + '"><span class="md-palsw">' + sw.map(function (c) { return '<i style="background:' + patCss(c) + '"></i>'; }).join('') + '</span><span class="md-palname">' + esc(_t(P.name)) + '</span></button>';
       }).join('') + '</div>';
     }).join('');
   }
@@ -94,30 +98,30 @@
     var rt = x.count.map(function (r) { return r.reduce(function (a, b) { return a + b; }, 0); }), ct = x.cols.map(function (_, j) { return x.count.reduce(function (a, r) { return a + r[j]; }, 0); }), n = rt.reduce(function (a, b) { return a + b; }, 0);
     var marks = t.marks && x.resid && res.sig, mode = t.pct;
     function cell(c, base) { return mode === 'none' || !base ? String(c) : c + ' (' + (c / base * 100).toFixed(1) + '%)'; }
-    var rows = [[''].concat(x.cols, ['合計'])], bold = [[]];
+    var rows = [[''].concat(x.cols, [_t('合計')])], bold = [[]];
     for (var i = 0; i < nr; i++) {
       var r = [x.rows[i]], b = [0];
       for (var j = 0; j < nc; j++) { var mk = marks ? (x.resid[i][j] > x.crit ? ' ▲' : x.resid[i][j] < -x.crit ? ' ▽' : '') : ''; r.push(cell(x.count[i][j], mode === 'row' ? rt[i] : ct[j]) + mk); b.push(mk ? 1 : 0); }
       r.push(cell(rt[i], mode === 'row' ? rt[i] : n)); rows.push(r); bold.push(b);
     }
-    rows.push(['合計'].concat(ct.map(function (c, j) { return cell(c, mode === 'row' ? n : ct[j]); }), [cell(n, n)]));
+    rows.push([_t('合計')].concat(ct.map(function (c, j) { return cell(c, mode === 'row' ? n : ct[j]); }), [cell(n, n)]));
     var notes = [];
-    if (mode !== 'none') notes.push('（　）内は' + (mode === 'row' ? '行' : '列') + 'の合計に対する割合。');
-    if (marks) notes.push('▲：期待される値より有意に多い　▽：有意に少ない（調整済み標準化残差の絶対値が ' + x.crit.toFixed(2) + ' を超えるセル' + (x.residMode === 'bonf' ? '、ボンフェローニ法で補正' : '') + '）。');
-    else if (t.marks && x.resid && res.sig === false) notes.push('検定全体が有意でないため、セルごとの印（▲▽）は付けていません。');
+    if (mode !== 'none') notes.push(_t('（　）内は{0}の合計に対する割合。', mode === 'row' ? _t('行') : _t('列')));
+    if (marks) notes.push(_t('▲：期待される値より有意に多い　▽：有意に少ない（調整済み標準化残差の絶対値が {0} を超えるセル{1}）。', x.crit.toFixed(2), x.residMode === 'bonf' ? _t('、ボンフェローニ法で補正') : ''));
+    else if (t.marks && x.resid && res.sig === false) notes.push(_t('検定全体が有意でないため、セルごとの印（▲▽）は付けていません。'));
     // セルの色分け（表のデザインの設定）
     var by = tab.tstyle.heat, heat = null;
     if (by === 'resid' && !x.resid) by = 'row';
     if (by && by !== 'none') {
       var V = x.count.map(function (r2, i2) { return r2.map(function (c, j2) { return by === 'row' ? (rt[i2] ? c / rt[i2] * 100 : 0) : by === 'col' ? (ct[j2] ? c / ct[j2] * 100 : 0) : by === 'resid' ? x.resid[i2][j2] : c; }); });
       var flat = [].concat.apply([], V), mx = Math.max.apply(null, flat.map(Math.abs));
-      heat = by === 'resid' ? { V: V, lo: -Math.max(2, Math.ceil(mx)), hi: Math.max(2, Math.ceil(mx)), by: by, label: '調整済み標準化残差' }
-        : { V: V, lo: 0, hi: by === 'count' ? mx : Math.min(100, Math.ceil(mx / 10) * 10), by: by, label: by === 'row' ? '行の割合 (%)' : by === 'col' ? '列の割合 (%)' : '人数' };
+      heat = by === 'resid' ? { V: V, lo: -Math.max(2, Math.ceil(mx)), hi: Math.max(2, Math.ceil(mx)), by: by, label: _t('調整済み標準化残差') }
+        : { V: V, lo: 0, hi: by === 'count' ? mx : Math.min(100, Math.ceil(mx / 10) * 10), by: by, label: by === 'row' ? _t('行の割合 (%)') : by === 'col' ? _t('列の割合 (%)') : _t('人数') };
     }
-    out.push({ caption: x.rowLabel + ' × ' + x.colLabel + '（人数' + (mode === 'none' ? '' : mode === 'row' ? 'と行の割合' : 'と列の割合') + '）', rows: rows, bold: bold, total: { row: true, col: true }, note: notes.join(' '), heat: heat });
+    out.push({ caption: x.rowLabel + ' × ' + x.colLabel + _t('（人数{0}）', mode === 'none' ? '' : mode === 'row' ? _t('と行の割合') : _t('と列の割合')), rows: rows, bold: bold, total: { row: true, col: true }, note: notes.join(' '), heat: heat });
     function mtab(cap, M, d, note) { var rr = [[''].concat(x.cols)]; M.forEach(function (r3, i3) { rr.push([x.rows[i3]].concat(r3.map(function (v) { return v === null ? '–' : fixed(v, d); }))); }); out.push({ caption: cap, rows: rr, note: note }); }
-    if (t.expected && x.expected) mtab('期待度数（関連がないと仮定したときの人数）', x.expected, 1, '5 未満のセルが多いときは、フィッシャーの正確確率検定が適しています。');
-    if (t.resid && x.resid) mtab('調整済み標準化残差', x.resid, 2, '絶対値が ' + x.crit.toFixed(2) + ' を超えるセルは、期待される値との差が有意。');
+    if (t.expected && x.expected) mtab(_t('期待度数（関連がないと仮定したときの人数）'), x.expected, 1, _t('5 未満のセルが多いときは、フィッシャーの正確確率検定が適しています。'));
+    if (t.resid && x.resid) mtab(_t('調整済み標準化残差'), x.resid, 2, _t('絶対値が {0} を超えるセルは、期待される値との差が有意。', x.crit.toFixed(2)));
     return out;
   }
   function gridTable(g) {
@@ -127,7 +131,7 @@
       rows.push([rn].concat(c.map(function (val, j) { b.push((g.mark && g.mark[i] && g.mark[i][j]) || (g.markRows && g.markRows[i] && j === g.markCol - 1) ? 1 : 0); return fmtCell(val, g.fmt[j]); })));
       bold.push(b);
     });
-    if (g.total) rows.push(['合計'].concat(g.total.map(function (val, j) { return fmtCell(val, g.fmt[j]); })));
+    if (g.total) rows.push([_t('合計')].concat(g.total.map(function (val, j) { return fmtCell(val, g.fmt[j]); })));
     return { caption: g.title, rows: rows, bold: bold, total: { row: !!g.total }, note: g.note || '', textCols: g.fmt.map(function (f) { return f === 'text'; }) };
   }
   function tablesOf(tab, res) {
@@ -259,102 +263,98 @@
 
   // ---------------- 上の部分
   function renderTitle() {
-    var auto = !!(S.data && S.P.settings.autoSave), st = S.saving ? '保存しています…' : S.dirty ? '未保存の変更あり' : S.projName ? (auto ? '自動保存済み' : '保存済み') : '';
+    var auto = !!(S.data && S.P.settings.autoSave), st = S.saving ? _t('保存しています…') : S.dirty ? _t('未保存の変更あり') : S.projName ? (auto ? _t('自動保存済み') : _t('保存済み')) : '';
     $('#md_title').innerHTML = window.icon('k_stack100', 20) + '<b>CrossTab Studio</b>' +
-      '<button class="md-autosave' + (auto ? ' on' : '') + '" data-act="autoSave"' + (S.data ? '' : ' disabled') + ' data-tip="オンにすると、変更するたびに数秒後にプロジェクトを自動で上書き保存します。"><span>自動保存</span><i></i><span>' + (auto ? 'オン' : 'オフ') + '</span></button>' +
-      '<button class="md-qsave' + (S.dirty && S.data ? ' dirty' : '') + '" data-act="save"' + (S.data ? '' : ' disabled') + ' data-tip="' + (S.dirty ? '未保存の変更があります。押すと上書き保存します（Ctrl+S）。' : 'プロジェクトを上書き保存します（Ctrl+S）。') + '">' + window.icon('save', 18) + '<span>上書き保存</span></button>' +
-      '<span class="md-sub">アンケートの集計と検定</span><span class="md-file">' +
-      esc(S.data ? (S.projName ? S.projName + '　' : '') + '（' + S.data.name + '）' + (st ? '　' + st : '') : '') + '</span>';
+      '<button class="md-autosave' + (auto ? ' on' : '') + '" data-act="autoSave"' + (S.data ? '' : ' disabled') + _t(' data-tip="オンにすると、変更するたびに数秒後にプロジェクトを自動で上書き保存します。"><span>自動保存</span><i></i><span>{0}</span></button><button class="md-qsave{1}" data-act="save"{2} data-tip="{3}">{4}<span>上書き保存</span></button><span class="md-sub">アンケートの集計と検定</span><span class="md-file">', auto ? _t('オン') : _t('オフ'), S.dirty && S.data ? ' dirty' : '', S.data ? '' : ' disabled', S.dirty ? _t('未保存の変更があります。押すと上書き保存します（Ctrl+S）。') : _t('プロジェクトを上書き保存します（Ctrl+S）。'), window.icon('save', 18)) +
+      esc(S.data ? (S.projName ? S.projName + _t('　') : '') + _t('（{0}）', S.data.name) + (st ? _t('　') + st : '') : '') + '</span>';
   }
   function renderTabs() {
-    $('#md_tabs').innerHTML = '<button class="md-tab md-tab-file" data-act="fileMenu" data-tip="開く・保存などのファイルの操作">ファイル</button>' +
-      RTABS.map(function (t) { return '<button class="md-tab' + (S.ui.rtab === t[0] ? ' active' : '') + '" data-rtab="' + t[0] + '">' + t[1] + '</button>'; }).join('') +
-      '<button class="md-pane-toggle" data-act="togglePane" data-tip="右の作業ウィンドウを開く・閉じる">作業ウィンドウ ' + (S.ui.pane ? '›' : '‹') + '</button>';
+    $('#md_tabs').innerHTML = _t('<button class="md-tab md-tab-file" data-act="fileMenu" data-tip="開く・保存などのファイルの操作">ファイル</button>{0}<button class="md-pane-toggle" data-act="togglePane" data-tip="右の作業ウィンドウを開く・閉じる">作業ウィンドウ ', RTABS.map(function (t) { return '<button class="md-tab' + (S.ui.rtab === t[0] ? ' active' : '') + '" data-rtab="' + t[0] + '">' + t[1] + '</button>'; }).join('')) + (S.ui.pane ? '›' : '‹') + '</button>';
   }
   function renderRibbon() {
     var tab = A.curTab(), res = tab ? S.results[tab.id] : null, ok = !!(res && res.ok), has = !!S.data, noTab = !tab, m = ok ? Chart.model(res) : null, fig = A.curFig(), noFig = !m || !fig;
     var kindNow = !noFig ? Chart.kindOf(m, fig) : null, isBar = kindNow && ['stack100', 'stack', 'group', 'bar', 'box', 'mean', 'coef'].indexOf(kindNow) >= 0, noVal = noFig || ['stack100', 'stack', 'box', 'mean', 'coef', 'scatter'].indexOf(kindNow) >= 0;
     var idx = tab ? S.P.tabs.indexOf(tab) : -1, canSwap = tab && ((tab.slots.a && tab.slots.b) || (tab.slots.x && tab.slots.y)), xt = !!(res && res.ok && res.xtab), h = {};
-    var gFile = rbGroup('ファイル', rbLarge({ act: 'openCsv', name: 'CSV を開く', ic: 'csv', tip: '回答の CSV ファイル、または Excel ファイル（.xlsx。1 枚目のシート）を選んで読み込みます（Ctrl+O）。' }),
-      rbStack(rbSmall({ act: 'openProject', name: 'プロジェクトを開く', ic: 'open', tip: '保存したプロジェクトの一覧から開きます。CSV は要りません。' }),
-        rbSmall({ act: 'save', name: '上書き保存', ic: 'save', tip: 'データ・解析・図と表の設定をまとめて保存します（Ctrl+S）。', off: !has }),
-        rbSmall({ act: 'saveAs', name: '名前を付けて保存', ic: 'saveas', tip: '別の名前でプロジェクトを保存します。', off: !has })));
-    var gEdit = rbGroup('編集', rbStack(rbSmall({ act: 'undo', name: '元に戻す', ic: 'undo', tip: '直前の操作を取り消します（Ctrl+Z）。', off: !S.undo.length }), rbSmall({ act: 'redo', name: 'やり直す', ic: 'redo', tip: '取り消した操作をもう一度行います（Ctrl+Y）。', off: !S.redo.length })));
-    var first = !S.P.tabs.length, bNew = rbLarge({ act: 'newAnalysis', name: first ? '解析を始める' : '新しい解析', ic: 'add', tip: first ? '解析の種類を選んで、最初の解析を始めます。' : '解析の種類を選んで、いちばん下に新しい解析を足します。', off: !has });
-    var sOrder = rbStack(rbSmall({ act: 'moveAn', arg: '-1', name: '上へ', ic: 'up', tip: '選んだ解析を 1 つ上へ動かします。見出しをドラッグしても並べ替えられます。', off: idx < 1 }),
-      rbSmall({ act: 'moveAn', arg: '1', name: '下へ', ic: 'down', tip: '選んだ解析を 1 つ下へ動かします。', off: idx < 0 || idx >= S.P.tabs.length - 1 }));
-    var sFold = rbStack(rbSmall({ act: 'foldAll', arg: '1', name: 'すべて畳む', ic: 'fold', tip: 'すべての解析を畳んで、名前だけの一覧にします。有意な解析は名前が赤い太字になります。', off: !S.P.tabs.length }),
-      rbSmall({ act: 'foldAll', arg: '0', name: 'すべて開く', ic: 'unfold', tip: 'すべての解析を開きます。', off: !S.P.tabs.length }));
-    var sEditAn = rbStack(rbSmall({ act: 'renameAn', name: '名前を変更', ic: 'rename', tip: '選んだ解析の名前を変えます（F2）。図のファイル名にも使われます。', off: noTab }),
-      rbSmall({ act: 'dupTab', name: '複製', ic: 'dup', tip: '選んだ解析と同じ設定の解析をもう 1 つ作ります。', off: noTab }),
-      rbSmall({ act: 'delTab', name: '削除', ic: 'del', tip: '選んだ解析を削除します（元に戻せます）。', off: noTab }));
-    var bExport = rbLarge({ act: 'exportAll', name: 'まとめて書き出す', ic: 'exportall', tip: '☑ を付けた解析の図・Excel ファイル・報告書を、選んだフォルダーに書き出します。', off: !has || !S.P.tabs.length });
-    h.home = gFile + gEdit + rbGroup('解析', bNew, sEditAn, sOrder, sFold) + rbGroup('書き出し', bExport);
+    var gFile = rbGroup(_t('ファイル'), rbLarge({ act: 'openCsv', name: _t('CSV を開く'), ic: 'csv', tip: _t('回答の CSV ファイル、または Excel ファイル（.xlsx。1 枚目のシート）を選んで読み込みます（Ctrl+O）。') }),
+      rbStack(rbSmall({ act: 'openProject', name: _t('プロジェクトを開く'), ic: 'open', tip: _t('保存したプロジェクトの一覧から開きます。CSV は要りません。') }),
+        rbSmall({ act: 'save', name: _t('上書き保存'), ic: 'save', tip: _t('データ・解析・図と表の設定をまとめて保存します（Ctrl+S）。'), off: !has }),
+        rbSmall({ act: 'saveAs', name: _t('名前を付けて保存'), ic: 'saveas', tip: _t('別の名前でプロジェクトを保存します。'), off: !has })));
+    var gEdit = rbGroup(_t('編集'), rbStack(rbSmall({ act: 'undo', name: _t('元に戻す'), ic: 'undo', tip: _t('直前の操作を取り消します（Ctrl+Z）。'), off: !S.undo.length }), rbSmall({ act: 'redo', name: _t('やり直す'), ic: 'redo', tip: _t('取り消した操作をもう一度行います（Ctrl+Y）。'), off: !S.redo.length })));
+    var first = !S.P.tabs.length, bNew = rbLarge({ act: 'newAnalysis', name: first ? _t('解析を始める') : _t('新しい解析'), ic: 'add', tip: first ? _t('解析の種類を選んで、最初の解析を始めます。') : _t('解析の種類を選んで、いちばん下に新しい解析を足します。'), off: !has });
+    var sOrder = rbStack(rbSmall({ act: 'moveAn', arg: '-1', name: _t('上へ'), ic: 'up', tip: _t('選んだ解析を 1 つ上へ動かします。見出しをドラッグしても並べ替えられます。'), off: idx < 1 }),
+      rbSmall({ act: 'moveAn', arg: '1', name: _t('下へ'), ic: 'down', tip: _t('選んだ解析を 1 つ下へ動かします。'), off: idx < 0 || idx >= S.P.tabs.length - 1 }));
+    var sFold = rbStack(rbSmall({ act: 'foldAll', arg: '1', name: _t('すべて畳む'), ic: 'fold', tip: _t('すべての解析を畳んで、名前だけの一覧にします。有意な解析は名前が赤い太字になります。'), off: !S.P.tabs.length }),
+      rbSmall({ act: 'foldAll', arg: '0', name: _t('すべて開く'), ic: 'unfold', tip: _t('すべての解析を開きます。'), off: !S.P.tabs.length }));
+    var sEditAn = rbStack(rbSmall({ act: 'renameAn', name: _t('名前を変更'), ic: 'rename', tip: _t('選んだ解析の名前を変えます（F2）。図のファイル名にも使われます。'), off: noTab }),
+      rbSmall({ act: 'dupTab', name: _t('複製'), ic: 'dup', tip: _t('選んだ解析と同じ設定の解析をもう 1 つ作ります。'), off: noTab }),
+      rbSmall({ act: 'delTab', name: _t('削除'), ic: 'del', tip: _t('選んだ解析を削除します（元に戻せます）。'), off: noTab }));
+    var bExport = rbLarge({ act: 'exportAll', name: _t('まとめて書き出す'), ic: 'exportall', tip: _t('☑ を付けた解析の図・Excel ファイル・報告書を、選んだフォルダーに書き出します。'), off: !has || !S.P.tabs.length });
+    h.home = gFile + gEdit + rbGroup(_t('解析'), bNew, sEditAn, sOrder, sFold) + rbGroup(_t('書き出し'), bExport);
     var sv = S.ui.selVar !== null ? A.v(S.ui.selVar) : null;
-    h.data = rbGroup('取り込み', rbLarge({ act: 'openCsv', name: 'CSV を開く', ic: 'csv', tip: '回答の CSV ファイル、または Excel ファイル（.xlsx。1 枚目のシート）を選んで読み込みます（Ctrl+O）。' }),
-      rbLarge({ act: 'replaceCsv', name: '差し替え', ic: 'refresh', tip: '回答が増えた新しい CSV（または Excel ファイル）に差し替えます。同じ質問の列には、解析の設定を引き継ぎます。', off: !has }),
-      rbStack(rbSmall({ act: 'openUrl', name: 'URL から', ic: 'link', tip: 'Google フォームの回答のスプレッドシートを、URL から読み込みます（共有の設定が必要です）。' }),
-        rbSmall({ act: 'refreshUrl', name: '最新に更新', ic: 'refresh', tip: 'URL から読み込んだスプレッドシートを読み込み直し、増えた回答を反映します。解析の設定は残ります。', off: !(has && S.P.srcUrl) }))) +
-      rbGroup('尺度', rbLarge({ act: 'scoreNew', name: '尺度得点を作る', ic: 'add', tip: '複数の項目（順序のある質問）の平均点・合計点を、新しい列として作ります。t 検定や相関などで使えます。', off: !has })) +
-      rbGroup('表示', rbRadio('ui.dataView', 'vars', '質問の一覧', 'vars', '列（質問）ごとの種類と回答数を表示します。', !has, true), rbRadio('ui.dataView', 'raw', '回答の一覧', 'data', '回答そのものを表で表示します。', !has, true)) +
-      rbGroup('選んだ列', rbStack('<label class="md-rfield" data-tip="選んだ列の種類を変えます。自動の判定が合わないときに直します。">種類<select data-var="type"' + (sv ? '' : ' disabled') + '>' + options([['nominal', '単一回答'], ['ordinal', '順序あり'], ['multi', '複数回答'], ['numeric', '数値'], ['text', '使わない（自由記述など）']], sv ? (sv.type === 'time' || sv.type === 'empty' ? 'text' : sv.type) : '') + '</select></label>',
-        rbSmall({ act: 'freqOfVar', name: 'この列を集計', ic: 'add', tip: '選んだ列の単純集計を作ります。', off: !sv || !A.isCat(sv) })));
-    h.analysis = rbGroup('解析', bNew, rbLarge({ act: 'changeType', name: '種類を変える', ic: 'change', tip: '選んだ列はそのままで、解析の種類だけを変えます。', off: noTab }), sEditAn) +
-      rbGroup('並びと開閉', sOrder, sFold) +
-      rbGroup('列', rbLarge({ act: 'swap', name: '行と列を入れ替え', ic: 'swap', tip: '2 つの質問の役割（行と列）を入れ替えます。', off: !canSwap })) +
-      rbGroup('計算', rbLarge({ act: 'rerun', name: '計算し直す', ic: 'refresh', tip: '選んだ解析をもう一度計算します。', off: noTab }));
+    h.data = rbGroup(_t('取り込み'), rbLarge({ act: 'openCsv', name: _t('CSV を開く'), ic: 'csv', tip: _t('回答の CSV ファイル、または Excel ファイル（.xlsx。1 枚目のシート）を選んで読み込みます（Ctrl+O）。') }),
+      rbLarge({ act: 'replaceCsv', name: _t('差し替え'), ic: 'refresh', tip: _t('回答が増えた新しい CSV（または Excel ファイル）に差し替えます。同じ質問の列には、解析の設定を引き継ぎます。'), off: !has }),
+      rbStack(rbSmall({ act: 'openUrl', name: _t('URL から'), ic: 'link', tip: _t('Google フォームの回答のスプレッドシートを、URL から読み込みます（共有の設定が必要です）。') }),
+        rbSmall({ act: 'refreshUrl', name: _t('最新に更新'), ic: 'refresh', tip: _t('URL から読み込んだスプレッドシートを読み込み直し、増えた回答を反映します。解析の設定は残ります。'), off: !(has && S.P.srcUrl) }))) +
+      rbGroup(_t('尺度'), rbLarge({ act: 'scoreNew', name: _t('尺度得点を作る'), ic: 'add', tip: _t('複数の項目（順序のある質問）の平均点・合計点を、新しい列として作ります。t 検定や相関などで使えます。'), off: !has })) +
+      rbGroup(_t('表示'), rbRadio('ui.dataView', 'vars', _t('質問の一覧'), 'vars', _t('列（質問）ごとの種類と回答数を表示します。'), !has, true), rbRadio('ui.dataView', 'raw', _t('回答の一覧'), 'data', _t('回答そのものを表で表示します。'), !has, true)) +
+      rbGroup(_t('選んだ列'), rbStack(_t('<label class="md-rfield" data-tip="選んだ列の種類を変えます。自動の判定が合わないときに直します。">種類<select data-var="type"') + (sv ? '' : ' disabled') + '>' + options([['nominal', _t('単一回答')], ['ordinal', _t('順序あり')], ['multi', _t('複数回答')], ['numeric', _t('数値')], ['text', _t('使わない（自由記述など）')]], sv ? (sv.type === 'time' || sv.type === 'empty' ? 'text' : sv.type) : '') + '</select></label>',
+        rbSmall({ act: 'freqOfVar', name: _t('この列を集計'), ic: 'add', tip: _t('選んだ列の単純集計を作ります。'), off: !sv || !A.isCat(sv) })));
+    h.analysis = rbGroup(_t('解析'), bNew, rbLarge({ act: 'changeType', name: _t('種類を変える'), ic: 'change', tip: _t('選んだ列はそのままで、解析の種類だけを変えます。'), off: noTab }), sEditAn) +
+      rbGroup(_t('並びと開閉'), sOrder, sFold) +
+      rbGroup(_t('列'), rbLarge({ act: 'swap', name: _t('行と列を入れ替え'), ic: 'swap', tip: _t('2 つの質問の役割（行と列）を入れ替えます。'), off: !canSwap })) +
+      rbGroup(_t('計算'), rbLarge({ act: 'rerun', name: _t('計算し直す'), ic: 'refresh', tip: _t('選んだ解析をもう一度計算します。'), off: noTab }));
     var km = m ? Chart.kinds(m) : ['stack100', 'group', 'stack', 'heat'], heat = kindNow === 'heat';
-    h.figure = rbGroup('図', rbStack(rbSmall({ act: 'addFig', name: '図を追加', ic: 'figadd', tip: 'この解析に、別の種類の図をもう 1 つ足します。図 1、図 2 … と番号が付きます。', off: !m }),
-        rbSmall({ act: 'delFig', name: '図を削除', ic: 'figdel', tip: '選んだ図を削除します（元に戻せます）。', off: noFig }),
-        rbSmall({ act: 'figReset', name: '最初の状態', ic: 'refresh', tip: '選んだ図の設定を最初の状態に戻します。', off: noFig }))) +
-      rbGroup('種類', km.map(function (k) { return rbBtn('large', { radio: 'fig.kind', val: k, name: Chart.KIND_NAMES[k], ic: 'k_' + k, tip: KIND_TIPS[k], off: noFig, on: k === kindNow }); }).join('')) +
-      rbGroup('向きと値', rbStack(rbRadio('fig.orient', 'h', '横向き', 'horiz', '棒を横向きにします。選択肢の名前が長いときに読みやすくなります。', !isBar), rbRadio('fig.orient', 'v', '縦向き', 'vert', '棒を縦向きにします。', !isBar)),
-        rbStack(rbRadio('fig.value', 'pct', '割合', 'pct', '割合（%）で表します。', noVal), rbRadio('fig.value', 'count', '人数', 'nlabel', '人数で表します。', noVal))) +
-      (heat ? rbGroup('カラーバー', rbStack(rbSelect('基準', 'fig.heatBy', HEAT_BY.slice(1), 'セルの色を決める値です。', noFig), rbSelect('位置', 'fig.bar', [['right', '右'], ['bottom', '下'], ['none', 'なし']], '色と値の対応を示す帯（カラーバー）の位置です。', noFig), rbSelect('形', 'fig.barShape', [['smooth', 'なめらか'], ['step', '5 段階']], 'カラーバーの形です。', noFig)))
-        : rbGroup('凡例', rbStack(rbSelect('位置', 'fig.legend', LEG_POS, '凡例（色の説明）の位置です。「なし」で消せます。', noFig), rbSelect('形', 'fig.legShape', [['square', '四角'], ['circle', '丸'], ['wide', '横長']], '凡例の色見本の形です。', noFig), rbToggle('fig.legFrame', '枠で囲む', 'check', '凡例を線で囲みます。', noFig)))) +
-      rbGroup('目盛り', rbStack(rbSelect('向き', 'fig.tickDir', [['out', '外向き'], ['in', '内向き'], ['none', 'なし']], '軸の目盛りの向きです。', noFig || heat || kindNow === 'pie'), rbSelect('目盛線', 'fig.grid', [['solid', '実線'], ['dash', '破線'], ['dot', '点線'], ['none', 'なし']], '目盛りの位置に引く線の種類です。', noFig || heat || kindNow === 'pie'), rbSelect('枠', 'fig.frame', [['L', '左と下だけ'], ['box', '四方を囲む']], 'グラフを描く範囲を四方の線で囲むか、左と下の軸だけにするかを選びます。', noFig || heat || kindNow === 'pie'))) +
-      rbGroup('文字', rbStack(rbSelect('和文', 'fig.fontJa', FONTS_JA, '図の中の日本語の書体です。', noFig), rbSelect('欧文', 'fig.fontEn', FONTS_EN, '図の中の英数字の書体です。', noFig),
-        '<div class="md-rfield">' + rbCombo('大きさ', 'fig.fsAll', 'dl_fs', '図の文字の大きさをまとめて変えます。細かくは作業ウィンドウで変えられます。', noFig) +
-        '<button class="md-rbtn md-small" data-act="fsStep" data-arg="1" data-tip="文字を 1 段階大きくします。"' + (noFig ? ' disabled' : '') + '>' + window.icon('fup', 20) + '</button><button class="md-rbtn md-small" data-act="fsStep" data-arg="-1" data-tip="文字を 1 段階小さくします。"' + (noFig ? ' disabled' : '') + '>' + window.icon('fdown', 20) + '</button></div>')) +
-      rbGroup('色と表示', rbLarge({ act: 'palettePop', arg: 'fig.palette', name: '配色', ic: 'palette', tip: '色の組み合わせを一覧から選びます。系列ごとに色を選ぶときは、作業ウィンドウの「色」で「系列ごとに選ぶ」にします。', off: noFig }),
-        rbStack(rbToggle('fig.labels', '値のラベル', 'labels', '棒の中や先に数値を書きます。入りきらない所は自動で省きます。', noFig), rbToggle('fig.showN', '人数 (n)', 'nlabel', 'グループの名前の下に人数を書きます。', noFig), rbToggle('fig.transparent', '背景を透明に', 'transparent', '図の背景を透明にします。スライドに重ねるときに使います。', noFig)));
+    h.figure = rbGroup(_t('図'), rbStack(rbSmall({ act: 'addFig', name: _t('図を追加'), ic: 'figadd', tip: _t('この解析に、別の種類の図をもう 1 つ足します。図 1、図 2 … と番号が付きます。'), off: !m }),
+        rbSmall({ act: 'delFig', name: _t('図を削除'), ic: 'figdel', tip: _t('選んだ図を削除します（元に戻せます）。'), off: noFig }),
+        rbSmall({ act: 'figReset', name: _t('最初の状態'), ic: 'refresh', tip: _t('選んだ図の設定を最初の状態に戻します。'), off: noFig }))) +
+      rbGroup(_t('種類'), km.map(function (k) { return rbBtn('large', { radio: 'fig.kind', val: k, name: _t(Chart.KIND_NAMES[k]), ic: 'k_' + k, tip: KIND_TIPS[k], off: noFig, on: k === kindNow }); }).join('')) +
+      rbGroup(_t('向きと値'), rbStack(rbRadio('fig.orient', 'h', _t('横向き'), 'horiz', _t('棒を横向きにします。選択肢の名前が長いときに読みやすくなります。'), !isBar), rbRadio('fig.orient', 'v', _t('縦向き'), 'vert', _t('棒を縦向きにします。'), !isBar)),
+        rbStack(rbRadio('fig.value', 'pct', _t('割合'), 'pct', _t('割合（%）で表します。'), noVal), rbRadio('fig.value', 'count', _t('人数'), 'nlabel', _t('人数で表します。'), noVal))) +
+      (heat ? rbGroup(_t('カラーバー'), rbStack(rbSelect(_t('基準'), 'fig.heatBy', HEAT_BY.slice(1), _t('セルの色を決める値です。'), noFig), rbSelect(_t('位置'), 'fig.bar', [['right', _t('右')], ['bottom', _t('下')], ['none', _t('なし')]], _t('色と値の対応を示す帯（カラーバー）の位置です。'), noFig), rbSelect(_t('形'), 'fig.barShape', [['smooth', _t('なめらか')], ['step', _t('5 段階')]], _t('カラーバーの形です。'), noFig)))
+        : rbGroup(_t('凡例'), rbStack(rbSelect(_t('位置'), 'fig.legend', LEG_POS, _t('凡例（色の説明）の位置です。「なし」で消せます。'), noFig), rbSelect(_t('形'), 'fig.legShape', [['square', _t('四角')], ['circle', _t('丸')], ['wide', _t('横長')]], _t('凡例の色見本の形です。'), noFig), rbToggle('fig.legFrame', _t('枠で囲む'), 'check', _t('凡例を線で囲みます。'), noFig)))) +
+      rbGroup(_t('目盛り'), rbStack(rbSelect(_t('向き'), 'fig.tickDir', [['out', _t('外向き')], ['in', _t('内向き')], ['none', _t('なし')]], _t('軸の目盛りの向きです。'), noFig || heat || kindNow === 'pie'), rbSelect(_t('目盛線'), 'fig.grid', [['solid', _t('実線')], ['dash', _t('破線')], ['dot', _t('点線')], ['none', _t('なし')]], _t('目盛りの位置に引く線の種類です。'), noFig || heat || kindNow === 'pie'), rbSelect(_t('枠'), 'fig.frame', [['L', _t('左と下だけ')], ['box', _t('四方を囲む')]], _t('グラフを描く範囲を四方の線で囲むか、左と下の軸だけにするかを選びます。'), noFig || heat || kindNow === 'pie'))) +
+      rbGroup(_t('文字'), rbStack(rbSelect(_t('和文'), 'fig.fontJa', FONTS_JA, _t('図の中の日本語の書体です。'), noFig), rbSelect(_t('欧文'), 'fig.fontEn', FONTS_EN, _t('図の中の英数字の書体です。'), noFig),
+        '<div class="md-rfield">' + rbCombo(_t('大きさ'), 'fig.fsAll', 'dl_fs', _t('図の文字の大きさをまとめて変えます。細かくは作業ウィンドウで変えられます。'), noFig) +
+        _t('<button class="md-rbtn md-small" data-act="fsStep" data-arg="1" data-tip="文字を 1 段階大きくします。"{0}>{1}</button><button class="md-rbtn md-small" data-act="fsStep" data-arg="-1" data-tip="文字を 1 段階小さくします。"', noFig ? ' disabled' : '', window.icon('fup', 20)) + (noFig ? ' disabled' : '') + '>' + window.icon('fdown', 20) + '</button></div>')) +
+      rbGroup(_t('色と表示'), rbLarge({ act: 'palettePop', arg: 'fig.palette', name: _t('配色'), ic: 'palette', tip: _t('色の組み合わせを一覧から選びます。系列ごとに色を選ぶときは、作業ウィンドウの「色」で「系列ごとに選ぶ」にします。'), off: noFig }),
+        rbStack(rbToggle('fig.labels', _t('値のラベル'), 'labels', _t('棒の中や先に数値を書きます。入りきらない所は自動で省きます。'), noFig), rbToggle('fig.showN', _t('人数 (n)'), 'nlabel', _t('グループの名前の下に人数を書きます。'), noFig), rbToggle('fig.transparent', _t('背景を透明に'), 'transparent', _t('図の背景を透明にします。スライドに重ねるときに使います。'), noFig)));
     var ts = tab ? tab.tstyle : null;
-    h.table = rbGroup('デザイン', T_DESIGNS.map(function (d) { return rbBtn('large', { act: 'tDesign', arg: d[0], name: d[1], ic: d[2], tip: d[3], off: !ok, on: ts && ts.design === d[0] }); }).join('')) +
-      rbGroup('割合', rbStack(rbRadio('tbl.pct', 'row', '行の割合', 'pct', '行（グループ）ごとの割合を人数に添えます。', !xt), rbRadio('tbl.pct', 'col', '列の割合', 'pct', '列（回答）ごとの割合を人数に添えます。', !xt), rbRadio('tbl.pct', 'none', '人数のみ', 'table', '割合を出さず、人数だけの表にします。', !xt))) +
-      rbGroup('加える', rbStack(rbToggle('tbl.marks', '多い・少ないの印', 'resid', '期待される値より有意に多いセルに ▲、少ないセルに ▽ を付けます。', !(xt && res.xtab.resid)), rbToggle('tbl.expected', '期待度数', 'table', '関連がないと仮定したときの人数の表を加えます。', !(xt && res.xtab.expected)), rbToggle('tbl.resid', '残差', 'resid', '調整済み標準化残差の表を加えます。', !(xt && res.xtab.resid)))) +
-      rbGroup('セルの色分け', rbStack(rbSelect('基準', 'tst.heat', HEAT_BY, 'セルに値の大きさに応じた色を付けます。', !xt), rbSelect('カラーバー', 'tst.bar', [['right', '右'], ['bottom', '下'], ['none', 'なし']], '色と値の対応を示す帯（カラーバー）の位置です。', !xt), rbSelect('形', 'tst.barShape', [['smooth', 'なめらか'], ['step', '5 段階']], 'カラーバーの形です。', !xt)),
-        rbLarge({ act: 'palettePop', arg: 'tst.heatPal', name: '配色', ic: 'palette', tip: 'セルの色分けに使う色を選びます。', off: !xt })) +
-      rbGroup('文字と線', rbStack(rbSelect('和文', 'tst.fontJa', FONTS_JA, '表の日本語の書体です。', !ok), rbSelect('欧文', 'tst.fontEn', FONTS_EN, '表の英数字の書体です。', !ok), rbCombo('大きさ', 'tst.fs', 'dl_fs', '表の文字の大きさです。', !ok)),
-        rbStack(rbCombo('線の太さ', 'tst.lw', 'dl_lw', '表の線の太さです。', !ok), rbSelect('線の種類', 'tst.ls', [['solid', '実線'], ['dashed', '破線'], ['dotted', '点線'], ['double', '二重線']], '表の線の種類です。', !ok),
-          '<div class="md-rfield" data-tip="表の線の色です。">線の色<button class="md-colbtn md-colbtn-sm" data-act="pickPath" data-arg="tst.lc"' + (ok ? '' : ' disabled') + '><i style="background:' + (ts ? ts.lc : '#7F7F7F') + '"></i></button></div>')) +
-      rbGroup('表の書き出し', rbStack(rbSmall({ act: 'tblCopy', name: 'コピー', ic: 'copy', tip: '表をデザインごとコピーします。Word や Excel に貼り付けられます。', off: !ok }), rbSmall({ act: 'tblCsv', name: 'CSV で保存', ic: 'csv', tip: '表を CSV ファイルで保存します。', off: !ok }), rbSmall({ act: 'tblPng', name: '画像で保存', ic: 'png', tip: '表を見たままの画像（PNG）で保存します。', off: !ok })));
+    h.table = rbGroup(_t('デザイン'), T_DESIGNS.map(function (d) { return rbBtn('large', { act: 'tDesign', arg: d[0], name: d[1], ic: d[2], tip: d[3], off: !ok, on: ts && ts.design === d[0] }); }).join('')) +
+      rbGroup(_t('割合'), rbStack(rbRadio('tbl.pct', 'row', _t('行の割合'), 'pct', _t('行（グループ）ごとの割合を人数に添えます。'), !xt), rbRadio('tbl.pct', 'col', _t('列の割合'), 'pct', _t('列（回答）ごとの割合を人数に添えます。'), !xt), rbRadio('tbl.pct', 'none', _t('人数のみ'), 'table', _t('割合を出さず、人数だけの表にします。'), !xt))) +
+      rbGroup(_t('加える'), rbStack(rbToggle('tbl.marks', _t('多い・少ないの印'), 'resid', _t('期待される値より有意に多いセルに ▲、少ないセルに ▽ を付けます。'), !(xt && res.xtab.resid)), rbToggle('tbl.expected', _t('期待度数'), 'table', _t('関連がないと仮定したときの人数の表を加えます。'), !(xt && res.xtab.expected)), rbToggle('tbl.resid', _t('残差'), 'resid', _t('調整済み標準化残差の表を加えます。'), !(xt && res.xtab.resid)))) +
+      rbGroup(_t('セルの色分け'), rbStack(rbSelect(_t('基準'), 'tst.heat', HEAT_BY, _t('セルに値の大きさに応じた色を付けます。'), !xt), rbSelect(_t('カラーバー'), 'tst.bar', [['right', _t('右')], ['bottom', _t('下')], ['none', _t('なし')]], _t('色と値の対応を示す帯（カラーバー）の位置です。'), !xt), rbSelect(_t('形'), 'tst.barShape', [['smooth', _t('なめらか')], ['step', _t('5 段階')]], _t('カラーバーの形です。'), !xt)),
+        rbLarge({ act: 'palettePop', arg: 'tst.heatPal', name: _t('配色'), ic: 'palette', tip: _t('セルの色分けに使う色を選びます。'), off: !xt })) +
+      rbGroup(_t('文字と線'), rbStack(rbSelect(_t('和文'), 'tst.fontJa', FONTS_JA, _t('表の日本語の書体です。'), !ok), rbSelect(_t('欧文'), 'tst.fontEn', FONTS_EN, _t('表の英数字の書体です。'), !ok), rbCombo(_t('大きさ'), 'tst.fs', 'dl_fs', _t('表の文字の大きさです。'), !ok)),
+        rbStack(rbCombo(_t('線の太さ'), 'tst.lw', 'dl_lw', _t('表の線の太さです。'), !ok), rbSelect(_t('線の種類'), 'tst.ls', [['solid', _t('実線')], ['dashed', _t('破線')], ['dotted', _t('点線')], ['double', _t('二重線')]], _t('表の線の種類です。'), !ok),
+          _t('<div class="md-rfield" data-tip="表の線の色です。">線の色<button class="md-colbtn md-colbtn-sm" data-act="pickPath" data-arg="tst.lc"') + (ok ? '' : ' disabled') + '><i style="background:' + (ts ? ts.lc : '#7F7F7F') + '"></i></button></div>')) +
+      rbGroup(_t('表の書き出し'), rbStack(rbSmall({ act: 'tblCopy', name: _t('コピー'), ic: 'copy', tip: _t('表をデザインごとコピーします。Word や Excel に貼り付けられます。'), off: !ok }), rbSmall({ act: 'tblCsv', name: _t('CSV で保存'), ic: 'csv', tip: _t('表を CSV ファイルで保存します。'), off: !ok }), rbSmall({ act: 'tblPng', name: _t('画像で保存'), ic: 'png', tip: _t('表を見たままの画像（PNG）で保存します。'), off: !ok })));
     var anyEdited = S.P.tabs.some(function (t) { return t.reportText !== null; });
-    h.export = rbGroup('まとめて', bExport, rbStack(rbSmall({ act: 'checkAll', arg: '1', name: 'すべて選ぶ', ic: 'checkall', tip: 'すべての解析に ☑ を付けます。', off: !S.P.tabs.length }), rbSmall({ act: 'checkAll', arg: '0', name: 'すべて外す', ic: 'uncheck', tip: 'すべての解析の ☑ を外します。', off: !S.P.tabs.length }))) +
-      rbGroup('選んだ図', rbLarge({ act: 'figPng', name: '画像で保存', ic: 'png', tip: '選んだ図を、画面に出ている形と大きさのまま PNG 画像で保存します。', off: noFig }),
-        rbStack(rbSmall({ act: 'figSvg', name: 'SVG で保存', ic: 'svg', tip: '選んだ図を SVG（拡大しても粗くならない形式）で保存します。', off: noFig }), rbSmall({ act: 'figCopy', name: '図をコピー', ic: 'copy', tip: '選んだ図を画像としてコピーします。', off: noFig }))) +
-      rbGroup('報告書', rbLarge({ act: 'goReport', name: '報告書を見る', ic: 'report', tip: '☑ を付けた解析の文と表を 1 つにまとめた報告書を表示します。', off: !has }),
-        rbLarge({ act: 'repDocx', name: 'Word で保存', ic: 'docx', tip: '報告書を Word ファイル（.docx）で保存します。文は MS 明朝・Times New Roman、表は Word の表（あとから直せる）、図は画像で入ります。', off: !has }),
-        rbLarge({ act: 'repTxt', name: 'テキストで保存', ic: 'txt', tip: '報告書を 1 つのテキストファイル（.txt）で保存します。', off: !has }),
-        rbStack(rbToggle('rep.tables', '表を入れる', 'table', '報告書に各解析の表を入れます。', !has), rbToggle('rep.holm', '補正後の p', 'holm', '検定を繰り返したことを考えて、ホルム法で補正した p を一覧に入れます。', !has),
-          rbSmall({ act: 'resetAllText', name: '定型文に戻す', ic: 'refresh', tip: '書き換えた文をすべて、結果から作った定型文に戻します。', off: !anyEdited }))) +
-      rbGroup('計算の確かめ', rbLarge({ act: 'excelOnly', name: 'Excel で保存', ic: 'excel', tip: 'データと、☑ を付けた解析を Excel の関数で再現したシートを保存します。', off: !has || !S.P.tabs.length }) +
-        rbLarge({ act: 'rOnly', name: 'R のコード', ic: 'rcode', tip: '☑ を付けた解析を R の標準の関数で計算し直すスクリプト（.R）と、そのためのデータ（CSV）を ZIP で保存します。R で実行すると、結果と「アプリの値」を見比べられます。', off: !has || !S.P.tabs.length })) +
-      rbGroup('プロジェクト', rbLarge({ act: 'projFile', name: 'ファイルに書き出す', ic: 'saveas', tip: 'プロジェクトを 1 つのファイル（.prj）にして保存します。別の端末やパソコン版でも開けます。', off: !has }));
-    h.settings = rbGroup('判定と表記', rbStack(rbSelect('有意水準', 'set.alpha', [[0.05, '5%（0.05）'], [0.01, '1%（0.01）'], [0.1, '10%（0.10）']], '「有意」と判定する基準です。すべての解析に使われます。', false, 'num'),
-        rbSelect('p の表記', 'set.lead0', [['true', 'p = 0.012'], ['false', 'p = .012']], 'p 値の書き方です。投稿先や指導者の指定に合わせます。', false, 'boolstr'))) +
-      rbGroup('図', rbStack(rbSelect('自動の文字', 'set.figLang', [['ja', '日本語'], ['en', '英語']], '軸の名前など、図に自動で入る文字の言語です。', false),
-        rbSelect('画像の細かさ', 'set.pngScale', [[1, '標準'], [2, '2 倍（資料向け）'], [4, '4 倍（印刷向け）']], '画像で保存するときの細かさです。貼り付けたときの大きさは、画面と同じになります。', false, 'num'))) +
-      rbGroup('画面', rbStack(rbSelect('拡大', 'set.zoom', [[90, '90%'], [100, '100%'], [115, '115%'], [130, '130%']], '画面全体の大きさを変えます。', false, 'num'))) +
-      rbGroup('情報', rbLarge({ act: 'about', name: 'このアプリ', ic: 'info', tip: '使っている統計手法と、計算をしている R の情報を表示します。' }) + rbLarge({ act: 'feedback', name: 'ご意見・不具合', ic: 'report', tip: '不具合の報告や、ご意見・要望を送る方法を表示します（GitHub を使います）。' }));
+    h.export = rbGroup(_t('まとめて'), bExport, rbStack(rbSmall({ act: 'checkAll', arg: '1', name: _t('すべて選ぶ'), ic: 'checkall', tip: _t('すべての解析に ☑ を付けます。'), off: !S.P.tabs.length }), rbSmall({ act: 'checkAll', arg: '0', name: _t('すべて外す'), ic: 'uncheck', tip: _t('すべての解析の ☑ を外します。'), off: !S.P.tabs.length }))) +
+      rbGroup(_t('選んだ図'), rbLarge({ act: 'figPng', name: _t('画像で保存'), ic: 'png', tip: _t('選んだ図を、画面に出ている形と大きさのまま PNG 画像で保存します。'), off: noFig }),
+        rbStack(rbSmall({ act: 'figSvg', name: _t('SVG で保存'), ic: 'svg', tip: _t('選んだ図を SVG（拡大しても粗くならない形式）で保存します。'), off: noFig }), rbSmall({ act: 'figCopy', name: _t('図をコピー'), ic: 'copy', tip: _t('選んだ図を画像としてコピーします。'), off: noFig }))) +
+      rbGroup(_t('報告書'), rbLarge({ act: 'goReport', name: _t('報告書を見る'), ic: 'report', tip: _t('☑ を付けた解析の文と表を 1 つにまとめた報告書を表示します。'), off: !has }),
+        rbLarge({ act: 'repDocx', name: _t('Word で保存'), ic: 'docx', tip: _t('報告書を Word ファイル（.docx）で保存します。文は MS 明朝・Times New Roman、表は Word の表（あとから直せる）、図は画像で入ります。'), off: !has }),
+        rbLarge({ act: 'repTxt', name: _t('テキストで保存'), ic: 'txt', tip: _t('報告書を 1 つのテキストファイル（.txt）で保存します。'), off: !has }),
+        rbStack(rbToggle('rep.tables', _t('表を入れる'), 'table', _t('報告書に各解析の表を入れます。'), !has), rbToggle('rep.holm', _t('補正後の p'), 'holm', _t('検定を繰り返したことを考えて、ホルム法で補正した p を一覧に入れます。'), !has),
+          rbSmall({ act: 'resetAllText', name: _t('定型文に戻す'), ic: 'refresh', tip: _t('書き換えた文をすべて、結果から作った定型文に戻します。'), off: !anyEdited }))) +
+      rbGroup(_t('計算の確かめ'), rbLarge({ act: 'excelOnly', name: _t('Excel で保存'), ic: 'excel', tip: _t('データと、☑ を付けた解析を Excel の関数で再現したシートを保存します。'), off: !has || !S.P.tabs.length }) +
+        rbLarge({ act: 'rOnly', name: _t('R のコード'), ic: 'rcode', tip: _t('☑ を付けた解析を R の標準の関数で計算し直すスクリプト（.R）と、そのためのデータ（CSV）を ZIP で保存します。R で実行すると、結果と「アプリの値」を見比べられます。'), off: !has || !S.P.tabs.length })) +
+      rbGroup(_t('プロジェクト'), rbLarge({ act: 'projFile', name: _t('ファイルに書き出す'), ic: 'saveas', tip: _t('プロジェクトを 1 つのファイル（.prj）にして保存します。別の端末やパソコン版でも開けます。'), off: !has }));
+    h.settings = rbGroup(_t('判定と表記'), rbStack(rbSelect(_t('有意水準'), 'set.alpha', [[0.05, _t('5%（0.05）')], [0.01, _t('1%（0.01）')], [0.1, _t('10%（0.10）')]], _t('「有意」と判定する基準です。すべての解析に使われます。'), false, 'num'),
+        rbSelect(_t('p の表記'), 'set.lead0', [['true', 'p = 0.012'], ['false', 'p = .012']], _t('p 値の書き方です。投稿先や指導者の指定に合わせます。'), false, 'boolstr'))) +
+      rbGroup(_t('図'), rbStack(rbSelect(_t('自動の文字'), 'set.figLang', [['ja', _t('日本語')], ['en', _t('英語')]], _t('軸の名前など、図に自動で入る文字の言語です。'), false),
+        rbSelect(_t('画像の細かさ'), 'set.pngScale', [[1, _t('標準')], [2, _t('2 倍（資料向け）')], [4, _t('4 倍（印刷向け）')]], _t('画像で保存するときの細かさです。貼り付けたときの大きさは、画面と同じになります。'), false, 'num'))) +
+      rbGroup(_t('画面'), rbStack(rbSelect(_t('拡大'), 'set.zoom', [[90, '90%'], [100, '100%'], [115, '115%'], [130, '130%']], _t('画面全体の大きさを変えます。'), false, 'num'))) +
+      rbGroup(_t('情報'), rbLarge({ act: 'about', name: _t('このアプリ'), ic: 'info', tip: _t('使っている統計手法と、計算をしている R の情報を表示します。') }) + rbLarge({ act: 'feedback', name: _t('ご意見・不具合'), ic: 'report', tip: _t('不具合の報告や、ご意見・要望を送る方法を表示します（GitHub を使います）。') }));
     $('#md_ribbon').innerHTML = RTABS.map(function (t) { return '<div class="md-ribbon-body' + (S.ui.rtab === t[0] ? ' active' : '') + '" data-tab="' + t[0] + '">' + h[t[0]] + '</div>'; }).join('');
   }
 
   // ---------------- 下の帯（表示の切り替え）
   function renderSheets() {
     var sigN = S.P.tabs.filter(function (t) { var r = S.results[t.id]; return r && r.ok && r.sig === true; }).length;
-    $('#md_sheets').innerHTML = [['analysis', '解析', '解析を上から順に並べた画面です。'], ['data', 'データ', '読み込んだデータ（質問と回答）です。'], ['report', '報告書', '☑ を付けた解析をまとめた報告書です。']].map(function (v) {
+    $('#md_sheets').innerHTML = [['analysis', _t('解析'), _t('解析を上から順に並べた画面です。')], ['data', _t('データ'), _t('読み込んだデータ（質問と回答）です。')], ['report', _t('報告書'), _t('☑ を付けた解析をまとめた報告書です。')]].map(function (v) {
       return '<button class="md-sheet md-sheet-fixed' + (S.ui.view === v[0] ? ' active' : '') + '" data-view="' + v[0] + '" data-tip="' + v[2] + '"' + (S.data ? '' : ' disabled') + '>' + v[1] + '</button>';
-    }).join('') + '<span class="md-sheet-count">解析 ' + S.P.tabs.length + ' 件' + (S.P.tabs.length ? '　有意 ' + sigN + ' 件' : '') + '</span>';
+    }).join('') + _t('<span class="md-sheet-count">解析 {0} 件', S.P.tabs.length) + (S.P.tabs.length ? _t('　有意 {0} 件', sigN) : '') + '</span>';
   }
 
   // ---------------- 中央
@@ -422,25 +422,21 @@
   function growLater(root) { var ts = root.querySelectorAll('textarea[data-auto]'); if (!growIO) { ts.forEach(autoGrow); return; } growIO.disconnect(); ts.forEach(function (t) { growIO.observe(t); }); }
   function autoGrow(t) { t.style.height = 'auto'; t.style.height = (t.scrollHeight + 4) + 'px'; }
   function dropHtml() {
-    var list = S.projList && S.projList.items && S.projList.items.length ? '<div class="md-projlist"><div class="md-sec-title">保存したプロジェクト</div>' + S.projList.items.slice(0, 8).map(function (p) {
-      return '<button class="md-projitem" data-act="openProjName" data-arg="' + esc(p.name) + '" data-tip="このプロジェクトを開きます。CSV は要りません。"><b>' + esc(p.name) + '</b><span>' + esc(p.saved) + '</span></button>';
-    }).join('') + (S.projList.items.length > 8 ? '<button class="md-link" data-act="openProject">ほかのプロジェクトを見る</button>' : '') + '</div>' : '';
-    return '<div class="md-drop" id="md_drop">' + window.icon('csv', 56) + '<h1>CSV ファイルを選ぶ</h1>' +
-      '<p>Google フォームの回答（スプレッドシートの「ファイル → ダウンロード → カンマ区切り形式（.csv）」）をそのまま入れられます。Excel ファイル（.xlsx）も、1 枚目のシートを読み込めます。1 行目が質問、2 行目以降が回答の表です。</p>' +
-      '<div class="md-row"><button class="md-btn md-btn-primary" data-act="openCsv">ファイルを選ぶ</button><button class="md-btn" data-act="openUrl">Google スプレッドシートの URL から</button></div>' + list +
-      '<p>データはこの端末の中だけで処理され、外部には送信されません。</p></div>';
+    var list = S.projList && S.projList.items && S.projList.items.length ? _t('<div class="md-projlist"><div class="md-sec-title">保存したプロジェクト</div>') + S.projList.items.slice(0, 8).map(function (p) {
+      return '<button class="md-projitem" data-act="openProjName" data-arg="' + esc(p.name) + _t('" data-tip="このプロジェクトを開きます。CSV は要りません。"><b>') + esc(p.name) + '</b><span>' + esc(p.saved) + '</span></button>';
+    }).join('') + (S.projList.items.length > 8 ? _t('<button class="md-link" data-act="openProject">ほかのプロジェクトを見る</button>') : '') + '</div>' : '';
+    return '<div class="md-drop" id="md_drop">' + window.icon('csv', 56) + _t('<h1>CSV ファイルを選ぶ</h1><p>Google フォームの回答（スプレッドシートの「ファイル → ダウンロード → カンマ区切り形式（.csv）」）をそのまま入れられます。Excel ファイル（.xlsx）も、1 枚目のシートを読み込めます。1 行目が質問、2 行目以降が回答の表です。</p><div class="md-row"><button class="md-btn md-btn-primary" data-act="openCsv">ファイルを選ぶ</button><button class="md-btn" data-act="openUrl">Google スプレッドシートの URL から</button></div>{0}<p>データはこの端末の中だけで処理され、外部には送信されません。</p></div>', list);
   }
   // 数値の列：直した回答・読めない回答の件数と、確かめる画面へのボタン。数値として読める選択肢の列には切り替えのボタン
   function numCell(x) {
     var c = x.clean;
-    if (x.type === 'numeric' && c && (c.nFixed || c.nFail)) return '<div class="md-numfix">直した ' + c.nFixed + ' 件・読めない ' + c.nFail + ' 件' + (x.fix && Object.keys(x.fix).length ? '（手直し ' + Object.keys(x.fix).length + '）' : '') +
-      ' <button class="md-btn md-btn-sm" data-act="numClean" data-arg="' + x.col + '">確かめる</button>' + (x.typeOrig ? ' <button class="md-btn md-btn-sm" data-act="asChoice" data-arg="' + x.col + '">選択肢に戻す</button>' : '') + '</div>';
-    if (x.type === 'numeric' && x.typeOrig) return '<div class="md-numfix"><button class="md-btn md-btn-sm" data-act="asChoice" data-arg="' + x.col + '">選択肢に戻す</button></div>';
-    if (x.numCand && x.type !== 'numeric') return '<div class="md-numfix"><button class="md-btn md-btn-sm" data-act="asNumeric" data-arg="' + x.col + '" data-tip="単位や全角文字を直して、数値として読み直します。ヒストグラムや平均の比較に使えるようになります。">数値として読む</button></div>';
+    if (x.type === 'numeric' && c && (c.nFixed || c.nFail)) return _t('<div class="md-numfix">直した {0} 件・読めない {1} 件{2} <button class="md-btn md-btn-sm" data-act="numClean" data-arg="{3}">確かめる</button>', c.nFixed, c.nFail, x.fix && Object.keys(x.fix).length ? _t('（手直し {0}）', Object.keys(x.fix).length) : '', x.col) + (x.typeOrig ? ' <button class="md-btn md-btn-sm" data-act="asChoice" data-arg="' + x.col + _t('">選択肢に戻す</button>') : '') + '</div>';
+    if (x.type === 'numeric' && x.typeOrig) return '<div class="md-numfix"><button class="md-btn md-btn-sm" data-act="asChoice" data-arg="' + x.col + _t('">選択肢に戻す</button></div>');
+    if (x.numCand && x.type !== 'numeric') return '<div class="md-numfix"><button class="md-btn md-btn-sm" data-act="asNumeric" data-arg="' + x.col + _t('" data-tip="単位や全角文字を直して、数値として読み直します。ヒストグラムや平均の比較に使えるようになります。">数値として読む</button></div>');
     return '';
   }
   function varsHtml() {
-    var h = '<div class="md-page md-wide"><table class="md-vars"><thead><tr><th>列</th><th style="min-width:300px">表示名（図・表・報告書に使う名前）</th><th>質問文</th><th style="min-width:150px">種類</th><th>回答数</th><th>選択肢</th></tr></thead><tbody>';
+    var h = _t('<div class="md-page md-wide"><table class="md-vars"><thead><tr><th>列</th><th style="min-width:300px">表示名（図・表・報告書に使う名前）</th><th>質問文</th><th style="min-width:150px">種類</th><th>回答数</th><th>選択肢</th></tr></thead><tbody>');
     S.P.vars.forEach(function (x) {
       if (x.comp) { h += compRow(x); return; }
       h += '<tr class="' + (S.ui.selVar === x.col ? 'sel' : '') + '" data-varrow="' + x.col + '"><td class="num">' + x.col + '</td><td><input type="text" data-varlabel="' + x.col + '" value="' + esc(x.label) + '"></td><td class="q" data-tip="' + esc(x.header) + '">' + esc(x.header.replace(/\s+/g, ' ')) + '</td><td>' + esc(A.TYPE_NAMES[x.type] || x.type) + '</td><td class="num">' + x.n + '</td><td class="num">' + (A.isCat(x) ? x.cats.length : '–') + numCell(x) + '</td></tr>';
@@ -449,43 +445,41 @@
   }
   // 尺度得点の行：作り方（項目・逆転・平均か合計か）と、直す・消すボタン
   function compRow(x) {
-    var names = x.comp.items.map(function (c) { var y = A.v(c); return y ? (y.label + ((x.comp.reverse || []).indexOf(c) >= 0 ? '（逆転）' : '')) : '?'; }).join('、');
-    return '<tr class="md-comprow" data-varrow="' + x.col + '"><td class="num">' + x.col + '</td><td><input type="text" data-varlabel="' + x.col + '" value="' + esc(x.label) + '"></td><td class="q">' + esc((x.comp.method === 'sum' ? '合計：' : '平均：') + names) + '</td>' +
-      '<td>尺度得点（' + (x.comp.method === 'sum' ? '合計' : '平均') + '）<br><button class="md-btn md-btn-sm" data-act="scoreEdit" data-arg="' + x.col + '">直す</button> <button class="md-btn md-btn-sm" data-act="scoreDel" data-arg="' + x.col + '">消す</button></td><td class="num">–</td><td class="num">–</td></tr>';
+    var names = x.comp.items.map(function (c) { var y = A.v(c); return y ? (y.label + ((x.comp.reverse || []).indexOf(c) >= 0 ? _t('（逆転）') : '')) : '?'; }).join(_t('、'));
+    return '<tr class="md-comprow" data-varrow="' + x.col + '"><td class="num">' + x.col + '</td><td><input type="text" data-varlabel="' + x.col + '" value="' + esc(x.label) + '"></td><td class="q">' + esc((x.comp.method === 'sum' ? _t('合計：') : _t('平均：')) + names) + '</td>' +
+      _t('<td>尺度得点（{0}）<br><button class="md-btn md-btn-sm" data-act="scoreEdit" data-arg="{1}">直す</button> <button class="md-btn md-btn-sm" data-act="scoreDel" data-arg="{2}">消す</button></td><td class="num">–</td><td class="num">–</td></tr>', x.comp.method === 'sum' ? _t('合計') : _t('平均'), x.col, x.col);
   }
   function rawHtml() {
     var rows = S.data.rows, lim = Math.min(rows.length, S.ui.rawRows);
     var h = '<div class="md-page md-wide"><table class="md-vars md-raw"><thead><tr><th>#</th>' + S.P.vars.filter(function (x) { return !x.comp; }).map(function (x) { return '<th data-tip="' + esc(x.header) + '">' + esc(x.label) + '</th>'; }).join('') + '</tr></thead><tbody>';
     for (var i = 0; i < lim; i++) h += '<tr><td class="num">' + (i + 1) + '</td>' + rows[i].map(function (c) { return '<td>' + esc(c === null ? '' : c) + '</td>'; }).join('') + '</tr>';
     h += '</tbody></table>';
-    if (lim < S.data.nrow) h += '<div class="md-empty">' + lim + ' 件まで表示しています（全 ' + S.data.nrow + ' 件）。' + (lim < rows.length ? '<button class="md-btn" data-act="moreRows">さらに 500 件表示</button>' : '画面に出せるのは ' + rows.length + ' 件までです。解析はすべての回答で行います。') + '</div>';
+    if (lim < S.data.nrow) h += '<div class="md-empty">' + lim + _t(' 件まで表示しています（全 {0} 件）。', S.data.nrow) + (lim < rows.length ? _t('<button class="md-btn" data-act="moreRows">さらに 500 件表示</button>') : _t('画面に出せるのは {0} 件までです。解析はすべての回答で行います。', rows.length)) + '</div>';
     return h + '</div>';
   }
   var CHEV = { open: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#1F4030" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5.5l5 5 5-5"/></svg>', closed: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#1F4030" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5.500 3l5 5-5 5"/></svg>' };
   function anSummary(tab, res) {
-    if (!A.tabReady(tab)) return '列を選んでください';
-    if (!res) return '計算しています';
-    if (!res.ok) return '計算できません';
-    return res.test + (res.p !== null && res.p !== undefined ? '　' + pText(res.p) + (res.sig ? '　有意' : '　有意ではない') : '');
+    if (!A.tabReady(tab)) return _t('列を選んでください');
+    if (!res) return _t('計算しています');
+    if (!res.ok) return _t('計算できません');
+    return res.test + (res.p !== null && res.p !== undefined ? _t('　') + pText(res.p) + (res.sig ? _t('　有意') : _t('　有意ではない')) : '');
   }
   function analysisPage() {
     if (!S.P.tabs.length) {
       var cnt = {}; S.P.vars.forEach(function (x) { cnt[x.type] = (cnt[x.type] || 0) + 1; });
-      return '<div class="md-page"><div class="md-block"><div class="md-empty"><b>データを読み込みました（回答 ' + S.data.nrow + ' 件、' + S.data.ncol + ' 列）</b><br>' +
-        ['nominal', 'ordinal', 'multi', 'numeric'].filter(function (k) { return cnt[k]; }).map(function (k) { return A.TYPE_NAMES[k] + ' ' + cnt[k] + ' 列'; }).join('、') + 'として読み取りました。<button class="md-link" data-view="data">列の読み取り方を確かめる</button><br><br>' +
-        '<button class="md-btn md-btn-primary" data-act="newAnalysis">解析を始める</button><br><br>解析の種類を選ぶと、この画面に解析の欄ができます。その欄で設問を選ぶと、すぐに結果が出ます。<br>解析を足すと、この画面の下へ順に並びます。見出しの ∨ で畳めます。</div></div></div>';
+      return _t('<div class="md-page"><div class="md-block"><div class="md-empty"><b>データを読み込みました（回答 {0} 件、{1} 列）</b><br>{2}として読み取りました。<button class="md-link" data-view="data">列の読み取り方を確かめる</button><br><br><button class="md-btn md-btn-primary" data-act="newAnalysis">解析を始める</button><br><br>解析の種類を選ぶと、この画面に解析の欄ができます。その欄で設問を選ぶと、すぐに結果が出ます。<br>解析を足すと、この画面の下へ順に並びます。見出しの ∨ で畳めます。</div></div></div>', S.data.nrow, S.data.ncol, ['nominal', 'ordinal', 'multi', 'numeric'].filter(function (k) { return cnt[k]; }).map(function (k) { return A.TYPE_NAMES[k] + ' ' + cnt[k] + _t(' 列'); }).join(_t('、')));
     }
-    return '<div class="md-page" id="md_anpage">' + S.P.tabs.map(sectionHtml).join('') + '<div class="md-addrow"><button class="md-btn" data-act="newAnalysis"' + (S.P.tabs.length >= A.MAX_TABS ? ' disabled' : '') + '>＋ 新しい解析</button></div></div>';
+    return '<div class="md-page" id="md_anpage">' + S.P.tabs.map(sectionHtml).join('') + '<div class="md-addrow"><button class="md-btn" data-act="newAnalysis"' + (S.P.tabs.length >= A.MAX_TABS ? ' disabled' : '') + _t('>＋ 新しい解析</button></div></div>');
   }
   function sectionHtml(tab, i) {
     var res = S.results[tab.id], sel = S.ui.sel === tab.id, sig = !!(res && res.ok && res.sig === true), n = S.P.tabs.length;
     var h = '<section class="md-an' + (sel ? ' sel' : '') + (tab.collapsed ? ' collapsed' : '') + '" data-an="' + tab.id + '"><div class="md-an-head"' + (window.CTS_TOUCH ? '' : ' draggable="true"') + ' data-anhead="' + tab.id + '">' +
-      '<button class="md-chev" data-act="toggleAn" data-arg="' + tab.id + '" data-tip="' + (tab.collapsed ? 'この解析を開きます。' : 'この解析を畳みます。') + '">' + (tab.collapsed ? CHEV.closed : CHEV.open) + '</button>' +
-      '<input type="checkbox" data-ancheck="' + tab.id + '"' + (tab.checked ? ' checked' : '') + ' data-tip="まとめて書き出すときの対象にします。">' +
-      '<span class="md-an-no">' + (i + 1) + '</span><span class="md-an-name' + (sig ? ' sig' : '') + '" data-anname="' + tab.id + '" data-tip="' + (sig ? '有意な結果です。' : '') + '右クリックで名前を変更できます。見出しをドラッグすると並べ替えられます。">' + esc(tab.name) + '</span>' +
+      '<button class="md-chev" data-act="toggleAn" data-arg="' + tab.id + '" data-tip="' + (tab.collapsed ? _t('この解析を開きます。') : _t('この解析を畳みます。')) + '">' + (tab.collapsed ? CHEV.closed : CHEV.open) + '</button>' +
+      '<input type="checkbox" data-ancheck="' + tab.id + '"' + (tab.checked ? ' checked' : '') + _t(' data-tip="まとめて書き出すときの対象にします。">') +
+      '<span class="md-an-no">' + (i + 1) + '</span><span class="md-an-name' + (sig ? ' sig' : '') + '" data-anname="' + tab.id + '" data-tip="' + (sig ? _t('有意な結果です。') : '') + _t('右クリックで名前を変更できます。見出しをドラッグすると並べ替えられます。">') + esc(tab.name) + '</span>' +
       '<span class="md-an-sum">' + esc(anSummary(tab, res)) + '</span><span class="md-an-btns">' +
-      '<button data-act="moveAnId" data-arg="' + tab.id + ':-1" data-tip="1 つ上へ動かします。"' + (i === 0 ? ' disabled' : '') + '>▲</button><button data-act="moveAnId" data-arg="' + tab.id + ':1" data-tip="1 つ下へ動かします。"' + (i === n - 1 ? ' disabled' : '') + '>▼</button>' +
-      '<button data-act="anMenu" data-arg="' + tab.id + '" data-tip="名前の変更・複製・削除など">⋯</button></span></div>';
+      '<button data-act="moveAnId" data-arg="' + tab.id + _t(':-1" data-tip="1 つ上へ動かします。"') + (i === 0 ? ' disabled' : '') + '>▲</button><button data-act="moveAnId" data-arg="' + tab.id + _t(':1" data-tip="1 つ下へ動かします。"') + (i === n - 1 ? ' disabled' : '') + '>▼</button>' +
+      '<button data-act="anMenu" data-arg="' + tab.id + _t('" data-tip="名前の変更・複製・削除など">⋯</button></span></div>');
     if (!tab.collapsed) h += '<div class="md-an-body">' + sectionBody(tab, res) + '</div>';
     return h + '</section>';
   }
@@ -494,19 +488,17 @@
   function manyHtml(tab, sd) {
     var sl = tab.slots[sd.id], cols = sl.cols || [], first = cols.length ? A.v(cols[0]) : null;
     var list = cols.map(function (c, i) { var x = A.v(c); return '<div class="md-item"><span class="md-item-no">' + (i + 1) + '</span><span class="md-item-name">' + esc(x ? x.label : '') + '</span>' +
-      '<button class="md-mv" data-act="itemMove" data-arg="' + tab.id + ':' + sd.id + ':' + i + ':-1" data-tip="1 つ上へ"' + (i === 0 ? ' disabled' : '') + '>▲</button><button class="md-mv" data-act="itemMove" data-arg="' + tab.id + ':' + sd.id + ':' + i + ':1" data-tip="1 つ下へ"' + (i === cols.length - 1 ? ' disabled' : '') + '>▼</button>' +
-      (tab.type === 'alpha' || tab.type === 'factor' || tab.type === 'cfa' ? '<button class="md-mv md-rev' + ((sl.reverse || []).indexOf(c) >= 0 ? ' on' : '') + '" data-act="itemRev" data-arg="' + tab.id + ':' + sd.id + ':' + c + '" data-tip="逆の向きの項目（逆転項目）として、得点を反転して計算します。">逆転</button>' : '') +
-      '<button class="md-mv md-danger" data-act="itemRemove" data-arg="' + tab.id + ':' + sd.id + ':' + i + '" data-tip="この設問を外します。">×</button></div>'; }).join('');
-    var opts = '<option value="">' + (cols.length ? '＋ 設問を追加' : sd.optional ? '（使わない。使うときは設問を選ぶ）' : '（1 つ目の設問を選んでください）') + '</option>' + S.P.vars.filter(function (x) { return cols.indexOf(x.col) < 0; }).map(function (x) {
+      '<button class="md-mv" data-act="itemMove" data-arg="' + tab.id + ':' + sd.id + ':' + i + _t(':-1" data-tip="1 つ上へ"{0}>▲</button><button class="md-mv" data-act="itemMove" data-arg="{1}:{2}:{3}:1" data-tip="1 つ下へ"{4}>▼</button>{5}<button class="md-mv md-danger" data-act="itemRemove" data-arg="{6}:{7}:{8}" data-tip="この設問を外します。">×</button></div>', i === 0 ? ' disabled' : '', tab.id, sd.id, i, i === cols.length - 1 ? ' disabled' : '', tab.type === 'alpha' || tab.type === 'factor' || tab.type === 'cfa' ? '<button class="md-mv md-rev' + ((sl.reverse || []).indexOf(c) >= 0 ? ' on' : '') + '" data-act="itemRev" data-arg="' + tab.id + ':' + sd.id + ':' + c + _t('" data-tip="逆の向きの項目（逆転項目）として、得点を反転して計算します。">逆転</button>') : '', tab.id, sd.id, i); }).join('');
+    var opts = '<option value="">' + (cols.length ? _t('＋ 設問を追加') : sd.optional ? _t('（使わない。使うときは設問を選ぶ）') : _t('（1 つ目の設問を選んでください）')) + '</option>' + S.P.vars.filter(function (x) { return cols.indexOf(x.col) < 0; }).map(function (x) {
       var ok = sd.types.indexOf(x.type) >= 0, mark = first && ok && sameChoices(first, x);
-      return '<option value="' + x.col + '"' + (ok ? '' : ' disabled') + '>' + (mark ? '◎ ' : '') + esc(x.label) + '　〔' + esc(A.TYPE_NAMES[x.type] || x.type) + '〕</option>';
+      return '<option value="' + x.col + '"' + (ok ? '' : ' disabled') + '>' + (mark ? '◎ ' : '') + esc(x.label) + _t('　〔{0}〕</option>', esc(A.TYPE_NAMES[x.type] || x.type));
     }).join('');
     var same = first ? S.P.vars.filter(function (x) { return cols.indexOf(x.col) < 0 && sd.types.indexOf(x.type) >= 0 && sameChoices(first, x); }) : [];
     return '<div class="md-qrow md-qrow-many"><span class="md-qlab">' + esc(sd.label) + (sd.hint ? '<small>' + esc(sd.hint) + '</small>' : '') + '</span><div>' +
       (list ? '<div class="md-items">' + list + '</div>' : '') +
       '<select class="md-in' + (cols.length < 2 && !(sd.optional && !cols.length) ? ' md-empty-sel' : '') + '" data-additem="' + sd.id + '" data-tab="' + tab.id + '">' + opts + '</select>' +
-      (same.length ? '<div class="md-qact" style="text-align:left;margin-top:6px"><button class="md-btn md-btn-sm" data-act="itemAddSame" data-arg="' + tab.id + ':' + sd.id + '" data-tip="選んだ設問と同じ選択肢の設問（◎ の付いたもの）を、すべて追加します。">同じ選択肢の設問をすべて追加（' + same.length + ' 個）</button></div>' : '') +
-      (cols.length === 1 ? '<div class="md-hint" style="margin:6px 0 0">比べる設問をもう 1 つ以上選んでください。◎ は、選んだ設問と同じ選択肢の設問です。</div>' : '') + '</div></div>';
+      (same.length ? '<div class="md-qact" style="text-align:left;margin-top:6px"><button class="md-btn md-btn-sm" data-act="itemAddSame" data-arg="' + tab.id + ':' + sd.id + _t('" data-tip="選んだ設問と同じ選択肢の設問（◎ の付いたもの）を、すべて追加します。">同じ選択肢の設問をすべて追加（{0} 個）</button></div>', same.length) : '') +
+      (cols.length === 1 ? _t('<div class="md-hint" style="margin:6px 0 0">比べる設問をもう 1 つ以上選んでください。◎ は、選んだ設問と同じ選択肢の設問です。</div>') : '') + '</div></div>';
   }
   function qselHtml(tab) {
     var d = A.def(tab.type), cols = d.slots.map(function (sd) { return sd.many ? null : tab.slots[sd.id].col; });
@@ -516,42 +508,41 @@
       if (sd.many) return manyHtml(tab, sd);
       var sl = tab.slots[sd.id], dup = sl.col !== null && dups.indexOf(sl.col) >= 0;
       return '<label class="md-qrow"><span class="md-qlab">' + esc(sd.label) + (sd.hint ? '<small>' + esc(sd.hint) + '</small>' : '') + '</span>' +
-        '<select class="md-in' + (dup ? ' md-dup' : '') + (sl.col === null && !sd.optional ? ' md-empty-sel' : '') + '" data-slot="' + sd.id + '" data-tab="' + tab.id + '"' + (dup ? ' data-tip="もう 1 つの欄と同じ設問です。別の設問を選んでください。"' : '') + '>' + varOptions(sd, sl.col) + '</select></label>';
-    }).join('') + (two && cols.every(function (c) { return c !== null; }) ? '<div class="md-qact"><button class="md-btn md-btn-sm" data-act="swapAt" data-arg="' + tab.id + '" data-tip="2 つの設問の役割（行と列など）を入れ替えます。">2 つの設問を入れ替える</button></div>' : '') + '</div>';
+        '<select class="md-in' + (dup ? ' md-dup' : '') + (sl.col === null && !sd.optional ? ' md-empty-sel' : '') + '" data-slot="' + sd.id + '" data-tab="' + tab.id + '"' + (dup ? _t(' data-tip="もう 1 つの欄と同じ設問です。別の設問を選んでください。"') : '') + '>' + varOptions(sd, sl.col) + '</select></label>';
+    }).join('') + (two && cols.every(function (c) { return c !== null; }) ? '<div class="md-qact"><button class="md-btn md-btn-sm" data-act="swapAt" data-arg="' + tab.id + _t('" data-tip="2 つの設問の役割（行と列など）を入れ替えます。">2 つの設問を入れ替える</button></div>') : '') + '</div>';
   }
   function sectionBody(tab, res) {
     var d = A.def(tab.type), h = '';
-    if (!A.tabReady(tab)) return '<div class="md-qintro"><b>' + esc(d.name) + '</b>　' + esc(d.desc) + '</div>' + qselHtml(tab) +
-      '<div class="md-hint" style="margin:6px 0 4px">設問を選ぶと、すぐに結果（p 値・表・図・報告書の文）が出ます。選択肢の名前やまとめ方、除外、絞り込みは、右の作業ウィンドウで設定できます。</div>';
+    if (!A.tabReady(tab)) return '<div class="md-qintro"><b>' + esc(d.name) + _t('</b>　{0}</div>{1}<div class="md-hint" style="margin:6px 0 4px">設問を選ぶと、すぐに結果（p 値・表・図・報告書の文）が出ます。選択肢の名前やまとめ方、除外、絞り込みは、右の作業ウィンドウで設定できます。</div>', esc(d.desc), qselHtml(tab));
     h += qselHtml(tab);
-    if (!res) return h + '<div class="md-empty">計算しています。</div>';
-    if (!res.ok) return h + '<ul class="md-notes"><li class="err">' + esc(res.message || '計算できませんでした。') + '</li></ul>';
-    var a = S.P.settings.alpha, verdict = res.sig === true ? '有意（p < ' + a + '）' : res.sig === false ? '有意ではない（p ≥ ' + a + '）' : '';
+    if (!res) return h + _t('<div class="md-empty">計算しています。</div>');
+    if (!res.ok) return h + '<ul class="md-notes"><li class="err">' + esc(res.message || _t('計算できませんでした。')) + '</li></ul>';
+    var a = S.P.settings.alpha, verdict = res.sig === true ? _t('有意（p < {0}）', a) : res.sig === false ? _t('有意ではない（p ≥ {0}）', a) : '';
     h += '<div class="md-result' + (res.sig ? ' sig' : '') + '"><span class="md-test">' + esc(res.test) + '</span>' +
       (res.headline || []).map(function (k) { var val = String(k.v); return '<span class="md-kv">' + esc(k.k) + (/^</.test(val) ? ' ' : ' = ') + esc(val) + '</span>'; }).join('') +
-      (res.n && res.n.excluded > 0 ? '<span class="md-kv" data-tip="無回答、またはチェックを外した選択肢を選んだ人です。">除外 ' + res.n.excluded + ' 人</span>' : '') + (verdict ? '<span class="md-verdict">' + verdict + '</span>' : '') + '</div>';
-    if (res.suggest === 'fisher') h += '<ul class="md-notes"><li>' + esc(res.notes[res.notes.length - 1]) + ' <button class="md-btn md-btn-sm" data-act="toFisher" data-arg="' + tab.id + '">フィッシャーの正確確率検定に切り替える</button></li></ul>';
+      (res.n && res.n.excluded > 0 ? _t('<span class="md-kv" data-tip="無回答、またはチェックを外した選択肢を選んだ人です。">除外 {0} 人</span>', res.n.excluded) : '') + (verdict ? '<span class="md-verdict">' + verdict + '</span>' : '') + '</div>';
+    if (res.suggest === 'fisher') h += '<ul class="md-notes"><li>' + esc(res.notes[res.notes.length - 1]) + ' <button class="md-btn md-btn-sm" data-act="toFisher" data-arg="' + tab.id + _t('">フィッシャーの正確確率検定に切り替える</button></li></ul>');
     // 表を先に、図をその下に置く
     var tbs = tablesOf(tab, res);
-    if (tbs.length) h += '<div class="md-block"><div class="md-block-head">表<span class="md-sp"><button class="md-btn md-btn-sm" data-act="tblCopyAt" data-arg="' + tab.id + '" data-tip="デザインごとコピーします。Excel や Word に貼り付けられます。">コピー</button><button class="md-btn md-btn-sm" data-act="tblCsvAt" data-arg="' + tab.id + '">CSV で保存</button></span></div><div class="md-block-body md-tables" data-tables="' + tab.id + '">' + tbs.map(function (t, ti) {
+    if (tbs.length) h += _t('<div class="md-block"><div class="md-block-head">表<span class="md-sp"><button class="md-btn md-btn-sm" data-act="tblCopyAt" data-arg="{0}" data-tip="デザインごとコピーします。Excel や Word に貼り付けられます。">コピー</button><button class="md-btn md-btn-sm" data-act="tblCsvAt" data-arg="{1}">CSV で保存</button></span></div><div class="md-block-body md-tables" data-tables="', tab.id, tab.id) + tab.id + '">' + tbs.map(function (t, ti) {
       return '<div class="md-tblwrap" data-tbl="' + tab.id + ':' + ti + '">' + tableHtml(t, tab.tstyle,
-        '<div class="md-th md-th-e" data-h="e" data-tip="ドラッグで表の幅を変えます。"></div><div class="md-th md-th-s" data-h="s" data-tip="ドラッグで行の高さを変えます。"></div><div class="md-th md-th-se" data-h="se" data-tip="ドラッグで表の幅と行の高さを変えます。ダブルクリックで元の大きさに戻します。"></div>') + '</div>';
+        _t('<div class="md-th md-th-e" data-h="e" data-tip="ドラッグで表の幅を変えます。"></div><div class="md-th md-th-s" data-h="s" data-tip="ドラッグで行の高さを変えます。"></div><div class="md-th md-th-se" data-h="se" data-tip="ドラッグで表の幅と行の高さを変えます。ダブルクリックで元の大きさに戻します。"></div>')) + '</div>';
     }).join('') + '</div></div>';
     var figs = figsOf(tab, res);
     if (Chart.model(res)) {
-      h += '<div class="md-block"><div class="md-block-head">図<span class="md-sp"><button class="md-btn md-btn-sm" data-act="addFigTo" data-arg="' + tab.id + '" data-tip="別の種類の図をもう 1 つ足します。">＋ 図を追加</button></span></div><div class="md-block-body">';
+      h += _t('<div class="md-block"><div class="md-block-head">図<span class="md-sp"><button class="md-btn md-btn-sm" data-act="addFigTo" data-arg="{0}" data-tip="別の種類の図をもう 1 つ足します。">＋ 図を追加</button></span></div><div class="md-block-body">', tab.id);
       figs.forEach(function (fg, k) {
         var selF = S.ui.sel === tab.id && S.ui.selFig === k && (S.ui.rtab === 'figure' || figs.length > 1);
-        h += '<div class="md-figrow"><div class="md-figcap">図 ' + (k + 1) + '　' + Chart.KIND_NAMES[fg.r.kind] + '　<span class="md-figsize">' + fg.r.w + ' × ' + fg.r.h + '</span><span class="md-sp"><button class="md-btn md-btn-sm" data-act="figCopyAt" data-arg="' + tab.id + ':' + k + '">コピー</button><button class="md-btn md-btn-sm" data-act="figPngAt" data-arg="' + tab.id + ':' + k + '">画像で保存</button>' +
-          '<button class="md-btn md-btn-sm" data-act="delFigAt" data-arg="' + tab.id + ':' + k + '" data-tip="この図を削除します（元に戻せます）。">削除</button></span></div>' +
-          '<div class="md-figwrap' + (selF ? ' sel' : '') + '" data-fig="' + tab.id + ':' + k + '">' + fg.r.svg + '<div class="md-fh md-fh-e" data-h="e" data-tip="ドラッグで幅を変えます。"></div><div class="md-fh md-fh-s" data-h="s" data-tip="ドラッグで高さを変えます。"></div><div class="md-fh md-fh-se" data-h="se" data-tip="ドラッグで大きさを変えます。"></div></div></div>';
+        h += _t('<div class="md-figrow"><div class="md-figcap">図 ') + (k + 1) + _t('　') + _t(Chart.KIND_NAMES[fg.r.kind]) + _t('　<span class="md-figsize">') + fg.r.w + ' × ' + fg.r.h + '</span><span class="md-sp"><button class="md-btn md-btn-sm" data-act="figCopyAt" data-arg="' + tab.id + ':' + k + _t('">コピー</button><button class="md-btn md-btn-sm" data-act="figPngAt" data-arg="') + tab.id + ':' + k + _t('">画像で保存</button>') +
+          '<button class="md-btn md-btn-sm" data-act="delFigAt" data-arg="' + tab.id + ':' + k + _t('" data-tip="この図を削除します（元に戻せます）。">削除</button></span></div>') +
+          '<div class="md-figwrap' + (selF ? ' sel' : '') + '" data-fig="' + tab.id + ':' + k + '">' + fg.r.svg + _t('<div class="md-fh md-fh-e" data-h="e" data-tip="ドラッグで幅を変えます。"></div><div class="md-fh md-fh-s" data-h="s" data-tip="ドラッグで高さを変えます。"></div><div class="md-fh md-fh-se" data-h="se" data-tip="ドラッグで大きさを変えます。"></div></div></div>');
       });
-      if (!figs.length) h += '<div class="md-hint" style="margin:0">図はありません。「＋ 図を追加」で足せます。</div>';
+      if (!figs.length) h += _t('<div class="md-hint" style="margin:0">図はありません。「＋ 図を追加」で足せます。</div>');
       h += '</div></div>';
     }
     var edited = tab.reportText !== null, stale = edited && tab.reportBase && tab.reportBase !== res.report;
-    h += '<div class="md-block"><div class="md-block-head">報告書の文（定型文）<span class="md-sp">' + (edited ? '<button class="md-btn md-btn-sm" data-act="resetTextAt" data-arg="' + tab.id + '" data-tip="結果から作った定型文に戻します。">定型文に戻す</button>' : '') + '<button class="md-btn md-btn-sm" data-act="textCopyAt" data-arg="' + tab.id + '">コピー</button></span></div><div class="md-block-body">' +
-      (stale ? '<ul class="md-notes"><li>この文を書き換えたあとで結果が変わりました。数値が合っているか確かめるか、「定型文に戻す」を押してください。</li></ul>' : '') +
+    h += _t('<div class="md-block"><div class="md-block-head">報告書の文（定型文）<span class="md-sp">{0}<button class="md-btn md-btn-sm" data-act="textCopyAt" data-arg="{1}">コピー</button></span></div><div class="md-block-body">', edited ? '<button class="md-btn md-btn-sm" data-act="resetTextAt" data-arg="' + tab.id + _t('" data-tip="結果から作った定型文に戻します。">定型文に戻す</button>') : '', tab.id) +
+      (stale ? _t('<ul class="md-notes"><li>この文を書き換えたあとで結果が変わりました。数値が合っているか確かめるか、「定型文に戻す」を押してください。</li></ul>') : '') +
       '<textarea class="md-in" data-auto data-reptext="' + tab.id + '" rows="3">' + esc(edited ? tab.reportText : res.report) + '</textarea></div></div>';
     var notes = (res.notes || []).slice(0, res.suggest === 'fisher' ? -1 : undefined);
     if (notes.length) h += '<ul class="md-notes">' + notes.map(function (nn) { return '<li class="info">' + esc(nn) + '</li>'; }).join('') + '</ul>';
@@ -580,17 +571,17 @@
   }
   function summaryTable() {
     var holm = S.P.report.holm, items = repItems().filter(function (x) { return x.ok; });
-    var rows = [['番号', '解析', '検定', '統計量', 'p'].concat(holm ? ['補正後の p'] : [], ['効果量', 'n'])];
+    var rows = [[_t('番号'), _t('解析'), _t('検定'), _t('統計量'), 'p'].concat(holm ? [_t('補正後の p')] : [], [_t('効果量'), 'n'])];
     items.forEach(function (x) {
       var r = x.res, hp = S.holm && S.holm.map[x.tab.id] !== undefined ? S.holm.map[x.tab.id] : null, hasP = r.p !== null && r.p !== undefined;
       rows.push([String(x.no), x.tab.name, r.test, (r.row && r.row.stat) || '–', hasP ? fmtP(r.p) : '–'].concat(holm ? [hasP ? fmtP(hp) : '–'] : [], [(r.row && r.row.effect) || '–', String(r.n ? r.n.used : '')]));
     });
     var k = S.holm ? S.holm.k : 0;
-    return { caption: '検定の一覧', rows: rows, textCols: [true, true], note: '有意水準は ' + (S.P.settings.alpha * 100) + '%。' + (holm ? '補正後の p は、この報告書の ' + k + ' 件の検定をまとめてホルム法で補正した値。検定を繰り返すと、関連がなくても偶然に有意となる検定が出やすくなるため、結論には補正後の p も参照する。' : '') };
+    return { caption: _t('検定の一覧'), rows: rows, textCols: [true, true], note: _t('有意水準は {0}%。', S.P.settings.alpha * 100) + (holm ? _t('補正後の p は、この報告書の {0} 件の検定をまとめてホルム法で補正した値。検定を繰り返すと、関連がなくても偶然に有意となる検定が出やすくなるため、結論には補正後の p も参照する。', k) : '') };
   }
   function repMeta() {
     var d = new Date(), pad = function (n) { return (n < 10 ? '0' : '') + n; };
-    return 'データ：' + S.data.name + '（回答 ' + S.data.nrow + ' 件）　有意水準：' + (S.P.settings.alpha * 100) + '%　作成日：' + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    return _t('データ：{0}（回答 {1} 件）　有意水準：{2}%　作成日：', S.data.name, S.data.nrow, S.P.settings.alpha * 100) + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
   }
   // ---------------- 引用のしかた：このアプリと R の参考文献の書き方（作成者・URL はここで決める）
   var CITE = { en: 'Okuyama, T.', full: 'Okuyama, Taiga', ja: '奥山泰冴', jaShort: '奥山', url: 'https://okuyama23.github.io/crosstab-studio/' };
@@ -599,27 +590,27 @@
     var rv = S.r || '', ry = S.rYear || 'n.d.', url = CITE.url, bare = url.replace(/^https?:\/\//, '');
     function it(t, html) { return html ? '<i>' + t + '</i>' : t; }
     return [
-      { name: 'APA（第 7 版）', ref: function (h) { return CITE.en + ' (' + yr + '). ' + it('CrossTab Studio', h) + ' (Version ' + v + ') [Computer software]. ' + url; }, inText: '（' + CITE.en.split(',')[0] + ', ' + yr + '）、日本語の文では ' + CITE.jaShort + '（' + yr + '）' },
-      { name: 'MLA（第 9 版）', ref: function (h) { return CITE.full + '. ' + it('CrossTab Studio', h) + '. Version ' + v + ', ' + yr + ', ' + bare + '.'; } },
-      { name: 'シカゴ（第 17 版、著者－年方式）', ref: function (h) { return CITE.full + '. ' + yr + '. ' + it('CrossTab Studio', h) + '. Version ' + v + '. ' + url + '.'; } },
-      { name: '日本語の論文の例（SIST 02 に準じた形）', ref: function () { return CITE.ja + '. CrossTab Studio. バージョン ' + v + ', ' + yr + '. ' + url + ', (参照 ' + (function (d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); })(new Date()) + ').'; } },
-      { name: 'R（APA 第 7 版）', ref: function (h) { return 'R Core Team. (' + ry + '). ' + it('R: A language and environment for statistical computing', h) + (rv ? ' (Version ' + rv + ')' : '') + ' [Computer software]. R Foundation for Statistical Computing. https://www.R-project.org/'; } }
+      { name: _t('APA（第 7 版）'), ref: function (h) { return CITE.en + ' (' + yr + '). ' + it('CrossTab Studio', h) + ' (Version ' + v + ') [Computer software]. ' + url; }, inText: _t('（{0}, {1}）、日本語の文では {2}（{3}）', CITE.en.split(',')[0], yr, CITE.jaShort, yr) },
+      { name: _t('MLA（第 9 版）'), ref: function (h) { return CITE.full + '. ' + it('CrossTab Studio', h) + '. Version ' + v + ', ' + yr + ', ' + bare + '.'; } },
+      { name: _t('シカゴ（第 17 版、著者－年方式）'), ref: function (h) { return CITE.full + '. ' + yr + '. ' + it('CrossTab Studio', h) + '. Version ' + v + '. ' + url + '.'; } },
+      { name: _t('日本語の論文の例（SIST 02 に準じた形）'), ref: function () { return CITE.ja + _t('. CrossTab Studio. バージョン {0}, {1}. {2}, (参照 ', v, yr, url) + (function (d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); })(new Date()) + ').'; } },
+      { name: _t('R（APA 第 7 版）'), ref: function (h) { return 'R Core Team. (' + ry + '). ' + it('R: A language and environment for statistical computing', h) + (rv ? ' (Version ' + rv + ')' : '') + ' [Computer software]. R Foundation for Statistical Computing. https://www.R-project.org/'; } }
     ];
   }
   // 報告書の末尾に入れる「使用したソフトウェア」
   function citeReport() {
     var c = citeList();
-    return { title: '使用したソフトウェア', text: '集計・検定・図の作成には CrossTab Studio（バージョン ' + (window.CTS_APP_VERSION || '') + '）を用い、計算には R' + (S.r ? '（バージョン ' + S.r + '）' : '') + 'を用いた。論文などで引用するときの例（APA 第 7 版）：',
+    return { title: _t('使用したソフトウェア'), text: _t('集計・検定・図の作成には CrossTab Studio（バージョン {0}）を用い、計算には R{1}を用いた。論文などで引用するときの例（APA 第 7 版）：', window.CTS_APP_VERSION || '', S.r ? _t('（バージョン {0}）', S.r) : ''),
              refs: [c[0].ref(false), c[4].ref(false)] };
   }
   function reportPlain() {
     var items = repItems(), L = [S.P.title, repMeta(), ''];
-    if (!items.length) return L.concat(['（☑ を付けた解析がありません）']).join('\r\n');
+    if (!items.length) return L.concat([_t('（☑ を付けた解析がありません）')]).join('\r\n');
     if (items.some(function (x) { return x.ok; })) L.push('■ ' + tableTsv(summaryTable()), '');
     items.forEach(function (x) {
-      L.push('■ ' + x.no + '. ' + x.tab.name + '（' + (x.ok ? x.res.test : A.def(x.tab.type).name) + '）');
-      if (!x.ok) { L.push(x.res ? (x.res.message || '計算できませんでした。') : '列がまだ選ばれていません。', ''); return; }
-      if (x.res.method) L.push('【方法】' + x.res.method, '【結果】' + x.text, ''); else L.push(x.text, '');
+      L.push('■ ' + x.no + '. ' + x.tab.name + _t('（{0}）', x.ok ? x.res.test : A.def(x.tab.type).name));
+      if (!x.ok) { L.push(x.res ? (x.res.message || _t('計算できませんでした。')) : _t('列がまだ選ばれていません。'), ''); return; }
+      if (x.res.method) L.push(_t('【方法】') + x.res.method, _t('【結果】') + x.text, ''); else L.push(x.text, '');
       if (S.P.report.tables) tablesOf(x.tab, x.res).forEach(function (t) { L.push(tableTsv(t), ''); });
     });
     var cr = citeReport(); L.push('■ ' + cr.title, cr.text); cr.refs.forEach(function (r) { L.push(r); });
@@ -627,9 +618,7 @@
   }
   function reportHtml() {
     var n = repItems().length;
-    return '<div class="md-page"><div class="md-doc"><input class="md-doctitle" type="text" data-set="proj.title" value="' + esc(S.P.title) + '" data-tip="報告書の題名です。">' +
-      '<div class="md-meta">☑ を付けた ' + n + ' 件の解析を、上から順にまとめています。PDF には図と表も入ります。文は各解析の「報告書の文」で書き換えられます。' +
-      '<span class="md-row" style="margin-top:6px"><button class="md-btn md-btn-primary" data-act="repPdf">PDF で保存（図・表を含む）</button><button class="md-btn" data-act="repDocx">Word で保存</button><button class="md-btn" data-act="repTxt">テキストで保存</button><button class="md-btn" data-act="repCopy">全文をコピー</button><button class="md-btn" data-view="analysis">解析に戻る</button></span></div>' +
+    return '<div class="md-page"><div class="md-doc"><input class="md-doctitle" type="text" data-set="proj.title" value="' + esc(S.P.title) + _t('" data-tip="報告書の題名です。"><div class="md-meta">☑ を付けた {0} 件の解析を、上から順にまとめています。PDF には図と表も入ります。文は各解析の「報告書の文」で書き換えられます。<span class="md-row" style="margin-top:6px"><button class="md-btn md-btn-primary" data-act="repPdf">PDF で保存（図・表を含む）</button><button class="md-btn" data-act="repDocx">Word で保存</button><button class="md-btn" data-act="repTxt">テキストで保存</button><button class="md-btn" data-act="repCopy">全文をコピー</button><button class="md-btn" data-view="analysis">解析に戻る</button></span></div>', n) +
       '<pre class="md-reportpre">' + esc(reportPlain()) + '</pre></div></div>';
   }
 
@@ -644,49 +633,49 @@
     body.innerHTML = f(); body.dataset.key = key; body.scrollTop = S.ui.paneScroll[key] || 0;
     body.querySelectorAll('textarea[data-auto]').forEach(autoGrow);
   }
-  function target(tab) { return '<div class="md-target" data-tip="作業ウィンドウの設定は、この解析に効きます。解析の見出しや図をクリックすると切り替わります。">対象：<b>' + (S.P.tabs.indexOf(tab) + 1) + '. ' + esc(tab.name) + '</b></div>'; }
-  function needTab(what) { var nm = S.P.tabs.length ? '新しい解析' : '解析を始める'; return sec(what, hint(S.data ? (S.P.tabs.length ? '解析の見出しをクリックして、対象の解析を選んでください。' : '「解析を始める」で解析を作ってください。') : '先に CSV ファイルを入れてください。'), S.data ? '<button class="md-btn md-btn-primary" data-act="newAnalysis">' + nm + '</button>' : '<button class="md-btn md-btn-primary" data-act="openCsv">CSV を開く</button>'); }
+  function target(tab) { return _t('<div class="md-target" data-tip="作業ウィンドウの設定は、この解析に効きます。解析の見出しや図をクリックすると切り替わります。">対象：<b>') + (S.P.tabs.indexOf(tab) + 1) + '. ' + esc(tab.name) + '</b></div>'; }
+  function needTab(what) { var nm = S.P.tabs.length ? _t('新しい解析') : _t('解析を始める'); return sec(what, hint(S.data ? (S.P.tabs.length ? _t('解析の見出しをクリックして、対象の解析を選んでください。') : _t('「解析を始める」で解析を作ってください。')) : _t('先に CSV ファイルを入れてください。')), S.data ? '<button class="md-btn md-btn-primary" data-act="newAnalysis">' + nm + '</button>' : _t('<button class="md-btn md-btn-primary" data-act="openCsv">CSV を開く</button>')); }
   function step(n, done, title, sub, act, arg) { return '<button class="md-step' + (done ? ' done' : '') + '" data-act="' + act + '"' + (arg ? ' data-arg="' + arg + '"' : '') + '><span class="md-num">' + n + '</span><span>' + esc(title) + '<small>' + esc(sub) + '</small></span></button>'; }
   function paneHome() {
     var anyOk = S.P.tabs.some(function (t) { return S.results[t.id] && S.results[t.id].ok; });
-    return sec('はじめに（作業の順番）',
-      step(1, !!S.data, 'CSV を入れる', '「CSV を開く」で回答のファイルを選びます。', 'openCsv'),
-      step(2, S.P.tabs.length > 0, S.P.tabs.length ? '解析を足す' : '解析を始める', '種類を選ぶと、画面の下へ順に並びます。', 'newAnalysis'),
-      step(3, anyOk, '設問を選ぶ', '解析の欄で設問を選ぶと、すぐに p 値・表・図・文が出ます。', 'goTab', 'analysis'),
-      step(4, false, '図と表を整える', '図や表をクリックして、文字・線・色を変えます。', 'goTab', 'figure'),
-      step(5, false, 'まとめて書き出す', '☑ を付けた解析の図・Excel・報告書を保存します。', 'exportAll')) +
-      sec('今の状態', hint(!S.data ? 'データがまだありません。' : 'データ：' + S.data.name + '（回答 ' + S.data.nrow + ' 件、' + S.data.ncol + ' 列）。解析 ' + S.P.tabs.length + ' 件。'),
-        hint('見出しの ∨ で解析を畳めます。有意な解析は、畳んでいても名前が赤い太字になります。')) +
-      sec('保存', hint('「上書き保存」で、データ（CSV の中身）・解析・図と表の設定を 1 つのプロジェクトとしてこの端末（ブラウザの中）に保存します。ブラウザのデータを消すと消えるので、大事なものは「ファイルに書き出す」でも保存してください。次からは「プロジェクトを開く」で、CSV なしで元どおりに開けます。' + (S.projName ? '今のプロジェクト：' + S.projName : '')),
-        '<div class="md-row"><button class="md-btn" data-act="save"' + (S.data ? '' : ' disabled') + '>上書き保存</button><button class="md-btn" data-act="openProject">プロジェクトを開く</button></div>');
+    return sec(_t('はじめに（作業の順番）'),
+      step(1, !!S.data, _t('CSV を入れる'), _t('「CSV を開く」で回答のファイルを選びます。'), 'openCsv'),
+      step(2, S.P.tabs.length > 0, S.P.tabs.length ? _t('解析を足す') : _t('解析を始める'), _t('種類を選ぶと、画面の下へ順に並びます。'), 'newAnalysis'),
+      step(3, anyOk, _t('設問を選ぶ'), _t('解析の欄で設問を選ぶと、すぐに p 値・表・図・文が出ます。'), 'goTab', 'analysis'),
+      step(4, false, _t('図と表を整える'), _t('図や表をクリックして、文字・線・色を変えます。'), 'goTab', 'figure'),
+      step(5, false, _t('まとめて書き出す'), _t('☑ を付けた解析の図・Excel・報告書を保存します。'), 'exportAll')) +
+      sec(_t('今の状態'), hint(!S.data ? _t('データがまだありません。') : _t('データ：{0}（回答 {1} 件、{2} 列）。解析 {3} 件。', S.data.name, S.data.nrow, S.data.ncol, S.P.tabs.length)),
+        hint(_t('見出しの ∨ で解析を畳めます。有意な解析は、畳んでいても名前が赤い太字になります。'))) +
+      sec(_t('保存'), hint(_t('「上書き保存」で、データ（CSV の中身）・解析・図と表の設定を 1 つのプロジェクトとしてこの端末（ブラウザの中）に保存します。ブラウザのデータを消すと消えるので、大事なものは「ファイルに書き出す」でも保存してください。次からは「プロジェクトを開く」で、CSV なしで元どおりに開けます。') + (S.projName ? _t('今のプロジェクト：') + S.projName : '')),
+        '<div class="md-row"><button class="md-btn" data-act="save"' + (S.data ? '' : ' disabled') + _t('>上書き保存</button><button class="md-btn" data-act="openProject">プロジェクトを開く</button></div>'));
   }
   function paneData() {
-    if (!S.data) return needTab('データ');
+    if (!S.data) return needTab(_t('データ'));
     var x = S.ui.selVar !== null ? A.v(S.ui.selVar) : null;
-    if (!x) return sec('列の設定', hint('左の一覧で列をクリックすると、その列の種類と回答の内訳をここで確認できます。')) +
-      sec('種類の見分け方', hint('単一回答：1 つだけ選ぶ質問。順序あり：「あてはまる〜あてはまらない」のように段階がある質問。複数回答：あてはまるものをすべて選ぶ質問。自動の判定が合わないときは、種類を選び直してください。'));
+    if (!x) return sec(_t('列の設定'), hint(_t('左の一覧で列をクリックすると、その列の種類と回答の内訳をここで確認できます。'))) +
+      sec(_t('種類の見分け方'), hint(_t('単一回答：1 つだけ選ぶ質問。順序あり：「あてはまる〜あてはまらない」のように段階がある質問。複数回答：あてはまるものをすべて選ぶ質問。自動の判定が合わないときは、種類を選び直してください。')));
     var mx = Math.max.apply(null, (x.cats || []).map(function (c) { return c.n; }).concat([1]));
-    var h = sec('列 ' + x.col + ' の設定', '<label class="md-field"><span>表示名</span><input type="text" data-varlabel="' + x.col + '" value="' + esc(x.label) + '"></label>',
-      grid2('<label class="md-field"><span>種類</span><select data-var="type">' + options([['nominal', '単一回答'], ['ordinal', '順序あり'], ['multi', '複数回答'], ['numeric', '数値'], ['text', '使わない（自由記述など）']], x.type === 'time' || x.type === 'empty' ? 'text' : x.type) + '</select></label>',
-        x.type === 'multi' ? '<label class="md-field"><span>回答の区切り</span><select data-var="delim">' + options([[';', 'セミコロン（;）'], [', ', 'カンマと空白（, ）'], ['、', '読点（、）']], x.delim) + '</select></label>' : '<span></span>'),
-      hint('表示名は図・表・報告書に出ます。短く書き直すと読みやすくなります。')) +
-      sec('質問文', '<div class="md-hint" style="color:var(--t-1e2f26);white-space:pre-wrap">' + esc(x.header) + '</div>');
-    if (A.isCat(x)) h += sec('回答の内訳（' + x.n + ' 人が回答）', x.cats.map(function (c, i) {
+    var h = sec(_t('列 {0} の設定', x.col), _t('<label class="md-field"><span>表示名</span><input type="text" data-varlabel="') + x.col + '" value="' + esc(x.label) + '"></label>',
+      grid2(_t('<label class="md-field"><span>種類</span><select data-var="type">') + options([['nominal', _t('単一回答')], ['ordinal', _t('順序あり')], ['multi', _t('複数回答')], ['numeric', _t('数値')], ['text', _t('使わない（自由記述など）')]], x.type === 'time' || x.type === 'empty' ? 'text' : x.type) + '</select></label>',
+        x.type === 'multi' ? _t('<label class="md-field"><span>回答の区切り</span><select data-var="delim">') + options([[';', _t('セミコロン（;）')], [', ', _t('カンマと空白（, ）')], [_t('、'), _t('読点（、）')]], x.delim) + '</select></label>' : '<span></span>'),
+      hint(_t('表示名は図・表・報告書に出ます。短く書き直すと読みやすくなります。'))) +
+      sec(_t('質問文'), '<div class="md-hint" style="color:var(--t-1e2f26);white-space:pre-wrap">' + esc(x.header) + '</div>');
+    if (A.isCat(x)) h += sec(_t('回答の内訳（{0} 人が回答）', x.n), x.cats.map(function (c, i) {
       return '<div class="md-bar" data-tip="' + esc(c.v) + '"><span class="md-bl">' + esc(c.v) + '</span><span class="md-bb"><i style="width:' + (c.n / mx * 100).toFixed(1) + '%"></i></span><span class="md-bn">' + c.n + '</span>' +
-        (x.type !== 'multi' ? '<button class="md-mv" data-act="varCatUp" data-arg="' + i + '" data-tip="この選択肢を 1 つ上へ動かします。"' + (i === 0 ? ' disabled' : '') + '>▲</button>' : '') + '</div>';
-    }).join(''), hint(x.type === 'ordinal' ? '上から順に「上位」として扱います。並びが合わないときは ▲ で直してください（新しく作る解析に反映されます）。' : x.type === 'multi' ? '複数回答は、選択肢ごとに選んだ人数を数えます。' : '並びは、これから作る解析の表や図の順番になります。'),
-      '<button class="md-btn" data-act="freqOfVar">この列を集計する</button>');
-    else if (x.type === 'numeric' && x.summary) h += sec('数値の要約', hint('最小 ' + x.summary.min + '、中央値 ' + x.summary.median + '、平均 ' + (+x.summary.mean).toFixed(2) + '、最大 ' + x.summary.max + '（' + x.n + ' 人が回答）'));
-    else h += sec('回答', hint(x.n + ' 人が回答しています。この種類の列は解析に使いません。'));
+        (x.type !== 'multi' ? '<button class="md-mv" data-act="varCatUp" data-arg="' + i + _t('" data-tip="この選択肢を 1 つ上へ動かします。"') + (i === 0 ? ' disabled' : '') + '>▲</button>' : '') + '</div>';
+    }).join(''), hint(x.type === 'ordinal' ? _t('上から順に「上位」として扱います。並びが合わないときは ▲ で直してください（新しく作る解析に反映されます）。') : x.type === 'multi' ? _t('複数回答は、選択肢ごとに選んだ人数を数えます。') : _t('並びは、これから作る解析の表や図の順番になります。')),
+      _t('<button class="md-btn" data-act="freqOfVar">この列を集計する</button>'));
+    else if (x.type === 'numeric' && x.summary) h += sec(_t('数値の要約'), hint(_t('最小 {0}、中央値 {1}、平均 {2}、最大 {3}（{4} 人が回答）', x.summary.min, x.summary.median, (+x.summary.mean).toFixed(2), x.summary.max, x.n)));
+    else h += sec(_t('回答'), hint(x.n + _t(' 人が回答しています。この種類の列は解析に使いません。')));
     return h;
   }
   function varOptions(sd, cur) {
     var ok = [], ng = [];
     S.P.vars.forEach(function (x) {
       var allowed = sd.types.indexOf(x.type) >= 0;
-      (allowed ? ok : ng).push('<option value="' + x.col + '"' + (cur === x.col ? ' selected' : '') + (allowed ? '' : ' disabled') + '>' + esc(x.label) + '　〔' + esc(A.TYPE_NAMES[x.type] || x.type) + '〕</option>');
+      (allowed ? ok : ng).push('<option value="' + x.col + '"' + (cur === x.col ? ' selected' : '') + (allowed ? '' : ' disabled') + '>' + esc(x.label) + _t('　〔{0}〕</option>', esc(A.TYPE_NAMES[x.type] || x.type)));
     });
-    return '<option value="">' + (sd.optional ? '（使わない）' : '（選んでください）') + '</option><optgroup label="使える列">' + ok.join('') + '</optgroup>' + (ng.length ? '<optgroup label="この欄には使えない列">' + ng.join('') + '</optgroup>' : '');
+    return '<option value="">' + (sd.optional ? _t('（使わない）') : _t('（選んでください）')) + _t('</option><optgroup label="使える列">') + ok.join('') + '</optgroup>' + (ng.length ? _t('<optgroup label="この欄には使えない列">') + ng.join('') + '</optgroup>' : '');
   }
   function catsEditor(tab, sid, sl, x) {
     if (!sl.cats.length || (x && !A.isCat(x))) return '';
@@ -694,128 +683,128 @@
     var h = '<div class="md-cats">';
     sl.cats.forEach(function (c, i) {
       var merged = c.on && sl.cats.some(function (k, j) { return j !== i && k.on && k.label === c.label; });
-      h += '<div class="md-cat' + (c.on ? '' : ' off') + '"><input type="checkbox" data-cat="' + sid + ':' + i + ':on"' + (c.on ? ' checked' : '') + ' data-tip="チェックを外すと、この選択肢を選んだ人を解析から除きます。">' +
-        '<input type="text" data-cat="' + sid + ':' + i + ':label" value="' + esc(c.label) + '" data-tip="元の回答：' + esc(c.v) + '。名前を書き換えられます。ほかの選択肢と同じ名前にすると、1 つにまとめます。">' +
-        (merged ? '<button class="md-merged" data-tip="同じ名前の選択肢とまとめています。押すと、この選択肢だけ元の名前に戻して分けます。">まとめ</button>' : '') + '<span class="md-n">' + (counts[c.v] || 0) + '</span>' +
-        '<button class="md-mv" data-act="catMove" data-arg="' + sid + ':' + i + ':-1" data-tip="1 つ上へ"' + (i === 0 ? ' disabled' : '') + '>▲</button><button class="md-mv" data-act="catMove" data-arg="' + sid + ':' + i + ':1" data-tip="1 つ下へ"' + (i === sl.cats.length - 1 ? ' disabled' : '') + '>▼</button>' +
-        (c.label !== c.v ? '<div class="md-orig">元の回答：' + esc(c.v) + '</div>' : '') + '</div>';
+      h += '<div class="md-cat' + (c.on ? '' : ' off') + '"><input type="checkbox" data-cat="' + sid + ':' + i + ':on"' + (c.on ? ' checked' : '') + _t(' data-tip="チェックを外すと、この選択肢を選んだ人を解析から除きます。">') +
+        '<input type="text" data-cat="' + sid + ':' + i + ':label" value="' + esc(c.label) + _t('" data-tip="元の回答：') + esc(c.v) + _t('。名前を書き換えられます。ほかの選択肢と同じ名前にすると、1 つにまとめます。">') +
+        (merged ? _t('<button class="md-merged" data-tip="同じ名前の選択肢とまとめています。押すと、この選択肢だけ元の名前に戻して分けます。">まとめ</button>') : '') + '<span class="md-n">' + (counts[c.v] || 0) + '</span>' +
+        '<button class="md-mv" data-act="catMove" data-arg="' + sid + ':' + i + _t(':-1" data-tip="1 つ上へ"') + (i === 0 ? ' disabled' : '') + '>▲</button><button class="md-mv" data-act="catMove" data-arg="' + sid + ':' + i + _t(':1" data-tip="1 つ下へ"') + (i === sl.cats.length - 1 ? ' disabled' : '') + '>▼</button>' +
+        (c.label !== c.v ? _t('<div class="md-orig">元の回答：') + esc(c.v) + '</div>' : '') + '</div>';
     });
     var onN = sl.cats.filter(function (c) { return c.on; }).length;
-    return h + '</div><div class="md-row" style="margin-bottom:8px">' + (onN >= 3 ? '<button class="md-btn md-btn-sm" data-act="catTwo" data-arg="' + sid + '" data-tip="チェックの入った選択肢を、上半分と下半分の 2 つにまとめます。">上下 2 つにまとめる</button>' : '') +
-      '<button class="md-btn md-btn-sm" data-act="catReset" data-arg="' + sid + '" data-tip="名前・並び・チェックを最初の状態に戻します。">最初の状態に戻す</button></div>';
+    return h + '</div><div class="md-row" style="margin-bottom:8px">' + (onN >= 3 ? '<button class="md-btn md-btn-sm" data-act="catTwo" data-arg="' + sid + _t('" data-tip="チェックの入った選択肢を、上半分と下半分の 2 つにまとめます。">上下 2 つにまとめる</button>') : '') +
+      '<button class="md-btn md-btn-sm" data-act="catReset" data-arg="' + sid + _t('" data-tip="名前・並び・チェックを最初の状態に戻します。">最初の状態に戻す</button></div>');
   }
   function paneAnalysis() {
-    var tab = A.curTab(); if (!tab) return needTab('解析');
+    var tab = A.curTab(); if (!tab) return needTab(_t('解析'));
     var d = A.def(tab.type), multiNote = tab.type === 'multi' || (tab.type === 'freq' && tab.slots.a.col !== null && A.v(tab.slots.a.col) && A.v(tab.slots.a.col).type === 'multi');
-    var h = target(tab) + sec('解析の種類', '<div style="font-weight:700;margin-bottom:2px">' + esc(d.name) + '</div>', hint(d.desc), '<button class="md-btn" data-act="changeType">種類を変える</button>');
+    var h = target(tab) + sec(_t('解析の種類'), '<div style="font-weight:700;margin-bottom:2px">' + esc(d.name) + '</div>', hint(d.desc), _t('<button class="md-btn" data-act="changeType">種類を変える</button>'));
     var slotsH = d.slots.map(function (sd) {
       var sl = tab.slots[sd.id];
       // 回帰分析の説明変数は、設問ごとの回答をそのまま使う（まとめた選択肢の一覧は意味を持たないので出さない）
-      if (sd.many && sd.types.indexOf('numeric') >= 0) return '<div class="md-sub"><b>' + esc(sd.label) + '</b>' + (sl.cols.length ? '：' + sl.cols.length + ' 個の設問' : '') + '</div>' + hint('説明変数は、それぞれの設問の回答をそのまま使います（「無回答」などは除きます）。単一回答の設問は、選択肢の並びの先頭を基準にします。');
-      if (sd.many) return '<div class="md-sub"><b>' + esc(sd.label) + '</b>' + (sl.cols.length ? '：' + sl.cols.length + ' 個の設問（人数は合計）' : '') + '</div>' + (sl.cols.length ? catsEditor(tab, sd.id, sl, null) : hint('設問はまだ選ばれていません。中央の解析の欄で選んでください。'));
+      if (sd.many && sd.types.indexOf('numeric') >= 0) return '<div class="md-sub"><b>' + esc(sd.label) + '</b>' + (sl.cols.length ? _t('：{0} 個の設問', sl.cols.length) : '') + '</div>' + hint(_t('説明変数は、それぞれの設問の回答をそのまま使います（「無回答」などは除きます）。単一回答の設問は、選択肢の並びの先頭を基準にします。'));
+      if (sd.many) return '<div class="md-sub"><b>' + esc(sd.label) + '</b>' + (sl.cols.length ? _t('：{0} 個の設問（人数は合計）', sl.cols.length) : '') + '</div>' + (sl.cols.length ? catsEditor(tab, sd.id, sl, null) : hint(_t('設問はまだ選ばれていません。中央の解析の欄で選んでください。')));
       var x = sl.col !== null ? A.v(sl.col) : null;
-      return '<div class="md-sub"><b>' + esc(sd.label) + '</b>' + (x ? '：' + esc(x.label) : '') + '</div>' + (x ? catsEditor(tab, sd.id, sl, x) : hint('設問はまだ選ばれていません。中央の解析の欄で選んでください。'));
+      return '<div class="md-sub"><b>' + esc(sd.label) + '</b>' + (x ? _t('：') + esc(x.label) : '') + '</div>' + (x ? catsEditor(tab, sd.id, sl, x) : hint(_t('設問はまだ選ばれていません。中央の解析の欄で選んでください。')));
     }).join('');
     // 選択肢を直せる欄があるときだけ、直し方の説明を付ける（数値や回帰分析の説明変数だけのときは付けない）
-    h += sec('選択肢の設定', slotsH, slotsH.indexOf('md-cats') < 0 ? '' : hint('選択肢の名前は書き換えられます。同じ名前にした選択肢は 1 つにまとめ、チェックを外した選択肢は解析から除きます。' + (multiNote ? '複数回答で選んだ人が 1% 未満の回答（自由記述）は、最初から「その他」にまとめています。' : '')));
+    h += sec(_t('選択肢の設定'), slotsH, slotsH.indexOf('md-cats') < 0 ? '' : hint(_t('選択肢の名前は書き換えられます。同じ名前にした選択肢は 1 つにまとめ、チェックを外した選択肢は解析から除きます。') + (multiNote ? _t('複数回答で選んだ人が 1% 未満の回答（自由記述）は、最初から「その他」にまとめています。') : '')));
     var fv = tab.filter && tab.filter.col !== null ? A.v(tab.filter.col) : null;
-    h += sec('絞り込み（一部の回答者だけで解析）', '<label class="md-field"><span>条件にする質問</span><select data-filter="col"><option value="">（絞り込まない）</option>' +
+    h += sec(_t('絞り込み（一部の回答者だけで解析）'), _t('<label class="md-field"><span>条件にする質問</span><select data-filter="col"><option value="">（絞り込まない）</option>') +
       S.P.vars.filter(A.isCat).map(function (x) { return '<option value="' + x.col + '"' + (fv && fv.col === x.col ? ' selected' : '') + '>' + esc(x.label) + '</option>'; }).join('') + '</select></label>' +
       (fv ? '<div class="md-cats">' + fv.cats.map(function (c, i) { return '<label class="md-cat" style="cursor:pointer"><input type="checkbox" data-filter="val" data-idx="' + i + '"' + (tab.filter.values.indexOf(c.v) >= 0 ? ' checked' : '') + '><span style="flex:1;padding:4px">' + esc(c.v) + '</span><span class="md-n">' + c.n + '</span></label>'; }).join('') + '</div>' +
-        hint(tab.filter.values.length ? 'チェックした回答をした人だけで解析します。' : '回答にチェックを入れると絞り込みます（今は全員で解析しています）。') : hint('例：Instagram を利用している人だけで解析する。')));
-    if ((d.opts || []).length) h += sec('検定の設定', d.opts.map(function (o) {
+        hint(tab.filter.values.length ? _t('チェックした回答をした人だけで解析します。') : _t('回答にチェックを入れると絞り込みます（今は全員で解析しています）。')) : hint(_t('例：Instagram を利用している人だけで解析する。'))));
+    if ((d.opts || []).length) h += sec(_t('検定の設定'), d.opts.map(function (o) {
       return (o.kind === 'check' ? fCheck(o.label, 'opt.' + o.id) : o.kind === 'text' ? fText(o.label, 'opt.' + o.id) : fSelect(o.label, 'opt.' + o.id, o.choices.map(function (c) { return [c.value, c.label]; }))) + (o.hint ? hint(o.hint) : '');
     }).join(''));
     return h;
   }
   function legOpts() {
-    var bg = get('fig.legBg'), lab = bg === 'none' ? '塗りなし（透明）' : bg ? bg : '自動';
-    return '<div class="md-row">' + fCheck('枠で囲む', 'fig.legFrame') + fCheck('質問名を見出しに付ける', 'fig.legTitle') + '</div>' +
-      grid2('<label class="md-field"><span>背景の色</span><button class="md-colbtn" data-act="pickLegBg" data-tip="凡例の背景の色を選びます。「塗りなし」で透明になります。"><i style="background:' + (bg && bg !== 'none' ? bg : 'transparent') + '"></i>' + esc(lab) + '</button></label>', '') +
-      hint('背景の「自動」は、図の中に置いたときだけ白を薄く敷きます。系列の名前は下の「色」の節で変えられます。図の凡例の名前をダブルクリックしても変えられます。');
+    var bg = get('fig.legBg'), lab = bg === 'none' ? _t('塗りなし（透明）') : bg ? bg : _t('自動');
+    return '<div class="md-row">' + fCheck(_t('枠で囲む'), 'fig.legFrame') + fCheck(_t('質問名を見出しに付ける'), 'fig.legTitle') + '</div>' +
+      grid2(_t('<label class="md-field"><span>背景の色</span><button class="md-colbtn" data-act="pickLegBg" data-tip="凡例の背景の色を選びます。「塗りなし」で透明になります。"><i style="background:') + (bg && bg !== 'none' ? bg : 'transparent') + '"></i>' + esc(lab) + '</button></label>', '') +
+      hint(_t('背景の「自動」は、図の中に置いたときだけ白を薄く敷きます。系列の名前は下の「色」の節で変えられます。図の凡例の名前をダブルクリックしても変えられます。'));
   }
   function paneFigure() {
-    var tab = A.curTab(); if (!tab) return needTab('図');
+    var tab = A.curTab(); if (!tab) return needTab(_t('図'));
     var res = S.results[tab.id], m = res && res.ok ? Chart.model(res) : null, st = A.curFig();
-    if (!m) return target(tab) + sec('図', hint('結果が出ると、ここで図を整えられます。先に「解析」で列を選んでください。'), '<button class="md-btn" data-act="goTab" data-arg="analysis">解析の設定へ</button>');
-    if (!st) return target(tab) + sec('図', hint('この解析には図がありません。'), '<button class="md-btn md-btn-primary" data-act="addFig">図を追加</button>');
+    if (!m) return target(tab) + sec(_t('図'), hint(_t('結果が出ると、ここで図を整えられます。先に「解析」で列を選んでください。')), _t('<button class="md-btn" data-act="goTab" data-arg="analysis">解析の設定へ</button>'));
+    if (!st) return target(tab) + sec(_t('図'), hint(_t('この解析には図がありません。')), _t('<button class="md-btn md-btn-primary" data-act="addFig">図を追加</button>'));
     var kind = Chart.kindOf(m, st), km = Chart.kinds(m), ser = Chart.seriesFor(m, st), cols = Chart.seriesColors(ser, st), heat = kind === 'heat', pie = kind === 'pie', k = Math.min(S.ui.selFig, tab.figs.length - 1);
-    var h = target(tab) + (tab.figs.length > 1 ? '<div class="md-row" style="margin:4px 0">' + tab.figs.map(function (_, i) { return '<button class="md-btn md-btn-sm' + (i === k ? ' md-btn-primary' : '') + '" data-act="selFig" data-arg="' + i + '">図 ' + (i + 1) + '</button>'; }).join('') + '</div>' : '');
-    h += sec('図の種類', tiles('fig.kind', km.map(function (x) { return [x, Chart.KIND_NAMES[x], window.icon('k_' + x, 30), KIND_TIPS[x]]; }), kind), hint('図は、設定を変えるたびにその場で描き直します。'));
+    var h = target(tab) + (tab.figs.length > 1 ? '<div class="md-row" style="margin:4px 0">' + tab.figs.map(function (_, i) { return '<button class="md-btn md-btn-sm' + (i === k ? ' md-btn-primary' : '') + '" data-act="selFig" data-arg="' + i + _t('">図 ') + (i + 1) + '</button>'; }).join('') + '</div>' : '');
+    h += sec(_t('図の種類'), tiles('fig.kind', km.map(function (x) { return [x, _t(Chart.KIND_NAMES[x]), window.icon('k_' + x, 30), KIND_TIPS[x]]; }), kind), hint(_t('図は、設定を変えるたびにその場で描き直します。')));
     // グラフの枠：描く範囲を四方の線で囲むか、左と下の軸だけにするか（見つけやすいように、図の種類のすぐ下に置く）
-    if (!pie && !heat && kind !== 'cloud' && kind !== 'net') h += sec('グラフの枠', tiles('fig.frame', fromMini('frame', [['L', '左と下だけ'], ['box', '四方を囲む']])), hint('「四方を囲む」にすると、グラフを描く範囲を枠で囲みます。枠の太さは「線の太さ」の「軸と枠」で変えられます。'));
-    if (!pie) h += sec('軸の名前', grid2(fText(heat ? '上の見出し' : '数値の軸の名前', 'fig.vTitle', { type: 'strnull', ph: '自動' }), fText('分類の軸の名前', 'fig.cTitle', { type: 'strnull', ph: '自動' })),
-      hint('空欄は自動の名前になります。消したいときは、図の上の文字をダブルクリックして空にしてください。図の中に題名は入れません。'));
-    if (heat) h += sec('カラーバー（色と値の対応）', fSelect('色を決める値', 'fig.heatBy', HEAT_BY.slice(1).filter(function (x) { return x[0] !== 'resid' || m.resid; })), '<div class="md-sub">位置</div>' + tiles('fig.bar', fromMini('bar', [['right', '右'], ['bottom', '下'], ['none', 'なし']])) + '<div class="md-sub">形</div>' + tiles('fig.barShape', fromMini('barShape', [['smooth', 'なめらか'], ['step', '5 段階']])));
-    else if (pie) { if (ser.length > 1) h += sec('凡例', hint('図の上の凡例をドラッグしても動かせます。'), '<div class="md-sub">位置</div>' + tiles('fig.legend', fromMini('leg', LEG_POS.filter(function (x) { return x[0] !== 'inTR' && x[0] !== 'inTL'; }))), legOpts()); }
+    if (!pie && !heat && kind !== 'cloud' && kind !== 'net') h += sec(_t('グラフの枠'), tiles('fig.frame', fromMini('frame', [['L', _t('左と下だけ')], ['box', _t('四方を囲む')]])), hint(_t('「四方を囲む」にすると、グラフを描く範囲を枠で囲みます。枠の太さは「線の太さ」の「軸と枠」で変えられます。')));
+    if (!pie) h += sec(_t('軸の名前'), grid2(fText(heat ? _t('上の見出し') : _t('数値の軸の名前'), 'fig.vTitle', { type: 'strnull', ph: _t('自動') }), fText(_t('分類の軸の名前'), 'fig.cTitle', { type: 'strnull', ph: _t('自動') })),
+      hint(_t('空欄は自動の名前になります。消したいときは、図の上の文字をダブルクリックして空にしてください。図の中に題名は入れません。')));
+    if (heat) h += sec(_t('カラーバー（色と値の対応）'), fSelect(_t('色を決める値'), 'fig.heatBy', HEAT_BY.slice(1).filter(function (x) { return x[0] !== 'resid' || m.resid; })), _t('<div class="md-sub">位置</div>{0}<div class="md-sub">形</div>', tiles('fig.bar', fromMini('bar', [['right', _t('右')], ['bottom', _t('下')], ['none', _t('なし')]]))) + tiles('fig.barShape', fromMini('barShape', [['smooth', _t('なめらか')], ['step', _t('5 段階')]])));
+    else if (pie) { if (ser.length > 1) h += sec(_t('凡例'), hint(_t('図の上の凡例をドラッグしても動かせます。')), _t('<div class="md-sub">位置</div>') + tiles('fig.legend', fromMini('leg', LEG_POS.filter(function (x) { return x[0] !== 'inTR' && x[0] !== 'inTL'; }))), legOpts()); }
     else {
-      h += sec('目盛り', grid3(fText('最小', 'fig.min', { type: 'numnull', ph: '自動' }), fText('最大', 'fig.max', { type: 'numnull', ph: '自動' }), fText('間隔', 'fig.step', { type: 'numnull', ph: '自動' })),
-        '<div class="md-sub">目盛りの向き</div>' + tiles('fig.tickDir', fromMini('tick', [['out', '外向き'], ['in', '内向き'], ['none', 'なし']])) + '<div class="md-sub">目盛線</div>' + tiles('fig.grid', fromMini('grid', [['solid', '実線'], ['dash', '破線'], ['dot', '点線'], ['none', 'なし']])) +
-        grid2(fText('目盛りの長さ', 'fig.tickLen', { type: 'num' }), fColor('目盛線の色', 'fig.gridColor')),
-        hint('範囲の空欄は自動です。数値の文字が重なるときは、自動で間引きます。'));
-      if (ser.length > 1) h += sec('凡例', hint('図の上の凡例をドラッグしても動かせます。右・上・下の端に寄せると図の外に並べ、それ以外は置いた位置に置きます。'), '<div class="md-sub">位置</div>' + tiles('fig.legend', fromMini('leg', LEG_POS)) + '<div class="md-sub">色見本の形</div>' + tiles('fig.legShape', fromMini('shape', [['square', '四角'], ['circle', '丸'], ['wide', '横長']])),
+      h += sec(_t('目盛り'), grid3(fText(_t('最小'), 'fig.min', { type: 'numnull', ph: _t('自動') }), fText(_t('最大'), 'fig.max', { type: 'numnull', ph: _t('自動') }), fText(_t('間隔'), 'fig.step', { type: 'numnull', ph: _t('自動') })),
+        _t('<div class="md-sub">目盛りの向き</div>{0}<div class="md-sub">目盛線</div>', tiles('fig.tickDir', fromMini('tick', [['out', _t('外向き')], ['in', _t('内向き')], ['none', _t('なし')]]))) + tiles('fig.grid', fromMini('grid', [['solid', _t('実線')], ['dash', _t('破線')], ['dot', _t('点線')], ['none', _t('なし')]])) +
+        grid2(fText(_t('目盛りの長さ'), 'fig.tickLen', { type: 'num' }), fColor(_t('目盛線の色'), 'fig.gridColor')),
+        hint(_t('範囲の空欄は自動です。数値の文字が重なるときは、自動で間引きます。')));
+      if (ser.length > 1) h += sec(_t('凡例'), hint(_t('図の上の凡例をドラッグしても動かせます。右・上・下の端に寄せると図の外に並べ、それ以外は置いた位置に置きます。')), _t('<div class="md-sub">位置</div>{0}<div class="md-sub">色見本の形</div>', tiles('fig.legend', fromMini('leg', LEG_POS))) + tiles('fig.legShape', fromMini('shape', [['square', _t('四角')], ['circle', _t('丸')], ['wide', _t('横長')]])),
         legOpts());
     }
-    h += sec('文字', grid2(fSelect('和文の書体', 'fig.fontJa', FONTS_JA), fSelect('欧文の書体', 'fig.fontEn', FONTS_EN)),
-      '<div class="md-grid2" style="grid-template-columns:1fr 1fr 1fr 1fr">' + fText('目盛り', 'fig.fsTick', { type: 'num', list: 'dl_fs' }) + fText('軸の名前', 'fig.fsAxis', { type: 'num', list: 'dl_fs' }) + fText('凡例', 'fig.fsLegend', { type: 'num', list: 'dl_fs' }) + fText('値', 'fig.fsLabel', { type: 'num', list: 'dl_fs' }) + '</div>',
-      hint('大きさの単位はピクセルです。英数字は欧文の書体、日本語は和文の書体で描きます。入りきらない文字は「…」で省き、重ならないようにします。'));
-    h += sec('線の太さ', grid3(fText('軸と枠', 'fig.lwAxis', { type: 'num', list: 'dl_lw' }), fText('棒の枠', 'fig.lwBar', { type: 'num', list: 'dl_lw' }), fText('目盛線', 'fig.lwGrid', { type: 'num', list: 'dl_lw' })));
-    h += sec('色', colorSec(m, st, ser, cols, heat, pie));
-    h += sec('大きさ', grid3(fText('幅', 'fig.w', { type: 'num' }), fText('高さ', 'fig.h', { type: 'num' }), fText('棒の太さ (%)', 'fig.barW', { type: 'num' })), fCheck('文字や棒が重ならない大きさまで自動で広げる', 'fig.fit'),
-      hint('図の右端・下端・右下の角をドラッグすると、その大きさに変わります。保存される画像は、画面に出ている形と大きさのままです。'));
-    if (!heat && kind !== 'box' && kind !== 'scatter' && kind !== 'line') h += sec('値のラベル', '<div class="md-row">' + fCheck('値のラベルを出す', 'fig.labels') + '</div>',
-      grid2(fSelect('書く内容', 'fig.labelWhat', [['value', '軸と同じ値'], ['pct', '割合 (%)'], ['n', '人数（件数）'], ['both', '割合と人数の両方']]), fText('割合の小数の桁', 'fig.labelDec', { type: 'num' })),
-      hint(pie ? '「両方」にすると、割合と人数を 2 行で書きます。扇が小さくて入りきらないところは書きません。' : '「両方」にすると「45.0% (9)」のように書きます。人数の軸のときは「9 (45.0%)」です。入りきらないところは自動で省きます。'));
-    h += sec('表示', '<div class="md-row">' + (heat ? fCheck('値のラベル', 'fig.labels') : '') + fCheck('人数 (n)', 'fig.showN') + fCheck('背景を透明にする', 'fig.transparent') + '</div>');
-    h += sec('書式の使い回し', '<div class="md-row"><button class="md-btn" data-act="figDefault" data-tip="文字・線・色・大きさの設定を、これから作る図の最初の状態にします。">これからの図の既定にする</button><button class="md-btn" data-act="figApplyAll" data-tip="文字・線・色・凡例・目盛りの設定を、すべての図にそろえます。">すべての図にそろえる</button><button class="md-btn" data-act="figReset">最初の状態に戻す</button></div>');
+    h += sec(_t('文字'), grid2(fSelect(_t('和文の書体'), 'fig.fontJa', FONTS_JA), fSelect(_t('欧文の書体'), 'fig.fontEn', FONTS_EN)),
+      '<div class="md-grid2" style="grid-template-columns:1fr 1fr 1fr 1fr">' + fText(_t('目盛り'), 'fig.fsTick', { type: 'num', list: 'dl_fs' }) + fText(_t('軸の名前'), 'fig.fsAxis', { type: 'num', list: 'dl_fs' }) + fText(_t('凡例'), 'fig.fsLegend', { type: 'num', list: 'dl_fs' }) + fText(_t('値'), 'fig.fsLabel', { type: 'num', list: 'dl_fs' }) + '</div>',
+      hint(_t('大きさの単位はピクセルです。英数字は欧文の書体、日本語は和文の書体で描きます。入りきらない文字は「…」で省き、重ならないようにします。')));
+    h += sec(_t('線の太さ'), grid3(fText(_t('軸と枠'), 'fig.lwAxis', { type: 'num', list: 'dl_lw' }), fText(_t('棒の枠'), 'fig.lwBar', { type: 'num', list: 'dl_lw' }), fText(_t('目盛線'), 'fig.lwGrid', { type: 'num', list: 'dl_lw' })));
+    h += sec(_t('色'), colorSec(m, st, ser, cols, heat, pie));
+    h += sec(_t('大きさ'), grid3(fText(_t('幅'), 'fig.w', { type: 'num' }), fText(_t('高さ'), 'fig.h', { type: 'num' }), fText(_t('棒の太さ (%)'), 'fig.barW', { type: 'num' })), fCheck(_t('文字や棒が重ならない大きさまで自動で広げる'), 'fig.fit'),
+      hint(_t('図の右端・下端・右下の角をドラッグすると、その大きさに変わります。保存される画像は、画面に出ている形と大きさのままです。')));
+    if (!heat && kind !== 'box' && kind !== 'scatter' && kind !== 'line') h += sec(_t('値のラベル'), '<div class="md-row">' + fCheck(_t('値のラベルを出す'), 'fig.labels') + '</div>',
+      grid2(fSelect(_t('書く内容'), 'fig.labelWhat', [['value', _t('軸と同じ値')], ['pct', _t('割合 (%)')], ['n', _t('人数（件数）')], ['both', _t('割合と人数の両方')]]), fText(_t('割合の小数の桁'), 'fig.labelDec', { type: 'num' })),
+      hint(pie ? _t('「両方」にすると、割合と人数を 2 行で書きます。扇が小さくて入りきらないところは書きません。') : _t('「両方」にすると「45.0% (9)」のように書きます。人数の軸のときは「9 (45.0%)」です。入りきらないところは自動で省きます。')));
+    h += sec(_t('表示'), '<div class="md-row">' + (heat ? fCheck(_t('値のラベル'), 'fig.labels') : '') + fCheck(_t('人数 (n)'), 'fig.showN') + fCheck(_t('背景を透明にする'), 'fig.transparent') + '</div>');
+    h += sec(_t('書式の使い回し'), _t('<div class="md-row"><button class="md-btn" data-act="figDefault" data-tip="文字・線・色・大きさの設定を、これから作る図の最初の状態にします。">これからの図の既定にする</button><button class="md-btn" data-act="figApplyAll" data-tip="文字・線・色・凡例・目盛りの設定を、すべての図にそろえます。">すべての図にそろえる</button><button class="md-btn" data-act="figReset">最初の状態に戻す</button></div>'));
     return h;
   }
   // 色の節：「配色から選ぶ」か「系列ごとに選ぶ」かを選ぶ。初めは配色から選ぶ
   function colorSec(m, st, ser, cols, heat, pie) {
     var keys = Chart.colorKeys(m, st), mode = Chart.colorMode(st), own = keys.length > 0 && mode === 'series', single = !ser.length;
     var kc = Chart.seriesColors(keys, st), h = '';
-    if (keys.length) h += '<div class="md-sub">色の決め方</div>' + tiles('fig.colorMode', [['palette', '配色から選ぶ', MINI.cmode.palette, '配色の一覧から 1 つ選ぶと、系列の順にその色を使います。'], ['series', '系列ごとに選ぶ', MINI.cmode.series, '系列ごとに好きな色を選びます。まだ選んでいない系列は、配色の色のままです。']], mode);
+    if (keys.length) h += _t('<div class="md-sub">色の決め方</div>') + tiles('fig.colorMode', [['palette', _t('配色から選ぶ'), MINI.cmode.palette, _t('配色の一覧から 1 つ選ぶと、系列の順にその色を使います。')], ['series', _t('系列ごとに選ぶ'), MINI.cmode.series, _t('系列ごとに好きな色を選びます。まだ選んでいない系列は、配色の色のままです。')]], mode);
     if (!own) h += paletteGallery('fig.palette', st.palette, heat ? ['濃淡', '2 方向'] : null, st.seed);
     if (keys.length && (own || ser.length > 1)) {
-      h += '<div class="md-sub">' + (own ? (single ? '図の色' : pie ? '回答ごとの色と名前' : '系列ごとの色と名前') : (pie ? '回答ごとの名前' : '系列ごとの名前')) + '</div>' + keys.map(function (s, i) {
+      h += '<div class="md-sub">' + (own ? (single ? _t('図の色') : pie ? _t('回答ごとの色と名前') : _t('系列ごとの色と名前')) : (pie ? _t('回答ごとの名前') : _t('系列ごとの名前'))) + '</div>' + keys.map(function (s, i) {
         var nm = (st.legNames || {})[s] || '', set = own && st.colors && st.colors[s];
-        return '<div class="md-bar"><button class="md-swatch md-swatch-pick' + (set ? ' set' : '') + '" style="background:' + patCss(kc[i]) + '" data-act="pickColor" data-arg="' + i + '" data-tip="' + (own ? 'この系列の色を選びます。' : '押すと「系列ごとに選ぶ」に切り替えて、この系列の色を選びます。') + '"></button>' +
-          (single ? '<span class="md-hint" style="margin:0">' + (set ? '選んだ色' : '配色の色') + '</span>' : '<input type="text" class="md-legname" data-legname="' + i + '" value="' + esc(nm || s) + '" data-tip="凡例に出す名前です。空にすると元の名前に戻ります。元の名前：' + esc(s) + '">') + '</div>';
+        return '<div class="md-bar"><button class="md-swatch md-swatch-pick' + (set ? ' set' : '') + '" style="background:' + patCss(kc[i]) + '" data-act="pickColor" data-arg="' + i + '" data-tip="' + (own ? _t('この系列の色を選びます。') : _t('押すと「系列ごとに選ぶ」に切り替えて、この系列の色を選びます。')) + '"></button>' +
+          (single ? '<span class="md-hint" style="margin:0">' + (set ? _t('選んだ色') : _t('配色の色')) + '</span>' : '<input type="text" class="md-legname" data-legname="' + i + '" value="' + esc(nm || s) + _t('" data-tip="凡例に出す名前です。空にすると元の名前に戻ります。元の名前：') + esc(s) + '">') + '</div>';
       }).join('');
     }
-    if (own && Object.keys(st.colors || {}).length) h += '<button class="md-btn md-btn-sm" data-act="clearColors" style="margin-top:4px" data-tip="選んだ色を消して、すべての系列を配色の色に戻します。">すべて配色の色に戻す</button>';
-    if (Object.keys(st.legNames || {}).length) h += '<button class="md-btn md-btn-sm" data-act="clearLegNames" style="margin-top:4px;margin-left:4px">名前を元に戻す</button>';
-    return h + hint(own ? '色見本を押して色を選びます。図の凡例の色を押しても選べます。' : '順序のある回答は濃淡か 2 方向、種類の違う回答は多色が向いています。白黒で印刷するときは「白黒の模様」が使えます。');
+    if (own && Object.keys(st.colors || {}).length) h += _t('<button class="md-btn md-btn-sm" data-act="clearColors" style="margin-top:4px" data-tip="選んだ色を消して、すべての系列を配色の色に戻します。">すべて配色の色に戻す</button>');
+    if (Object.keys(st.legNames || {}).length) h += _t('<button class="md-btn md-btn-sm" data-act="clearLegNames" style="margin-top:4px;margin-left:4px">名前を元に戻す</button>');
+    return h + hint(own ? _t('色見本を押して色を選びます。図の凡例の色を押しても選べます。') : _t('順序のある回答は濃淡か 2 方向、種類の違う回答は多色が向いています。白黒で印刷するときは「白黒の模様」が使えます。'));
   }
   function paneTable() {
-    var tab = A.curTab(); if (!tab) return needTab('表');
+    var tab = A.curTab(); if (!tab) return needTab(_t('表'));
     var res = S.results[tab.id], ts = tab.tstyle;
-    if (!res || !res.ok) return target(tab) + sec('表', hint('結果が出ると、ここで表を整えられます。'));
-    var xt = !!res.xtab, h = target(tab) + sec('デザイン', '<div class="md-tiles">' + T_DESIGNS.map(function (d) { return '<span class="md-tile-cap"><button class="md-tile' + (ts.design === d[0] ? ' on' : '') + '" data-act="tDesign" data-arg="' + d[0] + '" data-tip="' + esc(d[3]) + '">' + window.icon(d[2], 30) + '</button>' + d[1] + '</span>'; }).join('') + '</div>', hint('デザインを選ぶと、線と色がそのデザインの標準に変わります。そのあとで下の設定を変えられます。'));
-    if (xt) h += sec('表に出す内容', '<div class="md-row">' + ['row', 'col', 'none'].map(function (k) { return '<label class="md-check"><input type="radio" name="tblpct" data-set="tbl.pct" value="' + k + '"' + (tab.table.pct === k ? ' checked' : '') + '>' + { row: '行の割合', col: '列の割合', none: '人数のみ' }[k] + '</label>'; }).join('') + '</div>' +
-      (res.xtab.resid ? fCheck('多い・少ないの印（▲▽）を付ける', 'tbl.marks') + '<div class="md-row">' + fCheck('期待度数の表', 'tbl.expected') + fCheck('残差の表', 'tbl.resid') + '</div>' : ''));
-    if (xt) h += sec('セルの色分け', fSelect('色を決める値', 'tst.heat', HEAT_BY.filter(function (x) { return x[0] !== 'resid' || res.xtab.resid; })),
-      ts.heat !== 'none' ? '<div class="md-sub">配色</div>' + paletteGallery('tst.heatPal', ts.heatPal, ['濃淡', '2 方向']) + '<div class="md-sub">カラーバーの位置</div>' + tiles('tst.bar', fromMini('bar', [['right', '右'], ['bottom', '下'], ['none', 'なし']])) + '<div class="md-sub">カラーバーの形</div>' + tiles('tst.barShape', fromMini('barShape', [['smooth', 'なめらか'], ['step', '5 段階']])) : '',
-      hint('値の大きさに応じてセルに色を付け、カラーバーで色と値の対応を示します。残差は 0 を中央にした 2 方向の色になります。'));
-    h += sec('文字', grid2(fSelect('和文の書体', 'tst.fontJa', FONTS_JA), fSelect('欧文の書体', 'tst.fontEn', FONTS_EN)), grid2(fText('文字の大きさ', 'tst.fs', { type: 'num', list: 'dl_fs' }), fColor('文字の色', 'tst.ink')));
-    h += sec('大きさ', grid2(fText('表の幅（px）', 'tst.tw', { type: 'num' }), fText('行の高さ（px）', 'tst.rowH', { type: 'num' })),
-      hint('表の右端・下端・右下の角をドラッグしても変えられます。中身より小さくはなりません。0 にすると中身に合わせた大きさに戻ります。') + '<button class="md-btn md-btn-sm" data-act="tblSizeAuto">中身に合わせた大きさに戻す</button>');
-    h += sec('線', '<div class="md-sub">線の種類</div>' + tiles('tst.ls', fromMini('ls', [['solid', '実線'], ['dashed', '破線'], ['dotted', '点線']])), grid2(fText('線の太さ', 'tst.lw', { type: 'num', list: 'dl_lw' }), fColor('線の色', 'tst.lc')));
-    h += sec('見出しと縞の色', grid3(fColor('見出しの地', 'tst.headFill', '見出しの行（格子では見出しの列も）の地の色です。'), fColor('見出しの文字', 'tst.headInk'), fColor('縞の色', 'tst.stripe', '「縞」のデザインで 1 行おきに付ける色です。')));
-    h += sec('書式の使い回し', '<div class="md-row"><button class="md-btn" data-act="tstDefault" data-tip="この表のデザインを、これから作る解析の表の最初の状態にします。">これからの表の既定にする</button><button class="md-btn" data-act="tstApplyAll" data-tip="この表のデザインを、すべての解析の表にそろえます。">すべての表にそろえる</button><button class="md-btn" data-act="tstReset">最初の状態に戻す</button></div>');
+    if (!res || !res.ok) return target(tab) + sec(_t('表'), hint(_t('結果が出ると、ここで表を整えられます。')));
+    var xt = !!res.xtab, h = target(tab) + sec(_t('デザイン'), '<div class="md-tiles">' + T_DESIGNS.map(function (d) { return '<span class="md-tile-cap"><button class="md-tile' + (ts.design === d[0] ? ' on' : '') + '" data-act="tDesign" data-arg="' + d[0] + '" data-tip="' + esc(d[3]) + '">' + window.icon(d[2], 30) + '</button>' + d[1] + '</span>'; }).join('') + '</div>', hint(_t('デザインを選ぶと、線と色がそのデザインの標準に変わります。そのあとで下の設定を変えられます。')));
+    if (xt) h += sec(_t('表に出す内容'), '<div class="md-row">' + ['row', 'col', 'none'].map(function (k) { return '<label class="md-check"><input type="radio" name="tblpct" data-set="tbl.pct" value="' + k + '"' + (tab.table.pct === k ? ' checked' : '') + '>' + { row: _t('行の割合'), col: _t('列の割合'), none: _t('人数のみ') }[k] + '</label>'; }).join('') + '</div>' +
+      (res.xtab.resid ? fCheck(_t('多い・少ないの印（▲▽）を付ける'), 'tbl.marks') + '<div class="md-row">' + fCheck(_t('期待度数の表'), 'tbl.expected') + fCheck(_t('残差の表'), 'tbl.resid') + '</div>' : ''));
+    if (xt) h += sec(_t('セルの色分け'), fSelect(_t('色を決める値'), 'tst.heat', HEAT_BY.filter(function (x) { return x[0] !== 'resid' || res.xtab.resid; })),
+      ts.heat !== 'none' ? _t('<div class="md-sub">配色</div>{0}<div class="md-sub">カラーバーの位置</div>{1}<div class="md-sub">カラーバーの形</div>', paletteGallery('tst.heatPal', ts.heatPal, ['濃淡', '2 方向']), tiles('tst.bar', fromMini('bar', [['right', _t('右')], ['bottom', _t('下')], ['none', _t('なし')]]))) + tiles('tst.barShape', fromMini('barShape', [['smooth', _t('なめらか')], ['step', _t('5 段階')]])) : '',
+      hint(_t('値の大きさに応じてセルに色を付け、カラーバーで色と値の対応を示します。残差は 0 を中央にした 2 方向の色になります。')));
+    h += sec(_t('文字'), grid2(fSelect(_t('和文の書体'), 'tst.fontJa', FONTS_JA), fSelect(_t('欧文の書体'), 'tst.fontEn', FONTS_EN)), grid2(fText(_t('文字の大きさ'), 'tst.fs', { type: 'num', list: 'dl_fs' }), fColor(_t('文字の色'), 'tst.ink')));
+    h += sec(_t('大きさ'), grid2(fText(_t('表の幅（px）'), 'tst.tw', { type: 'num' }), fText(_t('行の高さ（px）'), 'tst.rowH', { type: 'num' })),
+      hint(_t('表の右端・下端・右下の角をドラッグしても変えられます。中身より小さくはなりません。0 にすると中身に合わせた大きさに戻ります。')) + _t('<button class="md-btn md-btn-sm" data-act="tblSizeAuto">中身に合わせた大きさに戻す</button>'));
+    h += sec(_t('線'), _t('<div class="md-sub">線の種類</div>') + tiles('tst.ls', fromMini('ls', [['solid', _t('実線')], ['dashed', _t('破線')], ['dotted', _t('点線')]])), grid2(fText(_t('線の太さ'), 'tst.lw', { type: 'num', list: 'dl_lw' }), fColor(_t('線の色'), 'tst.lc')));
+    h += sec(_t('見出しと縞の色'), grid3(fColor(_t('見出しの地'), 'tst.headFill', _t('見出しの行（格子では見出しの列も）の地の色です。')), fColor(_t('見出しの文字'), 'tst.headInk'), fColor(_t('縞の色'), 'tst.stripe', _t('「縞」のデザインで 1 行おきに付ける色です。'))));
+    h += sec(_t('書式の使い回し'), _t('<div class="md-row"><button class="md-btn" data-act="tstDefault" data-tip="この表のデザインを、これから作る解析の表の最初の状態にします。">これからの表の既定にする</button><button class="md-btn" data-act="tstApplyAll" data-tip="この表のデザインを、すべての解析の表にそろえます。">すべての表にそろえる</button><button class="md-btn" data-act="tstReset">最初の状態に戻す</button></div>'));
     return h;
   }
   function paneExport() {
-    if (!S.data) return needTab('書き出し');
+    if (!S.data) return needTab(_t('書き出し'));
     var tab = A.curTab(), res = tab ? S.results[tab.id] : null;
-    var h = sec('書き出す解析（☑）', S.P.tabs.length ? '<div class="md-cats">' + S.P.tabs.map(function (t, i) { var r = S.results[t.id], sig = r && r.ok && r.sig; return '<label class="md-cat" style="cursor:pointer"><input type="checkbox" data-ancheck="' + t.id + '"' + (t.checked ? ' checked' : '') + '><span style="flex:1;padding:4px" class="' + (sig ? 'md-sigtext' : '') + '">' + (i + 1) + '. ' + esc(t.name) + '</span><span class="md-n">図 ' + t.figs.length + '</span></label>'; }).join('') + '</div>' : hint('解析がまだありません。'),
-      '<div class="md-row"><button class="md-btn md-btn-sm" data-act="checkAll" data-arg="1">すべて選ぶ</button><button class="md-btn md-btn-sm" data-act="checkAll" data-arg="0">すべて外す</button></div>');
-    h += sec('まとめて書き出す', hint('☑ を付けた解析について、次のものから選んで、選んだフォルダーに書き出します。'),
-      '<div class="md-hint" style="color:var(--t-1e2f26)">・図：「解析の名前_図1.png」のように、解析ごとに 1 から番号を付けます。画面に出ている形と大きさのままです。<br>・Excel ファイル：CSV をシートにし、その右側に Excel の関数で解析を再現します（値の貼り付けはしません）。<br>・R のコード：解析を R の標準の関数で計算し直すスクリプトと、そのデータです。<br>・報告書：すべての解析の文と表を、PDF・Word・テキストのいずれかにまとめます。</div>',
-      '<button class="md-btn md-btn-primary" data-act="exportAll"' + (S.P.tabs.length ? '' : ' disabled') + '>まとめて書き出す</button>');
-    h += sec('報告書に入れる内容', fCheck('各解析の表を入れる', 'rep.tables'), fCheck('ホルム法で補正した p を一覧に入れる', 'rep.holm'), hint('補正後の p は、検定を何度も行うと偶然に有意となる結果が増える問題に対応するための値です。'));
-    if (tab && res && res.ok) h += sec('選んだ解析の文', target(tab), '<textarea class="md-in" data-auto data-reptext="' + tab.id + '" rows="5">' + esc(tab.reportText !== null ? tab.reportText : res.report) + '</textarea>',
-      hint('文は書き換えられます。定型文は結果の数値から決まった型で作っています。考察（なぜそうなったか）は含まれないため、自分で書き足してください。'), tab.reportText !== null ? '<button class="md-btn" data-act="resetTextAt" data-arg="' + tab.id + '">定型文に戻す</button>' : '');
+    var h = sec(_t('書き出す解析（☑）'), S.P.tabs.length ? '<div class="md-cats">' + S.P.tabs.map(function (t, i) { var r = S.results[t.id], sig = r && r.ok && r.sig; return '<label class="md-cat" style="cursor:pointer"><input type="checkbox" data-ancheck="' + t.id + '"' + (t.checked ? ' checked' : '') + '><span style="flex:1;padding:4px" class="' + (sig ? 'md-sigtext' : '') + '">' + (i + 1) + '. ' + esc(t.name) + _t('</span><span class="md-n">図 ') + t.figs.length + '</span></label>'; }).join('') + '</div>' : hint(_t('解析がまだありません。')),
+      _t('<div class="md-row"><button class="md-btn md-btn-sm" data-act="checkAll" data-arg="1">すべて選ぶ</button><button class="md-btn md-btn-sm" data-act="checkAll" data-arg="0">すべて外す</button></div>'));
+    h += sec(_t('まとめて書き出す'), hint(_t('☑ を付けた解析について、次のものから選んで、選んだフォルダーに書き出します。')),
+      _t('<div class="md-hint" style="color:var(--t-1e2f26)">・図：「解析の名前_図1.png」のように、解析ごとに 1 から番号を付けます。画面に出ている形と大きさのままです。<br>・Excel ファイル：CSV をシートにし、その右側に Excel の関数で解析を再現します（値の貼り付けはしません）。<br>・R のコード：解析を R の標準の関数で計算し直すスクリプトと、そのデータです。<br>・報告書：すべての解析の文と表を、PDF・Word・テキストのいずれかにまとめます。</div>'),
+      '<button class="md-btn md-btn-primary" data-act="exportAll"' + (S.P.tabs.length ? '' : ' disabled') + _t('>まとめて書き出す</button>'));
+    h += sec(_t('報告書に入れる内容'), fCheck(_t('各解析の表を入れる'), 'rep.tables'), fCheck(_t('ホルム法で補正した p を一覧に入れる'), 'rep.holm'), hint(_t('補正後の p は、検定を何度も行うと偶然に有意となる結果が増える問題に対応するための値です。')));
+    if (tab && res && res.ok) h += sec(_t('選んだ解析の文'), target(tab), '<textarea class="md-in" data-auto data-reptext="' + tab.id + '" rows="5">' + esc(tab.reportText !== null ? tab.reportText : res.report) + '</textarea>',
+      hint(_t('文は書き換えられます。定型文は結果の数値から決まった型で作っています。考察（なぜそうなったか）は含まれないため、自分で書き足してください。')), tab.reportText !== null ? '<button class="md-btn" data-act="resetTextAt" data-arg="' + tab.id + _t('">定型文に戻す</button>') : '');
     return h;
   }
   // 既定の設定：新しく始めるときに、初期設定とカスタム設定のどちらを使うか。カスタム設定の中身は、ここで直接選べる
@@ -827,47 +816,52 @@
     var sel = function (key, cur, list) { return '<select data-cust="' + key + '">' + list.map(function (o) { return '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(cur) ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('') + '</select>'; };
     var groups = {}, order = [];
     Object.keys(Chart.PALETTES).forEach(function (k) { var p = Chart.PALETTES[k]; if (p.hide) return; if (!groups[p.group]) { groups[p.group] = []; order.push(p.group); } groups[p.group].push(k); });
-    var palSel = '<select data-cust="palette"><option value=""' + (pal ? '' : ' selected') + '>初期のまま（グレー）</option>' + order.map(function (g) { return '<optgroup label="' + esc(g) + '">' + groups[g].map(function (k) { return '<option value="' + k + '"' + (k === pal ? ' selected' : '') + '>' + esc(Chart.PALETTES[k].name) + '</option>'; }).join('') + '</optgroup>'; }).join('') + '</select>';
+    var palSel = '<select data-cust="palette"><option value=""' + (pal ? '' : ' selected') + _t('>初期のまま（グレー）</option>') + order.map(function (g) { return '<optgroup label="' + esc(_t(g)) + '">' + groups[g].map(function (k) { return '<option value="' + k + '"' + (k === pal ? ' selected' : '') + '>' + esc(_t(Chart.PALETTES[k].name)) + '</option>'; }).join('') + '</optgroup>'; }).join('') + '</select>';
     var row = function (label, ctl) { return '<tr><th class="md-rh" style="text-align:left;white-space:nowrap">' + label + '</th><td style="text-align:left">' + ctl + '</td></tr>'; };
     var d = c ? new Date(c.savedAt || 0) : null;
     var editor = '<table class="md-t0 md-custed" style="width:100%;margin:6px 0">' +
-      row('有意水準', sel('alpha', cs.alpha, [[0.05, '5%（0.05）'], [0.01, '1%（0.01）'], [0.1, '10%（0.10）']])) +
-      row('p 値の表記', sel('lead0', cs.lead0 === false ? 'false' : 'true', [['true', 'p = 0.012'], ['false', 'p = .012']])) +
-      row('報告書の表', sel('tables', cr.tables === false ? 'false' : 'true', [['true', '入れる'], ['false', '入れない']])) +
-      row('補正後の p', sel('holm', cr.holm === false ? 'false' : 'true', [['true', '一覧に入れる（ホルム法）'], ['false', '入れない']])) +
-      row('図の配色', palSel) +
-      row('表のデザイン', sel('design', des, T_DESIGNS.map(function (t) { return [t[0], t[1]]; }))) + '</table>';
-    return sec('既定の設定（新しく始めるとき）', '<div class="md-row" style="gap:6px">' + seg('init', '初期設定') + seg('custom', 'カスタム設定') + '</div>' +
-      '<div class="md-hint" style="margin:8px 0 0">カスタム設定の中身' + (c && d && !isNaN(d) ? '（最後に変えた日時 ' + d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate() + ' ' + d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0') + '）' : '（まだありません。ここで選ぶと作られます）') + '</div>' + editor +
-      '<div class="md-row" style="gap:6px;flex-wrap:wrap;margin-top:6px"><button class="md-btn" data-act="customSave" data-tip="開いている画面の設定と、選んでいる図・表の書式（字体・大きさなども含む）を、まとめてカスタム設定にします。">今の設定と図・表の書式をまとめて取り込む</button><button class="md-btn" data-act="customApply"' + (S.data ? '' : ' disabled') + '>開いているプロジェクトに当てはめる</button></div>' +
-      '<div class="md-row" style="gap:6px;flex-wrap:wrap;margin-top:6px"><button class="md-btn" data-act="customExport"' + (c ? '' : ' disabled') + '>書き出す</button><button class="md-btn" data-act="customImport">読み込む</button><button class="md-btn" data-act="customDelete"' + (c ? '' : ' disabled') + '>消す</button></div>',
-      hint('カスタム設定は、この端末に保存するので、新しい版になっても残ります。「初期設定」を選んでいる間も消えません。保存したプロジェクトを開いたときは、プロジェクトの設定を使います。別の端末で使うときは、書き出したファイルを読み込んでください。'));
+      row(_t('有意水準'), sel('alpha', cs.alpha, [[0.05, _t('5%（0.05）')], [0.01, _t('1%（0.01）')], [0.1, _t('10%（0.10）')]])) +
+      row(_t('p 値の表記'), sel('lead0', cs.lead0 === false ? 'false' : 'true', [['true', 'p = 0.012'], ['false', 'p = .012']])) +
+      row(_t('報告書の表'), sel('tables', cr.tables === false ? 'false' : 'true', [['true', _t('入れる')], ['false', _t('入れない')]])) +
+      row(_t('補正後の p'), sel('holm', cr.holm === false ? 'false' : 'true', [['true', _t('一覧に入れる（ホルム法）')], ['false', _t('入れない')]])) +
+      row(_t('図の配色'), palSel) +
+      row(_t('表のデザイン'), sel('design', des, T_DESIGNS.map(function (t) { return [t[0], t[1]]; }))) + '</table>';
+    return sec(_t('既定の設定（新しく始めるとき）'), '<div class="md-row" style="gap:6px">' + seg('init', _t('初期設定')) + seg('custom', _t('カスタム設定')) + '</div>' +
+      _t('<div class="md-hint" style="margin:8px 0 0">カスタム設定の中身{0}</div>{1}<div class="md-row" style="gap:6px;flex-wrap:wrap;margin-top:6px"><button class="md-btn" data-act="customSave" data-tip="開いている画面の設定と、選んでいる図・表の書式（字体・大きさなども含む）を、まとめてカスタム設定にします。">今の設定と図・表の書式をまとめて取り込む</button><button class="md-btn" data-act="customApply"{2}>開いているプロジェクトに当てはめる</button></div><div class="md-row" style="gap:6px;flex-wrap:wrap;margin-top:6px"><button class="md-btn" data-act="customExport"{3}>書き出す</button><button class="md-btn" data-act="customImport">読み込む</button><button class="md-btn" data-act="customDelete"{4}>消す</button></div>', c && d && !isNaN(d) ? _t('（最後に変えた日時 {0}/{1}/{2} {3}:{4}）', d.getFullYear(), d.getMonth() + 1, d.getDate(), d.getHours(), String(d.getMinutes()).padStart(2, '0')) : _t('（まだありません。ここで選ぶと作られます）'), editor, S.data ? '' : ' disabled', c ? '' : ' disabled', c ? '' : ' disabled'),
+      hint(_t('カスタム設定は、この端末に保存するので、新しい版になっても残ります。「初期設定」を選んでいる間も消えません。保存したプロジェクトを開いたときは、プロジェクトの設定を使います。別の端末で使うときは、書き出したファイルを読み込んでください。')));
   }
   // アプリの色（画面の枠の色。図と表の色は変えない）
-  var THEMES = [['green', '緑（初期）', '#217346'], ['blue', '青', '#2B579A'], ['red', '赤', '#A4373A']];
+  var THEMES; function mkThemes() { THEMES = [['green', _t('緑（初期）'), '#217346'], ['blue', _t('青'), '#2B579A'], ['red', _t('赤'), '#A4373A']]; } mkThemes(); window.CTS_ONLANG.push(mkThemes);
   function themeSec() {
     var cur = A.theme();
-    return sec('アプリの色', '<div class="md-row" style="gap:6px;flex-wrap:wrap">' + THEMES.map(function (t) {
+    return sec(_t('アプリの色'), '<div class="md-row" style="gap:6px;flex-wrap:wrap">' + THEMES.map(function (t) {
       return '<button class="md-btn' + (cur === t[0] ? ' md-theme-on' : '') + '" data-act="setTheme" data-arg="' + t[0] + '" style="display:inline-flex;align-items:center;gap:6px"><span style="width:14px;height:14px;background:' + t[2] + ';display:inline-block"></span>' + t[1] + '</button>';
-    }).join('') + '</div>', hint('画面の枠（タイトル・リボン・作業ウィンドウ・ボタン）の色です。図と表の色は変わりません。この端末に保存するので、新しい版になっても残ります。'));
+    }).join('') + '</div>', hint(_t('画面の枠（タイトル・リボン・作業ウィンドウ・ボタン）の色です。図と表の色は変わりません。この端末に保存するので、新しい版になっても残ります。')));
+  }
+  // 言語：画面・結果の文・報告書・Excel・R のコードの言語。端末に保存する
+  function langSec() {
+    var cur = window.CTS_LANG;
+    return sec(window.CTS_LANG === 'en' ? 'Language' : '言語 / Language', '<div class="md-row" style="gap:6px;flex-wrap:wrap">' + [['ja', '日本語'], ['en', 'English']].map(function (l) {
+      return '<button class="md-btn' + (cur === l[0] ? ' md-theme-on' : '') + '" data-act="setLang" data-arg="' + l[0] + '">' + l[1] + '</button>';
+    }).join('') + '</div>', hint(_t('画面の文字、解析の結果の文、報告書、Excel ファイル、R のコードの言語です。データの質問文や選択肢はそのまま表示します。この端末に保存するので、新しい版になっても残ります。')));
   }
   // 設定の画面（「ファイル」→「設定」）。今開いているプロジェクトの設定と、端末に保存する設定をまとめて出す
   function paneSettings() {
-    return themeSec() + defaultsSec() + '<div class="md-hint" style="margin:10px 0 0;font-weight:700;color:var(--ink-ui)">開いているプロジェクトの設定</div>' + sec('判定と表記', grid2(fSelect('有意水準', 'set.alpha', [[0.05, '5%（0.05）'], [0.01, '1%（0.01）'], [0.1, '10%（0.10）']], 'num'), fSelect('p 値の表記', 'set.lead0', [['true', 'p = 0.012'], ['false', 'p = .012']], 'boolstr')),
-      hint('有意水準を変えると、すべての解析の判定と定型文が変わります。')) +
-      sec('図', grid2(fSelect('自動で入る文字', 'set.figLang', [['ja', '日本語'], ['en', '英語']]), fSelect('画像の細かさ', 'set.pngScale', [[1, '標準'], [2, '2 倍（資料向け）'], [4, '4 倍（印刷向け）']], 'num')),
-        hint('画像の細かさを上げても、Word や PowerPoint に貼ったときの大きさは画面と同じです（解像度の情報を画像に書き込みます）。回答の選択肢の名前はデータのまま表示します。')) +
-      sec('画面', grid2(fSelect('画面の拡大', 'set.zoom', [[90, '90%'], [100, '100%'], [115, '115%'], [130, '130%']], 'num'), '<span></span>')) +
-      sec('計算について', hint('集計と検定はすべて、この端末のブラウザの中で動く R' + (S.r ? '（バージョン ' + S.r + '）' : '') + ' で計算しています。データが外部に送られることはありません。'), '<button class="md-btn" data-act="about">使っている手法を見る</button>') +
-      sec('ご意見・不具合の報告', hint('不具合の報告や、ご意見・要望は GitHub で受け付けています。'), '<button class="md-btn" data-act="feedback">報告のしかたを見る</button>');
+    return langSec() + themeSec() + defaultsSec() + _t('<div class="md-hint" style="margin:10px 0 0;font-weight:700;color:var(--ink-ui)">開いているプロジェクトの設定</div>') + sec(_t('判定と表記'), grid2(fSelect(_t('有意水準'), 'set.alpha', [[0.05, _t('5%（0.05）')], [0.01, _t('1%（0.01）')], [0.1, _t('10%（0.10）')]], 'num'), fSelect(_t('p 値の表記'), 'set.lead0', [['true', 'p = 0.012'], ['false', 'p = .012']], 'boolstr')),
+      hint(_t('有意水準を変えると、すべての解析の判定と定型文が変わります。'))) +
+      sec(_t('図'), grid2(fSelect(_t('自動で入る文字'), 'set.figLang', [['ja', _t('日本語')], ['en', _t('英語')]]), fSelect(_t('画像の細かさ'), 'set.pngScale', [[1, _t('標準')], [2, _t('2 倍（資料向け）')], [4, _t('4 倍（印刷向け）')]], 'num')),
+        hint(_t('画像の細かさを上げても、Word や PowerPoint に貼ったときの大きさは画面と同じです（解像度の情報を画像に書き込みます）。回答の選択肢の名前はデータのまま表示します。'))) +
+      sec(_t('画面'), grid2(fSelect(_t('画面の拡大'), 'set.zoom', [[90, '90%'], [100, '100%'], [115, '115%'], [130, '130%']], 'num'), '<span></span>')) +
+      sec(_t('計算について'), hint(_t('集計と検定はすべて、この端末のブラウザの中で動く R{0} で計算しています。データが外部に送られることはありません。', S.r ? _t('（バージョン {0}）', S.r) : '')), _t('<button class="md-btn" data-act="about">使っている手法を見る</button>')) +
+      sec(_t('ご意見・不具合の報告'), hint(_t('不具合の報告や、ご意見・要望は GitHub で受け付けています。')), _t('<button class="md-btn" data-act="feedback">報告のしかたを見る</button>'));
   }
   function renderStatus() {
-    var tab = A.curTab(), res = tab ? S.results[tab.id] : null, mode = !S.data ? '' : S.ui.view === 'data' ? 'データ' : S.ui.view === 'report' ? '報告書' : tab ? '解析 ' + (S.P.tabs.indexOf(tab) + 1) + '：' + A.def(tab.type).name : '解析';
+    var tab = A.curTab(), res = tab ? S.results[tab.id] : null, mode = !S.data ? '' : S.ui.view === 'data' ? _t('データ') : S.ui.view === 'report' ? _t('報告書') : tab ? _t('解析 {0}：', S.P.tabs.indexOf(tab) + 1) + A.def(tab.type).name : _t('解析');
     var h = '<span class="md-st-mode">' + esc(mode) + '</span>';
-    if (S.ui.view === 'analysis' && res && res.ok && res.n) h += '<span class="md-st-num">n = ' + res.n.used + '（対象 ' + res.n.total + '）</span>';
+    if (S.ui.view === 'analysis' && res && res.ok && res.n) h += '<span class="md-st-num">n = ' + res.n.used + _t('（対象 {0}）</span>', res.n.total);
     if (S.ui.view === 'analysis' && res && res.ok && res.p !== null && res.p !== undefined) h += '<span class="md-st-num">' + pText(res.p) + '</span>';
-    if (S.data) h += '<span>' + esc(S.data.name) + '　回答 ' + S.data.nrow + ' 件</span>';
-    h += '<span class="md-st-r">' + (S.r ? '計算：R ' + esc(S.r) : '<b style="color:#C00000">R に接続できません</b>') + '</span>';
+    if (S.data) h += '<span>' + esc(S.data.name) + _t('　回答 {0} 件</span>', S.data.nrow);
+    h += '<span class="md-st-r">' + (S.r ? _t('計算：R ') + esc(S.r) : _t('<b style="color:#C00000">R に接続できません</b>')) + '</span>';
     $('#md_status').innerHTML = h;
   }
   function applyZoom() { var z = (S.P.settings.zoom || 100) / 100, app = document.querySelector('.md-app'); app.style.zoom = z; app.style.height = (100 / z) + 'vh'; }

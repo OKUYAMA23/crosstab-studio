@@ -1,0 +1,73 @@
+1	 (
+2	%)
+3	).
+4	 and 
+5	).
+6	)
+7	).
+8	Project “
+9	” was not found.
+10	An error occurred during the calculation (
+11	“
+12	. 
+13	Added “R code” to the “Export” tab. It saves, as a ZIP, a script that recalculates the analyses marked with ☑ with standard R functions, together with its data. When run in R, the “App values” are printed after each analysis's results so you can compare them and verify the calculations (like the Excel workbook, it is for verification).
+14	The update notice now shows the version you were using on this device and lists all changes since then.
+15	Added the ω coefficient and item-level ceiling and floor effect checks to “Scale reliability”.
+16	Added “Confirmatory factor analysis”. Define which items belong to which factor (up to four factors) to get fit indices (CFI, TLI, RMSEA, SRMR), factor loadings and reliability by factor (ω, AVE).
+17	The app color can now be chosen from green (default), blue and red. Figure and table colors do not change.
+18	Settings were combined into one screen under “File” → “Settings”, and the “Settings” tab of the ribbon was removed. “About this app” and “Feedback & bugs” can also be opened from “File”.
+19	The contents of the custom settings (significance level, p notation, report, figure colors, table design) can now be chosen directly in the settings screen.
+20	The “Settings” button in the phone title bar (which opens the task pane) was renamed “Details”.
+21	Added “Default settings” to the “Settings” tab. When starting new, you can choose “Standard settings” or “Custom settings”. Custom settings include the significance level and p notation, report settings, figure formats and table design, and are kept after updates.
+22	When a new version is released, the app no longer opens the old version and then reloads; it loads the new version on the loading screen and starts once.
+23	Version updates now reload only the app itself, not R (about 20 MB), so updates are faster.
+24	The task pane of regression analyses no longer shows the option list of the independent variables (a setting that is not used).
+25	Values close to 0 are no longer shown as “-0.00” in tables and figures.
+26	Punctuation such as “.” no longer wraps alone to the next line in table headings and figure legends.
+27	The correspondence analysis map now uses a wider area and places point labels so that they do not overlap.
+28	The line chart of the response timeline now shows response counts from the start.
+29	Warnings are now shown when α is negative in scale reliability and when an item has a communality close to 1 in factor analysis.
+30	Fixed the summary of tests in the report, where correlation coefficients appeared in both the statistic and effect size columns.
+31	Google Forms response spreadsheets can now be loaded from their URL (“From URL” on the “Data” tab). The URL is kept in the project, so new responses can be loaded with “Refresh”.
+32	On phones and tablets, the headings of tables with many columns no longer wrap every one or two characters. Tables that do not fit can be scrolled sideways.
+33	Added “Create scale score” to the “Data” tab. The mean or total score of several items (reverse-scored items can be specified) becomes a new column that can be used in t-tests, ANOVA, correlations, regression, etc.
+34	Excel files (.xlsx) can now be loaded directly (first sheet).
+35	Added “Choosing an analysis” to the “Start analysis” screen. Choose what you want to know and the questions, and suitable analyses are listed and created with the questions already filled in.
+36	Added “Stratified cross-tabulation (CMH test)”, “Multiple regression analysis” and “Logistic regression analysis”. Regression analyses also draw a coefficient plot (points and 95% CIs).
+37	Reports can now be saved as Word files (.docx). The tables are Word tables, so they can be edited directly.
+38	The Excel file now reproduces stratified cross-tabulation (tests by stratum and the 2×2 CMH test) and multiple regression with functions.
+39	Added “Feedback & bugs” to the “Settings” tab. You can send bug reports and comments via GitHub (the app version and device type are filled in automatically).
+40	Errors in the app are now recorded only on the device, and can be copied and pasted when reporting. The log is never sent.
+41	The source code was published under the MIT License. Anyone can check how the calculations work (the location is shown in “Settings” → “About”).
+42	Added “Plot frame” to the figure task pane. With “All sides”, the plot area is enclosed in a frame (just below the figure type).
+43	Added “Methods” to text mining reports. The word segmentation, removed words, word selection criteria, co-occurrence calculation and group comparison tests are described with the settings used.
+44	Added “Software used” at the end of the report, and how to cite the app in papers (APA, MLA, Chicago, etc.) under “Settings” → “About”.
+45	More analyses are reproduced in the Excel file: numeric summary and histogram, t-test, ANOVA, paired t-test, Pearson's correlation, scale reliability (α), response timeline, Friedman test, etc.
+46	Expanded the explanations in “Settings” → “About”: calculation methods of all analyses, data handling, analyses reproduced in Excel, report fonts and the components used.
+47	Figure colors can now be chosen “From a palette” or “By series”. With “By series”, each color can be changed in “Colors” in the task pane.
+48	Each analysis now shows its most commonly used figure first (“Mean and CI” for comparing means, a 100% stacked bar for frequencies of multiple questions, a line chart for the response timeline, etc.).
+49	The project file extension is now .prj. Older files (.ctsproj) can still be opened.
+50	Report (PDF) body text and tables now use MS Mincho for Japanese and Times New Roman for Latin characters, with gothic headings and figures. On devices without these fonts, similar fonts are used instead.
+51	Fixed a problem where changing figure settings scrolled back to the top of the analysis and hid the figure. The figure you were looking at now stays in place (especially on phones).
+52	Improved the startup process of the app.
+53	A “Welcome” screen is now shown at startup with the current version and the changes.
+54	Fixed the number of analyses shown in “Current status” in the task pane.
+55	Changed the app icon to a table on a white background, which is easier to distinguish from the desktop version (which runs on R).
+56	Tables, like figures, can now be resized (table width and row height) by dragging the right edge, bottom edge or bottom-right corner. Double-click to restore the original size. Images and PDFs use the same size.
+57	Removed the limit on the number of analyses (20). To keep redrawing fast with many analyses, analyses that are not visible are not drawn.
+58	Fixed pie charts whose value labels sometimes did not switch when “Count” or “Percent” was pressed.
+59	Reports can now be saved as PDF. The text, tables and figures of the report are combined into one file (“Report” screen or “Export all”).
+60	Added 10 analyses: numeric summary and histogram, t-test, one-way ANOVA, paired t-test, Pearson's correlation coefficient, scale reliability (Cronbach's α), exploratory factor analysis, correspondence analysis, response timeline and text mining.
+61	Text mining: splits free text into words and shows them as a word cloud, a frequent-word bar chart and a co-occurrence network. Words used more often by each group can also be compared.
+62	Responses to numeric questions are now corrected automatically (full-width digits, units such as years and minutes, words such as “about”, and ranges such as “3–4”). Corrected and unreadable responses can be checked under “Data”.
+63	Renewed the figure color palettes (journal-style palettes, viridis, etc.).
+64	Improved display and operation on phones (the ribbon is always shown, settings use the lower half of the screen, and zooming or shifting when touching input fields is prevented).
+65	When a new version is released, it is loaded automatically and the changes are announced on this screen.
+66	Choose what to show in the task pane. Linked to the tabs above.
+67	Previous tab
+68	Next tab
+69	Closes the task pane.
+70	Drop here to load
+71	Processing is still running. It has not stopped. Please wait.
+72	Language
+73	Language of the screen, analysis result text, reports, Excel files and R code. Question texts and options in the data are shown as they are. Saved on this device, so it remains after updates.

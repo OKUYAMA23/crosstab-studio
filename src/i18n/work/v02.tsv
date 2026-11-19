@@ -1,0 +1,120 @@
+1	Reloads the spreadsheet loaded from the URL and adds new responses. Analysis settings are kept.
+2	Scale
+3	Create scale score
+4	Creates the mean or total score of several items (ordinal questions) as a new column. Can be used in t-tests, correlations, etc.
+5	View
+6	Questions
+7	Shows the type and number of responses for each column (question).
+8	Responses
+9	Shows the responses themselves in a table.
+10	Selected column
+11	@選んだ列の種類を変えます。自動の判定が合わないときに直します。=>Changes the type of the selected column. Use it when the automatic detection is wrong. || 種類=>Type
+12	Not used (free text, etc.)
+13	Tabulate this column
+14	Creates a frequency table of the selected column.
+15	Change type
+16	Changes only the analysis type, keeping the selected columns.
+17	Order and folding
+18	Swap rows and columns
+19	Swaps the roles (rows and columns) of the two questions.
+20	Calculation
+21	Recalculate
+22	Calculates the selected analysis again.
+23	Add figure
+24	Adds another figure of a different type to this analysis. Figures are numbered 1, 2, ….
+25	Delete figure
+26	Deletes the selected figure (can be undone).
+27	Reset
+28	Returns the selected figure's settings to their initial state.
+29	Type
+30	Orientation and values
+31	Horizontal
+32	Makes the bars horizontal. Easier to read when option names are long.
+33	Vertical
+34	Makes the bars vertical.
+35	Percent
+36	Shows values as percentages (%).
+37	Shows values as counts.
+38	Color bar
+39	Based on
+40	The value that determines the cell colors.
+41	Position
+42	Position of the bar showing how colors correspond to values (color bar).
+43	Shape
+44	Smooth
+45	5 steps
+46	Shape of the color bar.
+47	Legend
+48	Position of the legend (color key). Choose “None” to hide it.
+49	Square
+50	Circle
+51	Wide
+52	Shape of the legend swatches.
+53	Frame
+54	Draws a line around the legend.
+55	Ticks
+56	Direction
+57	Outside
+58	Inside
+59	Direction of the axis ticks.
+60	Grid lines
+61	Solid
+62	Dashed
+63	Dotted
+64	Type of the lines drawn at the tick positions.
+65	Frame
+66	Left and bottom
+67	All sides
+68	Choose whether to enclose the plot area on all four sides or show only the left and bottom axes.
+69	Text
+70	Japanese
+71	Font for Japanese text in the figure.
+72	Latin
+73	Font for letters and numbers in the figure.
+74	Size
+75	Changes all text sizes in the figure at once. Fine-tune them in the task pane.
+76	@文字を 1 段階大きくします。=>Makes the text one step larger. || 文字を 1 段階小さくします。=>Makes the text one step smaller.
+77	Color and display
+78	Colors
+79	Choose a color combination from the list. To choose colors for each series, set “Color” to “By series” in the task pane.
+80	Value labels
+81	Writes values inside or at the end of bars. Labels that do not fit are omitted automatically.
+82	Count (n)
+83	Writes the count below each group name.
+84	Transparent background
+85	Makes the figure background transparent. Use when placing it on slides.
+86	Design
+87	Adds percentages by row (group) to the counts.
+88	Adds percentages by column (response) to the counts.
+89	Counts only
+90	Shows only counts, without percentages.
+91	Add
+92	Higher/lower marks
+93	Marks cells significantly higher than expected with ▲ and lower with ▽.
+94	Expected frequencies
+95	Adds a table of counts expected if there were no association.
+96	Adds a table of adjusted standardized residuals.
+97	Cell shading
+98	Shades cells according to the size of their values.
+99	Choose the colors used for cell shading.
+100	Text and lines
+101	Font for Japanese text in the table.
+102	Font for letters and numbers in the table.
+103	Text size in the table.
+104	Line width
+105	Width of the table lines.
+106	Line type
+107	Double
+108	Type of the table lines.
+109	@表の線の色です。=>Color of the table lines. || 線の色=>Line color
+110	Table export
+111	Copy
+112	Copies the table with its design. You can paste it into Word or Excel.
+113	Save as CSV
+114	Saves the table as a CSV file.
+115	Save as image
+116	Saves the table as an image (PNG) exactly as shown.
+117	All
+118	Select all
+119	Marks all analyses with ☑.
+120	Clear all

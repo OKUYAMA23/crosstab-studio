@@ -1,0 +1,98 @@
+1	Mean inter-item correlation
+2	Standardized α
+3	Response date
+4	Start date
+5	Next start date
+6	Start date and next start date are Excel date values (format the cells as dates to read them).
+7	Dimensions and coordinates of the correspondence analysis (singular value decomposition)
+8	Used (1)
+9	Dependent variable: 
+10	Independent variable: 
+11	X'X (sums of products of the independent variables; the first is the intercept)
+12	Inverse of (X'X)
+13	Residual sum of squares
+14	Total sum of squares
+15	F (df %d and n−%d)
+16	The coefficients are obtained from the normal equations B = (X'X)⁻¹X'y. Single-choice variables are dummy-coded (reference option = 0), and ordinal responses are converted to scores with the score table.
+17	Logistic regression (the coefficients are obtained by iterative computation)
+18	Stratum: 
+19	CMH test (2×2 tables)
+20	CMH χ² (uncorrected)
+21	Common odds ratio (Mantel–Haenszel)
+22	a–d are the counts in the top-left, top-right, bottom-left and bottom-right cells of the 2×2 table. The confidence interval of the common odds ratio and the Breslow–Day test are not reproduced in Excel.
+23	Confidence interval of the common odds ratio and the Breslow–Day test
+24	Generalized Cochran–Mantel–Haenszel test (tables larger than 2×2)
+25	[
+26	] 
+27	Filter: 
+28	 xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Data and analyses" sheetId="1" r:id="rId1"/></sheets><calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>
+29	  %s <- as.numeric(dd[["%d_num"]])
+30	  %s <- score(%s)                       # level score with the first option as the highest
+31	  for (j in which(%s %%in%% %s)) %s[, j] <- %d + 1 - %s[, j]   # reverse-scored items
+32	  # Filter: respondents whose %s includes any of %s
+33	  # Filter: respondents whose %s is %s
+34	# Scale score “%s”: %3$s of %2$d items (only respondents who answered all items)
+35	as.numeric(d[["%d_num"]])
+36	d[["%d_num"]] <- ifelse(complete.cases(sc), %s(sc), NA)
+37	>> App: could not be calculated (
+38	)\n
+39	>> App values: 
+40	)   # compare with the result above
+41	  tab <- table(a); print(cbind(n = tab, percent = round(100 * prop.table(tab), 1)))
+42	  print(chisq.test(tab))                         # goodness-of-fit test (are all options equally likely?)
+43	  m <- X[complete.cases(X), , drop = FALSE]; print(friedman.test(m)); cat("Kendall's W =", friedman.test(m)$statistic / (nrow(m) * (ncol(m) - 1)), "\\n")
+44	  cat("Cramér's V =", sqrt(unname(suppressWarnings(chisq.test(tab, correct = FALSE))$statistic) / (sum(tab) * (min(dim(tab)) - 1))), "\\n")
+45	  print(round(ct$stdres, 2))                     # adjusted residuals
+46	  print(wilcox.test(y ~ g, exact = FALSE, correct = TRUE))   # normal approximation (with corrections for ties and continuity)
+47	  print(pairwise.wilcox.test(y, g, p.adjust.method = "holm", exact = FALSE))   # multiple comparisons
+48	  print(cbind(p = p, adjusted_p = p.adjust(p, "holm")))   # per option (Fisher's test if any expected count is below 5)
+49	  if (tab[1, 2] + tab[2, 1] < 25) print(binom.test(tab[1, 2], tab[1, 2] + tab[2, 1], 0.5)) else print(mcnemar.test(tab, correct = TRUE))   # exact binomial test if fewer than 25 discordant pairs
+50	  print(do.call(rbind, tapply(y[ok], droplevels(g[ok]), function(x) c(n = length(x), mean = mean(x), sd = sd(x), median = median(x), min = min(x), max = max(x)))))
+51	  y <- y[!is.na(y)]; print(c(n = length(y), mean = mean(y), sd = sd(y), median = median(y), min = min(y), max = max(y)))
+52	Welch's ANOVA
+53	  print(TukeyHSD(aov(y ~ g)))                    # Tukey multiple comparisons
+54	  print(sapply(seq_len(k), function(j) c(item_rest_correlation = cor(X[, j], rowSums(X[, -j, drop = FALSE])), alpha_if_deleted = if (k > 2) (k - 1) / (k - 2) * (1 - sum(apply(X[, -j], 2, var)) / var(rowSums(X[, -j]))) else NA)))
+55	  nf <- max(1, sum(eigen(cor(X), only.values = TRUE)$values > 1))   # number of eigenvalues above 1 (Kaiser criterion)
+56	  nf <- min(nf, max(which(sapply(1:p, function(f) ((p - f)^2 - (p + f)) / 2 >= 0))))   # no more factors than the items allow
+57	  sv <- svd(Z)$d; print(round(rbind(eigenvalue = sv^2, percent = 100 * sv^2 / sum(sv^2)), 4)[, seq_len(min(dim(tab)) - 1), drop = FALSE])
+58	  if (requireNamespace("lavaan", quietly = TRUE)) {          # recalculate with the lavaan package if available
+59	  } else cat("Recalculating the confirmatory factor analysis requires the lavaan package (install.packages(\\"lavaan\\")).\\n")
+60	  y <- as.numeric(y == levels(y)[1])           # whether the answer is the first option (1 / 0)
+61	  fit <- glm(y ~ ., data = m, family = binomial); print(summary(fit)); print(exp(cbind(odds_ratio = coef(fit), confint.default(fit))))
+62	  cat("Likelihood-ratio chi-square =", fit$null.deviance - fit$deviance, " df =", fit$df.null - fit$df.residual, " p =", pchisq(fit$null.deviance - fit$deviance, fit$df.null - fit$df.residual, lower.tail = FALSE), "\\n")
+63	  # This analysis (%s) is not rewritten with standard R functions.
+64	\n==== %d. %s ====\nThis analysis uses the app's own processing (%s), so it is not converted to R code.\n
+65	word segmentation
+66	reading of response date-times
+67	# R code exported from CrossTab Studio %s (%s)
+68	# For checking the app's analyses by recalculating them with standard R functions (like the Excel workbook, it is for verifying the calculations).
+69	# Usage: put this file and “analysis_data.csv” in the same folder, set R's working directory (RStudio, etc.) to that folder, and run the whole file.
+70	#        At the end of each analysis, “>> App values” is printed; compare them with the R results printed above.
+71	# No additional packages are used (only the confirmatory factor analysis uses the lavaan package if it is available).
+72	# Combining options: map is a list of “display name = original responses”. Responses not in the list (excluded options, no answer) become missing
+73	# Level scores: the first option gets the highest score (5 to 1 for five levels)
+74	# Multiple choice: a respondents × options TRUE / FALSE matrix (NA for no answer)
+75	_num
+76	This request cannot be accepted.
+77	The project could not be saved. Check that the folder is writable (
+78	Data has not been loaded.
+79	). Change the combination of columns and try again.
+80	No port is available (
+81	”
+82	No column is selected. Select a column in the task pane on the right.
+83	The selected column is not in the data. Select the column again.
+84	: all options are excluded. Check at least one option in “Option settings”.
+85	No multiple-choice column is selected.
+86	: all options are excluded.
+87	Ordinal items were scored with the first option as the highest (%s). 
+88	%d-level items scored %d to 1
+89	“%s” was the %4$s score of the %3$d items %2$s. %5$s%6$sOnly respondents who answered all items were included.
+90	Reverse-scored items were reversed before calculation. 
+91	For %s, the most common response in every group was %s (%s). 
+92	For %s, the most common response was %s. 
+93	%2$s in %1$s (%3$s%%)
+94	|adjusted standardized residual| > 
+95	However, no cell exceeded the criterion (%s). 
+96	Residual analysis (%s) showed that the proportions of %s were significantly higher than expected%s
+97	 (the six largest residuals are listed). 
+98	between %s and %s

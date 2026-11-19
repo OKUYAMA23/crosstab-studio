@@ -29,7 +29,7 @@ if (length(miss)) {
   if (length(miss)) { logf("パッケージ ", paste(miss, collapse = ", "), " を入れられませんでした。インターネットにつないでもう一度起動してください。"); quit(status = 3) }
 }
 # ソースは UTF-8。パソコンの文字コードの設定に左右されないよう、UTF-8 と明示して読み込む
-for (f in c("data.R", "stats.R", "analyses.R", "analyses2.R", "excel.R", "rexport.R", "server.R")) {
+for (f in c("i18n.R", "i18n_en.R", "data.R", "stats.R", "analyses.R", "analyses2.R", "excel.R", "rexport.R", "server.R")) {
   src <- readLines(file.path(app_dir, "R", f), encoding = "UTF-8", warn = FALSE)
   eval(parse(text = src, encoding = "UTF-8", keep.source = FALSE), envir = globalenv())
 }

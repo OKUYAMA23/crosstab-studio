@@ -10,7 +10,7 @@
   async function unzip(u8) {
     var dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength), e = -1;
     for (var i = u8.length - 22; i >= Math.max(0, u8.length - 65557); i--) if (dv.getUint32(i, true) === 0x06054b50) { e = i; break; }
-    if (e < 0) throw new Error('Excel ファイルとして読めませんでした。ファイルが壊れていないか確かめてください。');
+    if (e < 0) throw new Error(_t('Excel ファイルとして読めませんでした。ファイルが壊れていないか確かめてください。'));
     var n = dv.getUint16(e + 10, true), p = dv.getUint32(e + 16, true), out = {}, td = new TextDecoder();
     for (var k = 0; k < n; k++) {
       var meth = dv.getUint16(p + 10, true), csz = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), off = dv.getUint32(p + 42, true);
@@ -48,17 +48,17 @@
   }
   function numText(s) { var x = Number(s); if (!isFinite(x)) return s; return String(Number(x.toPrecision(15))); }
   async function xlsxToCsv(u8) {
-    if (u8[0] === 0xD0 && u8[1] === 0xCF) throw new Error('古い形式の Excel ファイル（.xls）は読めません。Excel で「名前を付けて保存」から .xlsx か CSV にしてから入れてください。');
-    if (typeof DecompressionStream === 'undefined') throw new Error('このブラウザは Excel ファイルの読み込みに対応していません。CSV にしてから入れてください。');
+    if (u8[0] === 0xD0 && u8[1] === 0xCF) throw new Error(_t('古い形式の Excel ファイル（.xls）は読めません。Excel で「名前を付けて保存」から .xlsx か CSV にしてから入れてください。'));
+    if (typeof DecompressionStream === 'undefined') throw new Error(_t('このブラウザは Excel ファイルの読み込みに対応していません。CSV にしてから入れてください。'));
     var get = await unzip(u8);
-    var wb = xml(await get('xl/workbook.xml')); if (!wb) throw new Error('Excel ファイルとして読めませんでした。');
-    var sheets = tags(wb, 'sheet'); if (!sheets.length) throw new Error('シートが見つかりませんでした。');
+    var wb = xml(await get('xl/workbook.xml')); if (!wb) throw new Error(_t('Excel ファイルとして読めませんでした。'));
+    var sheets = tags(wb, 'sheet'); if (!sheets.length) throw new Error(_t('シートが見つかりませんでした。'));
     var d1904 = tags(wb, 'workbookPr').some(function (w) { var a = w.getAttribute('date1904'); return a === '1' || a === 'true'; });
     var rid = sheets[0].getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id') || sheets[0].getAttribute('r:id');
     var rels = xml(await get('xl/_rels/workbook.xml.rels')), target = 'worksheets/sheet1.xml';
     tags(rels, 'Relationship').forEach(function (r) { if (r.getAttribute('Id') === rid) target = r.getAttribute('Target'); });
     var path = target.charAt(0) === '/' ? target.slice(1) : 'xl/' + target.replace(/^\.\//, '');
-    var sh = xml(await get(path)); if (!sh) throw new Error('最初のシートを読めませんでした。');
+    var sh = xml(await get(path)); if (!sh) throw new Error(_t('最初のシートを読めませんでした。'));
     var sst = xml(await get('xl/sharedStrings.xml')), strs = sst ? tags(sst, 'si').map(siText) : [];
     var st = xml(await get('xl/styles.xml')), fmts = {}, dateXf = [];
     if (st) {
@@ -83,7 +83,7 @@
       rows[rn] = line; if (line.length > maxC) maxC = line.length;
     });
     while (rows.length && !(rows[rows.length - 1] || []).length) rows.pop();
-    if (!rows.length) throw new Error('最初のシートが空です。');
+    if (!rows.length) throw new Error(_t('最初のシートが空です。'));
     var csv = [];
     for (var i = 0; i < rows.length; i++) {
       var L = rows[i] || [], f = [];

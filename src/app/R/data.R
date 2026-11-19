@@ -8,7 +8,7 @@ stop_user <- function(...) {
 }
 
 # 尺度の外にある回答（順序の検定では既定で除く）
-SPECIAL_PATTERN <- "わからない|分からない|判断できない|該当しない|回答したくない|答えたくない|無回答|覚えていない"
+SPECIAL_PATTERN <- "わからない|分からない|判断できない|該当しない|回答したくない|答えたくない|無回答|覚えていない|don't know|do not know|not sure|unsure|prefer not|rather not|no answer|not applicable|^n/?a$"   # 英語の回答にも対応（大文字・小文字は区別しない）
 
 # 順序のある選択肢の辞書。先頭が「上位」（程度が大きい・頻度が高い・肯定的）。
 SCALES <- list(
@@ -31,16 +31,36 @@ SCALES <- list(
   c("よく知っている", "どのような機能か知っている", "内容を知っている", "知っている", "少し知っている",
     "名前だけ知っている", "聞いたことがある", "あまり知らない", "知らない", "まったく知らない"),
   c("とても重要", "重要", "やや重要", "どちらともいえない", "あまり重要でない", "重要でない"),
-  c("とても感じる", "感じる", "やや感じる", "どちらともいえない", "あまり感じない", "感じない", "まったく感じない")
+  c("とても感じる", "感じる", "やや感じる", "どちらともいえない", "あまり感じない", "感じない", "まったく感じない"),
+  # 英語の回答（大文字・小文字と空白は区別しない）
+  c("strongly agree", "agree", "somewhat agree", "slightly agree", "neither agree nor disagree", "neutral", "undecided",
+    "slightly disagree", "somewhat disagree", "disagree", "strongly disagree"),
+  c("very satisfied", "satisfied", "somewhat satisfied", "neither satisfied nor dissatisfied", "neutral",
+    "somewhat dissatisfied", "dissatisfied", "very dissatisfied"),
+  c("always", "almost always", "very often", "often", "frequently", "sometimes", "occasionally", "rarely", "seldom", "almost never", "never"),
+  c("extremely important", "very important", "important", "moderately important", "somewhat important", "slightly important",
+    "not very important", "not important", "not at all important"),
+  c("excellent", "very good", "good", "fair", "average", "poor", "very poor"),
+  c("very likely", "likely", "somewhat likely", "neutral", "somewhat unlikely", "unlikely", "very unlikely"),
+  c("very much", "quite a bit", "a lot", "somewhat", "a little", "not much", "not at all"),
+  c("extremely interested", "very interested", "interested", "somewhat interested", "slightly interested", "not very interested",
+    "not interested", "not at all interested"),
+  c("every day", "daily", "almost every day", "several times a week", "once a week", "several times a month", "once a month",
+    "less than once a month", "rarely", "never"),
+  c("love", "like", "neutral", "dislike", "hate"),
+  c("like very much", "like", "neither like nor dislike", "dislike", "dislike very much"),
+  c("very high", "high", "moderate", "low", "very low"),
+  c("very easy", "easy", "neutral", "difficult", "very difficult"),
+  c("increased", "slightly increased", "no change", "unchanged", "slightly decreased", "decreased")
 )
 # 2 択（名義として扱うが、並びは決めておく）
 BINARIES <- list(c("はい", "いいえ"), c("ある", "ない"), c("いる", "いない"), c("あり", "なし"),
                  c("知っている", "知らない"), c("思う", "思わない"), c("できる", "できない"),
-                 c("している", "していない"))
+                 c("している", "していない"), c("yes", "no"), c("true", "false"))
 
 norm_label <- function(x) {
   x <- chartr("０１２３４５６７８９〜~－", "0123456789～～-", x)
-  gsub("[[:space:]　]", "", x)
+  tolower(gsub("[[:space:]　]", "", x))
 }
 
 # バイト列を UTF-8 の文字列にする（BOM 付き UTF-8、UTF-8、Shift_JIS(CP932) を判定）
@@ -54,15 +74,15 @@ bytes_to_text <- function(raw) {
   Encoding(txt) <- "UTF-8"
   if (validUTF8(txt)) return(txt)
   conv <- iconv(list(raw), from = "CP932", to = "UTF-8")
-  if (is.na(conv)) stop_user("文字コードを判定できませんでした。CSV を UTF-8 で保存し直してください。")
+  if (is.na(conv)) stop_user(tr_("文字コードを判定できませんでした。CSV を UTF-8 で保存し直してください。"))
   conv
 }
 
 read_survey_csv <- function(raw, filename = "") {
   if (length(raw) >= 4 && identical(as.integer(raw[1:2]), c(80L, 75L))) {
-    stop_user("Excel ブック（.xlsx）または ZIP は読み込めません。スプレッドシートから「CSV」でダウンロードしたファイルを入れてください。")
+    stop_user(tr_("Excel ブック（.xlsx）または ZIP は読み込めません。スプレッドシートから「CSV」でダウンロードしたファイルを入れてください。"))
   }
-  if (length(raw) == 0) stop_user("ファイルが空です。回答が入った CSV を入れてください。")
+  if (length(raw) == 0) stop_user(tr_("ファイルが空です。回答が入った CSV を入れてください。"))
   txt <- bytes_to_text(raw)
   first <- sub("\r?\n.*", "", substr(txt, 1, 5000))
   sep <- if (grepl("\\.tsv$", filename, ignore.case = TRUE) ||
@@ -71,8 +91,8 @@ read_survey_csv <- function(raw, filename = "") {
     utils::read.table(text = txt, sep = sep, header = TRUE, quote = "\"", colClasses = "character",
                       check.names = FALSE, na.strings = character(0), fill = TRUE, comment.char = "",
                       encoding = "UTF-8", stringsAsFactors = FALSE, blank.lines.skip = TRUE),
-    error = function(e) stop_user("CSV として読めませんでした（", conditionMessage(e), "）。Google スプレッドシートの「ファイル → ダウンロード → カンマ区切り形式（.csv）」で保存したファイルを使ってください。"))
-  if (ncol(df) < 1 || nrow(df) < 1) stop_user("回答の行がありません。1 行目が質問、2 行目以降が回答の CSV を入れてください。")
+    error = function(e) stop_user(tr_("CSV として読めませんでした（"), conditionMessage(e), tr_("）。Google スプレッドシートの「ファイル → ダウンロード → カンマ区切り形式（.csv）」で保存したファイルを使ってください。")))
+  if (ncol(df) < 1 || nrow(df) < 1) stop_user(tr_("回答の行がありません。1 行目が質問、2 行目以降が回答の CSV を入れてください。"))
   for (j in seq_along(df)) {
     v <- df[[j]]
     Encoding(v) <- "UTF-8"
@@ -81,10 +101,10 @@ read_survey_csv <- function(raw, filename = "") {
     df[[j]] <- v
   }
   nm <- names(df); Encoding(nm) <- "UTF-8"
-  nm[is.na(nm) | nm == ""] <- paste0("列", which(is.na(nm) | nm == ""))
+  nm[is.na(nm) | nm == ""] <- paste0(tr_("列"), which(is.na(nm) | nm == ""))
   names(df) <- nm
   df <- df[rowSums(!is.na(df)) > 0, , drop = FALSE]
-  if (nrow(df) < 1) stop_user("回答の行がありません。")
+  if (nrow(df) < 1) stop_user(tr_("回答の行がありません。"))
   df
 }
 
@@ -139,7 +159,7 @@ guess_delim <- function(x) {
 # 選択肢の並びを決める。戻り値：list(order = 並べた選択肢, ordinal = 順序があるか)
 order_categories <- function(vals, counts) {
   nv <- norm_label(vals)
-  special <- grepl(SPECIAL_PATTERN, vals)
+  special <- grepl(SPECIAL_PATTERN, vals, ignore.case = TRUE)
   core <- which(!special)
   put <- function(idx) c(idx, which(special)[order(-counts[special])])
   if (length(core) == 0) return(list(order = order(-counts), ordinal = FALSE))
@@ -173,12 +193,12 @@ category_info <- function(x, type, delim) {
   tb <- table(tok)
   vals <- names(tb); Encoding(vals) <- "UTF-8"; counts <- as.integer(tb)
   if (type == "multi") {
-    sp <- grepl(SPECIAL_PATTERN, vals)
+    sp <- grepl(SPECIAL_PATTERN, vals, ignore.case = TRUE)
     ord <- c(which(!sp)[order(-counts[!sp])], which(sp)[order(-counts[sp])]); ordinal <- FALSE
   } else {
     oc <- order_categories(vals, counts); ord <- oc$order; ordinal <- oc$ordinal
   }
-  list(cats = lapply(ord, function(i) list(v = vals[i], n = counts[i], special = grepl(SPECIAL_PATTERN, vals[i]))),
+  list(cats = lapply(ord, function(i) list(v = vals[i], n = counts[i], special = grepl(SPECIAL_PATTERN, vals[i], ignore.case = TRUE))),
        ordinal = ordinal)
 }
 
@@ -202,6 +222,8 @@ clean_number <- function(x, unit = NULL) {
     w <- gsub("(?<=[0-9]),(?=[0-9]{3})", "", w, perl = TRUE)
     w <- sub("^(約|およそ|だいたい|大体|ほぼ|おおよそ)", "", w)
     w <- sub("(くらい|ぐらい|位|程度|前後|ほど)$", "", w)
+    w <- sub("^(about|around|approx\\.?|approximately|roughly|nearly|almost)", "", w, ignore.case = TRUE)   # 英語の回答
+    w <- sub("(ish|orso)$", "", w, ignore.case = TRUE)
     # 時間と分：質問が「何分」なら「1時間」→ 60、「何時間」なら「30分」→ 0.5 に直す（質問の単位がわからないときは数字だけを使う）
     hm <- regmatches(w, regexec("^([0-9]+(?:\\.[0-9]+)?)時間(半|([0-9]+)分)?$", w)); ish <- lengths(hm) == 4
     hv <- rep(NA_real_, length(w)); if (any(ish)) hv[ish] <- vapply(hm[ish], function(v) as.numeric(v[2]) + if (v[3] == "半") 0.5 else if (nzchar(v[4])) as.numeric(v[4]) / 60 else 0, 0)
@@ -210,10 +232,11 @@ clean_number <- function(x, unit = NULL) {
     for (k in 1:2) {
       w <- sub("(くらい|ぐらい|位|程度|前後|ほど|以上|以下|未満|超|弱|強|頃|ごろ)$", "", w)
       w <- sub(NUM_UNITS, "", w)
+      w <- sub("(minutes?|mins?|hours?|hrs?|yearsold|years?|yrs?|times|people|persons?|days?|weeks?|months?|books?|yen|dollars?|usd|ormore|orless|plus|\\+)$", "", w, ignore.case = TRUE)
     }
     man <- grepl("^-?[0-9]+(\\.[0-9]+)?万$", w)
     v <- suppressWarnings(as.numeric(sub("万$", "", w))); v[man] <- v[man] * 10000
-    rg <- regmatches(w, regexec("^(-?[0-9]+(?:\\.[0-9]+)?)[^0-9.]{0,4}?(?:~|-|ー|から|－)(-?[0-9]+(?:\\.[0-9]+)?)[^0-9]*$", w))
+    rg <- regmatches(w, regexec("^(-?[0-9]+(?:\\.[0-9]+)?)[^0-9.]{0,4}?(?:~|-|ー|から|－|to)(-?[0-9]+(?:\\.[0-9]+)?)[^0-9]*$", w))
     isr <- lengths(rg) == 3 & is.na(v)
     if (any(isr)) v[isr] <- vapply(rg[isr], function(m) mean(as.numeric(m[2:3])), 0)
     if (identical(unit, "min")) { v[ish] <- hv[ish] * 60 }
@@ -256,9 +279,11 @@ detect_variable <- function(x, header) {
   if (grepl("タイムスタンプ|timestamp", header, ignore.case = TRUE) ||
       mean(grepl("^[0-9]{4}[/-][0-9]{1,2}[/-][0-9]{1,2}([ T].*)?$", nn)) > 0.9) { base$type <- "time"; return(base) }
   # 数値：そのまま、または直して数値として読める回答が 8 割以上で、値の種類が多い（または質問文が数を尋ねている）
-  unit <- if (grepl("何分|（分）|\\(分\\)|分くらい|分程度|分間", header)) "min" else if (grepl("何時間|（時間）|\\(時間\\)|時間くらい|時間程度", header)) "hour" else NULL
+  unit <- if (grepl("何分|（分）|\\(分\\)|分くらい|分程度|分間", header) || grepl("minutes|\\(min\\)|\\bin min", header, ignore.case = TRUE)) "min"
+          else if (grepl("何時間|（時間）|\\(時間\\)|時間くらい|時間程度", header) || grepl("\\bhours\\b|\\(h\\)|\\(hours?\\)", header, ignore.case = TRUE)) "hour" else NULL
   cn <- clean_number(nn, unit); okshare <- mean(!is.na(cn$value)); numv <- cn$value[!is.na(cn$value)]
-  asks_num <- grepl("何歳|年齢|何人|何時間|何分|何回|何日|何冊|何円|金額|時間数|人数|回数|半角数字|数字で|数値で", header)
+  asks_num <- grepl("何歳|年齢|何人|何時間|何分|何回|何日|何冊|何円|金額|時間数|人数|回数|半角数字|数字で|数値で", header) ||
+              grepl("how (many|much|old|long)|\\bage\\b|number of|in minutes|in hours|enter a number|numbers? only", header, ignore.case = TRUE)
   # 質問文が数を尋ねていても、「1～2人」のような選択肢（そのままでは数値でない回答が半数以上）は選択肢として扱う
   if (okshare >= 0.8 && (length(unique(numv)) > 11 || (asks_num && mean(cn$status == "ok") >= 0.5 && length(unique(numv)) >= 2))) {
     base$type <- "numeric"
@@ -267,7 +292,7 @@ detect_variable <- function(x, header) {
     return(base)
   }
   if (okshare >= 0.5 && length(unique(numv)) >= 2) { base$numCand <- TRUE; base$clean <- clean_info(nn, unit); base$unit <- unit }   # 数値として読み直せる列
-  says_multi <- grepl("複数回答|複数選択|すべて選|全て選|いくつでも", header)
+  says_multi <- grepl("複数回答|複数選択|すべて選|全て選|いくつでも", header) || grepl("select all|check all|choose all|all that apply|multiple answers", header, ignore.case = TRUE)
   d <- guess_delim(x)
   if (!is.na(d) || says_multi) {
     if (is.na(d)) d <- ";"

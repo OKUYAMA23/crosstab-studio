@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var MAX_TABS = Infinity;                 // 解析の数に上限は設けない（多いときは、画面に見えている解析だけ図を描く）
-  var TYPE_NAMES = { nominal: '単一回答', ordinal: '順序あり', multi: '複数回答', numeric: '数値', text: '自由記述（使わない）', time: '日時（使わない）', empty: '回答なし' };
+  var TYPE_NAMES; function mkTypes() { TYPE_NAMES = { nominal: _t('単一回答'), ordinal: _t('順序あり'), multi: _t('複数回答'), numeric: _t('数値'), text: _t('自由記述（使わない）'), time: _t('日時（使わない）'), empty: _t('回答なし') }; } mkTypes(); window.CTS_ONLANG.push(mkTypes);
   var S = {
     registry: [], data: null, P: null, results: {}, undo: [], redo: [], dirty: false, projName: '', r: null, holm: null,
     ui: { rtab: 'home', view: 'analysis', sel: null, selFig: 0, pane: true, selVar: null, dataView: 'vars', paneScroll: {}, rawRows: 200 }
@@ -12,8 +12,8 @@
       stripe: '#F5F5F5', heat: 'none', heatPal: 'green', bar: 'right', barShape: 'smooth' };
   }
   function baseProject() {
-    return { title: '集計と検定の報告', tabs: [], vars: [], seq: 0, figDefault: null, tstyleDefault: null,
-      settings: { alpha: 0.05, lead0: true, figLang: 'ja', zoom: 100, pngScale: 2, autoSave: false }, report: { tables: true, holm: true } };
+    return { title: _t('集計と検定の報告'), tabs: [], vars: [], seq: 0, figDefault: null, tstyleDefault: null,
+      settings: { alpha: 0.05, lead0: true, figLang: window.CTS_LANG === 'en' ? 'en' : 'ja', zoom: 100, pngScale: 2, autoSave: false }, report: { tables: true, holm: true } };
   }
   // ---- 既定の設定：初期設定か、自分のカスタム設定か。カスタム設定は端末（ブラウザ）に保存し、新しい版が出ても残す
   var CUSTOM_KEY = 'cts-custom', MODE_KEY = 'cts-defmode';
@@ -66,15 +66,15 @@
   var busyN = 0, busyT = null, busyTick = null, busyAt = 0, busyText = '';
   function busyDraw() {
     var el = $('#md_busy'), sec = Math.floor((Date.now() - busyAt) / 1000);
-    el.querySelector('.md-busy-text').textContent = busyText + (busyN > 1 ? '（残り ' + busyN + ' 件）' : '');
-    el.querySelector('.md-busy-sec').textContent = sec >= 2 ? sec + ' 秒経過' : '';
+    el.querySelector('.md-busy-text').textContent = busyText + (busyN > 1 ? _t('（残り {0} 件）', busyN) : '');
+    el.querySelector('.md-busy-sec').textContent = sec >= 2 ? sec + _t(' 秒経過') : '';
     el.querySelector('.md-busy-long').style.display = sec >= 10 ? 'block' : 'none';
     el.classList.toggle('long', sec >= 3);
   }
   function busy(on, text) {
     if (on) {
       if (busyN === 0) { busyAt = Date.now(); busyT = setTimeout(function () { $('#md_busy').style.display = 'block'; busyDraw(); busyTick = setInterval(busyDraw, 500); }, 400); }
-      busyN++; if (text) busyText = text; else if (!busyText) busyText = '計算しています';
+      busyN++; if (text) busyText = text; else if (!busyText) busyText = _t('計算しています');
       if ($('#md_busy').style.display === 'block') busyDraw();
     } else {
       busyN = Math.max(0, busyN - 1);
@@ -84,7 +84,7 @@
   }
   function bytesToB64(u8) { var s = '', n = 0x8000; for (var i = 0; i < u8.length; i += n) s += String.fromCharCode.apply(null, u8.subarray(i, i + n)); return btoa(s); }
   function b64ToBytes(b) { var s = atob(b), u = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; }
-  function safeName(s) { return String(s).replace(/[\\/:*?"<>|\u0000-\u001f]+/g, '_').replace(/\s+/g, ' ').trim().slice(0, 100) || '無題'; }
+  function safeName(s) { return String(s).replace(/[\\/:*?"<>|\u0000-\u001f]+/g, '_').replace(/\s+/g, ' ').trim().slice(0, 100) || _t('無題'); }
 
   // ---------------- ZIP（.xlsx の作成と、フォルダーを選べないときのまとめ保存に使う）
   async function deflate(u8) {
@@ -112,13 +112,13 @@
   // ---------------- R との通信
   async function api(path, body, raw) {
     var res;
-    try { res = await fetch(path, { method: 'POST', headers: { 'Content-Type': raw ? 'application/octet-stream' : 'application/json' }, body: raw ? body : JSON.stringify(body || {}) }); }
-    catch (e) { S.r = null; App.renderStatus(); throw new Error('計算をする R に接続できません。アプリを起動し直してください。'); }
+    try { res = await fetch(path + (path.indexOf('?') < 0 ? '?' : '&') + 'lang=' + (window.CTS_LANG || 'ja'), { method: 'POST', headers: { 'Content-Type': raw ? 'application/octet-stream' : 'application/json' }, body: raw ? body : JSON.stringify(body || {}) }); }
+    catch (e) { S.r = null; App.renderStatus(); throw new Error(_t('計算をする R に接続できません。アプリを起動し直してください。')); }
     return res.json();
   }
   async function uploadData(bytes, name) {
-    busy(true, 'データを読み込んでいます');
-    try { var d = await api('/api/load?name=' + encodeURIComponent(name), bytes, true); if (!d.ok) throw new Error(d.message || 'データを読み込めませんでした。'); return d; }
+    busy(true, _t('データを読み込んでいます'));
+    try { var d = await api('/api/load?name=' + encodeURIComponent(name), bytes, true); if (!d.ok) throw new Error(d.message || _t('データを読み込めませんでした。')); return d; }
     finally { busy(false); }
   }
   // R がデータを持っていないとき（R を起動し直したあとなど）は、手元のデータを送り直す
@@ -153,7 +153,7 @@
     if (vr.type === 'multi') {
       // 複数回答で 1% 未満しか選ばれていない回答は、「その他」に書かれた自由記述とみなして 1 つにまとめておく
       var lim = Math.max(1, Math.floor(vr.n * 0.01)), rare = cats.filter(function (c, i) { return vr.cats[i].n <= lim; });
-      if (rare.length >= 2 && rare.length < cats.length) rare.forEach(function (c) { c.label = 'その他'; });
+      if (rare.length >= 2 && rare.length < cats.length) rare.forEach(function (c) { c.label = _t('その他'); });
     }
     return cats;
   }
@@ -161,14 +161,14 @@
   function itemsName(cols) {
     var vs = cols.map(v).filter(Boolean); if (!vs.length) return null;
     var same = vs.every(function (x) { return x.item && x.stem && x.stem === vs[0].stem; });
-    return same ? vs[0].stem + '（' + vs.map(function (x) { return x.item; }).join('・') + '）' : vs.map(function (x) { return x.label; }).join(' / ');
+    return same ? vs[0].stem + _t('（{0}）', vs.map(function (x) { return x.item; }).join(_t('・'))) : vs.map(function (x) { return x.label; }).join(' / ');
   }
   function autoName(tab) {
     if (!tab.nameAuto) return;
     var d = def(tab.type), labs = d.slots.map(function (s) { var sl = tab.slots[s.id]; if (!sl) return null; if (s.many) return itemsName(sl.cols || []); var vr = v(sl.col); return vr ? vr.label : null; }).filter(Boolean);
     tab.name = labs.length ? labs.join(' × ') : d.name;
     // 回帰分析は説明変数を並べると長くなるので「目的変数 ← 説明変数 n 個」にする
-    if ((tab.type === 'reg' || tab.type === 'logit') && tab.slots.y && v(tab.slots.y.col)) { var nx = (tab.slots.x && tab.slots.x.cols || []).length; tab.name = v(tab.slots.y.col).label + (nx ? ' ← 説明変数 ' + nx + ' 個' : ''); }
+    if ((tab.type === 'reg' || tab.type === 'logit') && tab.slots.y && v(tab.slots.y.col)) { var nx = (tab.slots.x && tab.slots.x.cols || []).length; tab.name = v(tab.slots.y.col).label + (nx ? _t(' ← 説明変数 {0} 個', nx) : ''); }
   }
   // 複数の設問の選択肢：最初の設問の並びを基に、ほかの設問にしかない選択肢を後ろに足す
   function defaultCatsMany(cols, sd) {
@@ -198,7 +198,7 @@
   }
   function newFig() { return Object.assign(Chart.defaults(), clone(S.P.figDefault || {})); }
   function newTab(type) {
-    if (S.P.tabs.length >= MAX_TABS) { toast('解析は ' + MAX_TABS + ' 個までです。使わない解析を削除してください。', true); return null; }
+    if (S.P.tabs.length >= MAX_TABS) { toast(_t('解析は {0} 個までです。使わない解析を削除してください。', MAX_TABS), true); return null; }
     var d = def(type), tab = { id: 't' + (++S.P.seq), type: type, name: d.name, nameAuto: true, slots: {}, filter: null, opts: {}, figs: [newFig()],
       table: { pct: 'row', expected: false, resid: false, marks: true }, tstyle: Object.assign(tableDefaults(), clone(S.P.tstyleDefault || {})), reportText: null, collapsed: false, checked: true };
     d.slots.forEach(function (s) { tab.slots[s.id] = s.many ? { cols: [], cats: [] } : { col: null, cats: [] }; });
@@ -240,7 +240,7 @@
     if (!tab || !S.data) return;
     if (!tabReady(tab)) { delete S.results[id]; App.render(); return; }
     var req = buildReq(tab), sig = JSON.stringify(req), my = (seqs[id] = (seqs[id] || 0) + 1);
-    busy(true, '解析を計算しています');
+    busy(true, _t('解析を計算しています'));
     try { var rq = App.prepReq ? await App.prepReq(tab, req) : req; if (seqs[id] !== my) return; var res = await apiData('/api/analyze', rq); if (seqs[id] !== my) return; res.sig0 = sig; S.results[id] = res; S.holm = null; }
     catch (e) { if (seqs[id] !== my) return; S.results[id] = { ok: false, message: e.message, sig0: sig }; }
     finally { busy(false); }
@@ -344,11 +344,11 @@
         if (t.filter && t.filter.col !== null) { if (map[t.filter.col]) t.filter.col = map[t.filter.col]; else t.filter = null; }
       });
       S.undo = []; S.redo = []; markDirty(); S.results = {}; scheduleAll();
-      toast('データを差し替えました（回答 ' + d.nrow + ' 件）。すべての解析を計算し直しました。');
+      toast(_t('データを差し替えました（回答 {0} 件）。すべての解析を計算し直しました。', d.nrow));
     } else {
       S.P = newProject(); S.P.vars = clone(d.vars); S.results = {}; S.undo = []; S.redo = []; S.projName = ''; S.dirty = false;
       S.ui.view = 'analysis'; S.ui.rtab = 'home'; S.ui.selVar = null; S.ui.sel = null;
-      toast('読み込みました（回答 ' + d.nrow + ' 件、' + d.ncol + ' 列）。');
+      toast(_t('読み込みました（回答 {0} 件、{1} 列）。', d.nrow, d.ncol));
     }
     App.applyZoom(); App.render();
   }
@@ -363,9 +363,9 @@
   }
   async function openProjectText(text, name) {
     var j;
-    try { j = JSON.parse(text); } catch (e) { throw new Error('プロジェクトのファイルが壊れています。'); }
-    if (j && j.ok === false) throw new Error(j.message || 'プロジェクトを開けませんでした。');
-    if (!j || j.app !== 'CrossTabStudio' || !j.data || !j.project) throw new Error('CrossTab Studio のプロジェクトではありません。');
+    try { j = JSON.parse(text); } catch (e) { throw new Error(_t('プロジェクトのファイルが壊れています。')); }
+    if (j && j.ok === false) throw new Error(j.message || _t('プロジェクトを開けませんでした。'));
+    if (!j || j.app !== 'CrossTabStudio' || !j.data || !j.project) throw new Error(_t('CrossTab Studio のプロジェクトではありません。'));
     var bytes = b64ToBytes(j.data.b64), d = await uploadData(bytes, j.data.name);
     setData(d, bytes, j.data.name);
     var P = Object.assign(baseProject(), j.project);                // 保存したプロジェクトは、プロジェクトの設定のまま開く
@@ -378,47 +378,47 @@
     S.P = P; S.results = {}; S.undo = []; S.redo = []; S.dirty = false; S.projName = name;
     S.ui.view = 'analysis'; S.ui.sel = P.tabs.length ? P.tabs[0].id : null; S.ui.selFig = 0; S.ui.rtab = 'home';
     App.applyZoom(); App.render(); scheduleAll();
-    toast('プロジェクト「' + name + '」を開きました（解析 ' + P.tabs.length + ' 件）。');
+    toast(_t('プロジェクト「{0}」を開きました（解析 {1} 件）。', name, P.tabs.length));
   }
   // アプリの中の置き場（アプリのフォルダーの projects）に保存する。CSV も一緒に入るので、開くときに CSV は要らない
   async function saveProjectAs(name, o) {
     o = o || {};
-    if (!S.data) { toast('保存するデータがありません。先に CSV を入れてください。', true); return false; }
-    if (!o.quiet) busy(true, 'プロジェクトを保存しています');
+    if (!S.data) { toast(_t('保存するデータがありません。先に CSV を入れてください。'), true); return false; }
+    if (!o.quiet) busy(true, _t('プロジェクトを保存しています'));
     var stamp = JSON.stringify(S.P); S.saving = true; App.renderTitle();
     try {
       var d = await api('/api/proj/save?name=' + encodeURIComponent(name), new TextEncoder().encode(projectJson()), true);
-      if (!d.ok) throw new Error(d.message || '保存できませんでした。');
+      if (!d.ok) throw new Error(d.message || _t('保存できませんでした。'));
       S.projName = d.name; S.dirty = JSON.stringify(S.P) !== stamp;              // 保存中に変えた分は未保存のまま残す
       if (S.dirty) markDirty();
-      if (!o.quiet) toast('プロジェクト「' + d.name + '」を保存しました。');
+      if (!o.quiet) toast(_t('プロジェクト「{0}」を保存しました。', d.name));
       return true;
-    } catch (e) { toast((o.quiet ? '自動保存できませんでした：' : '') + e.message, true); return false; }
+    } catch (e) { toast((o.quiet ? _t('自動保存できませんでした：') : '') + e.message, true); return false; }
     finally { S.saving = false; if (!o.quiet) busy(false); App.renderTitle(); }
   }
   async function listProjects() { try { var d = await api('/api/proj/list', {}); return d.ok ? d : { items: [], folder: '' }; } catch (e) { return { items: [], folder: '' }; } }
   async function openProjectByName(name) {
-    busy(true, 'プロジェクトを開いています');
+    busy(true, _t('プロジェクトを開いています'));
     try { var res = await fetch('/api/proj/load', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: name }) }); await openProjectText(await res.text(), name); }
     catch (e) { toast(e.message, true); } finally { busy(false); }
   }
   async function exportProjectFile() {
     if (!S.data) return;
-    if (await saveBlob(new Blob([projectJson()], { type: 'application/octet-stream' }), baseName() + '.prj', 'CrossTab Studio のプロジェクト', '.prj')) toast('プロジェクトをファイルに書き出しました。パソコン版でも開けます。');
+    if (await saveBlob(new Blob([projectJson()], { type: 'application/octet-stream' }), baseName() + '.prj', _t('CrossTab Studio のプロジェクト'), '.prj')) toast(_t('プロジェクトをファイルに書き出しました。パソコン版でも開けます。'));
   }
   // Excel ファイルなら CSV に直す（名前の拡張子は .csv に替える。データは CSV としてプロジェクトに入る）
   async function xlsxIn(buf, name) {
     var isZip = buf[0] === 0x50 && buf[1] === 0x4B, isOle = buf[0] === 0xD0 && buf[1] === 0xCF;
     if (!(/\.(xlsx|xlsm|xls)$/i.test(name) || isZip && !/\.(prj|ctsproj)/i.test(name)) || !(isZip || isOle)) return { buf: buf, name: name };
     var r = await App.xlsxToCsv(buf);
-    if (r.nSheets > 1) toast('シートが ' + r.nSheets + ' 枚あります。1 枚目の「' + r.sheet + '」を読み込みます。ほかのシートを使うときは、そのシートを 1 枚目にして保存し直してください。');
+    if (r.nSheets > 1) toast(_t('シートが {0} 枚あります。1 枚目の「{1}」を読み込みます。ほかのシートを使うときは、そのシートを 1 枚目にして保存し直してください。', r.nSheets, r.sheet));
     return { buf: r.bytes, name: name.replace(/\.(xlsx|xlsm|xls)$/i, '') + '.csv' };
   }
   // Google スプレッドシート（フォームの回答先）の URL を、CSV を取り出す URL に直す
   function sheetCsvUrl(s) {
     s = String(s || '').trim(); var m;
-    if (!/^https?:\/\//i.test(s)) throw new Error('URL（https:// で始まるもの）を入れてください。');
-    if (/docs\.google\.com\/forms\//i.test(s)) throw new Error('これは Google フォームの URL です。フォームの「回答」タブの「スプレッドシートにリンク」で開いたスプレッドシートの URL を入れてください。');
+    if (!/^https?:\/\//i.test(s)) throw new Error(_t('URL（https:// で始まるもの）を入れてください。'));
+    if (/docs\.google\.com\/forms\//i.test(s)) throw new Error(_t('これは Google フォームの URL です。フォームの「回答」タブの「スプレッドシートにリンク」で開いたスプレッドシートの URL を入れてください。'));
     if ((m = /docs\.google\.com\/spreadsheets\/d\/e\/([^/?#]+)/i.exec(s))) {          // 「ウェブに公開」の URL
       var g = /[?&#]gid=(\d+)/.exec(s);
       return 'https://docs.google.com/spreadsheets/d/e/' + m[1] + '/pub?output=csv' + (g ? '&single=true&gid=' + g[1] : '');
@@ -429,21 +429,21 @@
     }
     return s;                                                                    // CSV を直接返す URL
   }
-  var URL_HELP = 'スプレッドシートの共有を「リンクを知っている全員（閲覧者）」にするか、「ファイル → 共有 → ウェブに公開」で CSV を選んで作った URL を使ってください。';
+  function URL_HELP() { return _t('スプレッドシートの共有を「リンクを知っている全員（閲覧者）」にするか、「ファイル → 共有 → ウェブに公開」で CSV を選んで作った URL を使ってください。'); }
   async function fetchSheet(url) {
     var u = sheetCsvUrl(url), r;
     try { r = await fetch(u, { credentials: 'omit', cache: 'no-store', redirect: 'follow' }); }
-    catch (e) { throw new Error('スプレッドシートを読み込めませんでした。共有されていないか、通信できません。' + URL_HELP); }
-    if (!r.ok) throw new Error('スプレッドシートを読み込めませんでした（' + r.status + '）。' + URL_HELP);
+    catch (e) { throw new Error(_t('スプレッドシートを読み込めませんでした。共有されていないか、通信できません。') + URL_HELP()); }
+    if (!r.ok) throw new Error(_t('スプレッドシートを読み込めませんでした（{0}）。', r.status) + URL_HELP());
     var buf = new Uint8Array(await r.arrayBuffer()), head = new TextDecoder().decode(buf.subarray(0, 300)).toLowerCase();
-    if (/<!doctype html|<html/.test(head)) throw new Error('CSV ではなく、ログインなどの画面が返ってきました。' + URL_HELP);
+    if (/<!doctype html|<html/.test(head)) throw new Error(_t('CSV ではなく、ログインなどの画面が返ってきました。') + URL_HELP());
     return buf;
   }
   // URL から読み込む。keepTabs のときは解析を残して差し替える（最新の回答に更新）
   async function loadUrl(url, keepTabs) {
-    busy(true, 'スプレッドシートから回答を読み込んでいます');
+    busy(true, _t('スプレッドシートから回答を読み込んでいます'));
     try {
-      var buf = await fetchSheet(url), d = new Date(), name = 'Google スプレッドシートの回答_' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') + '.csv';
+      var buf = await fetchSheet(url), d = new Date(), name = _t('Google スプレッドシートの回答_') + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') + '.csv';
       busy(false);
       await loadCsv(buf, name, keepTabs);
       S.P.srcUrl = String(url).trim(); markDirty(); App.render();

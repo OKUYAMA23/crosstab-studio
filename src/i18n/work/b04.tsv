@@ -1,0 +1,140 @@
+1	The means of %3$s were compared among the %2$d groups of %1$s (%4$s). 
+2	The %s showed that the difference in means between the groups was %s (%s). 
+3	Means were highest in the order %s. 
+4	Multiple comparisons using %s showed %s
+5	the Tukey method
+6	the Games–Howell method
+7	significant differences for %s. 
+8	no significant difference for any pair. 
+9	Welch's one-way ANOVA does not assume equal variances across groups. Multiple comparisons also use the Games–Howell method, which allows for unequal variances.
+10	One-way ANOVA assuming equal variances, with multiple comparisons by the Tukey method.
+11	η² (eta squared) is the proportion of variance explained by group differences (0.01: small, 0.06: medium, 0.14: large as rules of thumb).
+12	The scores of ordinal responses are averaged. If the intervals between options cannot be regarded as equal, the Kruskal–Wallis test is more appropriate.
+13	One-way ANOVA (comparing three or more means)
+14	Tests whether the mean of a numeric value (or ordinal score) differs among three or more groups, and shows which pairs differ.
+15	e.g., grade
+16	Assume equal variances (standard ANOVA and Tukey method)
+17	Usually, Welch's method (the default), which does not assume equal variances, is used.
+18	At least three respondents must have answered both (currently 
+19	The difference is the same for everyone, so the test cannot be run.
+20	Means and difference
+21	Difference (1 − 2)
+22	Calculated for the 
+23	 respondents who answered both.
+24	The means of %1$s (M = %2$s, SD = %3$s) and %4$s (M = %5$s, SD = %6$s) were compared for the %7$d respondents who answered both. 
+25	The paired t-test showed that the difference in means was %s (%s, mean difference = %s, 95%% CI %s). 
+26	The mean was higher for %s. 
+27	Tests whether the mean difference between two values answered by the same respondents differs from 0. The effect size dz is the mean difference divided by the SD of the differences.
+28	The scores of ordinal responses are averaged. If the intervals cannot be regarded as equal, the Wilcoxon signed-rank test is more appropriate.
+29	Tests whether the means of two values answered by the same respondents (before and after, scores of two items, etc.) differ.
+30	Value 1
+31	e.g., score before the lesson
+32	Value 2
+33	e.g., score after the lesson
+34	Correlation and regression line
+35	Intercept
+36	Slope
+37	Regression line: 
+38	The association between %s and %s was examined with Pearson's correlation coefficient. %s (%s). 
+39	Pearson's correlation coefficient measures the strength of a linear association. Because it is sensitive to outlying values and to responses with few levels, also check Spearman's rank correlation in those cases.
+40	A correlation shows that two values are related; it does not show that one causes the other.
+41	Measures the strength of the linear association between two numeric values (or ordinal scores) and draws a scatter plot with a regression line.
+42	Value 1 (horizontal axis)
+43	Value 2 (vertical axis)
+44	Select at least 
+45	 items (currently 
+46	Some items have different options from the first item (
+47	). Select only items answered with the same options.
+48	Too few respondents answered all items (
+49	Some items received the same response from everyone (
+50	). Remove those items.
+51	Ceiling effect
+52	Floor effect
+53	Scale reliability (α and ω coefficients)
+54	Item statistics (item analysis)
+55	Item
+56	Ceiling / floor effect
+57	Corrected item–total correlation
+58	α if item deleted
+59	Scores range from 1 to %1$d. A ceiling effect means mean + SD exceeds %1$d; a floor effect means mean − SD is below 1. The corrected item–total correlation is the correlation between an item and the total of the remaining items. Items below 0.3, or whose removal raises α, are shown in bold.
+60	Whole scale
+61	Total score
+62	Number of items
+63	Standardized α
+64	Mean inter-item correlation
+65	Mean of total score
+66	SD of total score
+67	very high
+68	high
+69	acceptable
+70	somewhat low
+71	low
+72	The internal consistency of %d items (%s) was examined with Cronbach's α coefficient. 
+73	For the %d respondents who answered all items, α = %s (standardized α = %s%s), indicating a %s level of internal consistency. 
+74	, ω = 
+75	Responses to %s were concentrated at one end of the options. 
+76	Items with a corrected item–total correlation below 0.3 were %s. 
+77	Removing %s would raise α. 
+78	%s were reverse-scored. 
+79	Scores were assigned from the %s end (%d to 1 points). 
+80	α of 0.7 or higher (0.8 or higher is high) is often cited as a guideline, but note that α tends to increase with the number of items.
+81	The ω coefficient is computed when there are three or more items.
+82	The ω coefficient is computed from the loadings of a one-factor factor analysis (maximum likelihood); its assumptions are looser than those of α because loadings may differ between items.
+83	Items worded in the opposite direction (reverse-scored items) can be specified under “Reverse-scored items” in the task pane, and their scores will be reversed.
+84	α is negative. The items are negatively correlated with each other, usually because reverse-worded items have not been specified as reverse-scored.
+85	Check whether the items negatively correlated with the total of the other items (%s) are reverse-worded.
+86	Note that α was negative, so the handling of reverse-scored items should be checked. 
+87	Examines the internal consistency of several ordinal questions measuring the same construct (a scale) with α and ω coefficients, and shows item-level problems such as means, ceiling and floor effects, and item–total correlations.
+88	Scale items (same options)
+89	e.g., the 8 items on interest in the ocean
+90	 items allow at most 
+91	 factors. Add items or reduce the number of factors.
+92	The factor analysis did not converge (
+93	). Change the number of factors or review the items.
+94	Factor %d
+95	Exploratory factor analysis (maximum likelihood
+96	promax rotation
+97	varimax rotation
+98	Factor loadings
+99	Communality
+100	Loadings with an absolute value of 0.40 or more are in bold. Items are ordered by the factor on which they load most strongly.
+101	Eigenvalues of the correlation matrix
+102	Eigenvalue
+103	Cumulative proportion (%)
+104	The number of eigenvalues above 1 (Kaiser criterion) is used as a guide to the number of factors (when set to “Automatic”).
+105	Factor correlations
+106	Factors
+107	%2$s loaded highly on %1$s
+108	No item loaded highly on %s
+109	An exploratory factor analysis (maximum likelihood%3$s) was conducted on %1$d items using data from the %2$d respondents who answered all items. 
+110	The number of factors was set to %d, the number of eigenvalues of the correlation matrix greater than 1. 
+111	The number of factors was set to %d. 
+112	Items that did not load at 0.40 or higher on any factor were %s. 
+113	The proportions of variance explained by the factors were %s. 
+114	Some items have communalities close to 1 (%s). The estimation is probably unstable (a Heywood case), and the loadings of those items are not reliable. Reduce the number of factors or remove those items and recalculate.
+115	However, the communality of %s was close to 1 (a Heywood case), so the solution may be unstable. 
+116	Factors are extracted by maximum likelihood from the Pearson correlation matrix of the level scores. Decide the number of factors by considering the eigenvalues, interpretability and previous research together.
+117	Name each factor by reading the items that load highly on it. Once you have decided which items to use as a scale, check its reliability with Cronbach's α.
+118	Looks for common underlying factors behind many ordinal questions. Used to develop questionnaire scales.
+119	Items to analyze (same options)
+120	e.g., all items on interest in the ocean
+121	Number of factors
+122	Automatic (number of eigenvalues above 1)
+123	Rotation
+124	Promax (allows correlated factors)
+125	Varimax (independent factors)
+126	Promax rotation, which assumes that factors are correlated, is commonly used for psychological and educational scales.
+127	Correspondence analysis requires at least three options in both the rows and the columns (currently 
+128	Inertia by dimension
+129	Dimension
+130	Singular value
+131	Inertia (eigenvalue)
+132	Proportion (%)
+133	Coordinates (dimensions 1 and 2)
+134	Dimension 1
+135	Dimension 2
+136	Both rows and columns are shown in principal coordinates (symmetric map).
+137	Dimension 1 (
+138	Dimension 2 (
+139	Cumulative proportion of dimensions 1 and 2
+140	A correspondence analysis was performed on the cross-tabulation of %s and %s (n = %d). 

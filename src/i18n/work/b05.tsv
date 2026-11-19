@@ -1,0 +1,140 @@
+1	The first and second dimensions accounted for %s%% and %s%% of the inertia, respectively, together explaining %s%%. 
+2	Categories plotted close together on the map were %s. 
+3	%s – %s
+4	Distances on the map are only a guide. Closeness among rows or among columns indicates similar response patterns, but the distance between a row point and a column point has no exact meaning, so interpret it together with the original cross-tabulation.
+5	The p value is from the chi-square test of independence for the whole table (χ²(%s) = %s).
+6	Summarizes the cross-tabulation of two questions with many options as a single map in which options with similar response patterns are placed close together.
+7	Question 1 (rows)
+8	e.g., favorite food
+9	Question 2 (columns)
+10	%1$d-%2$02d-%3$02d
+11	: dates could not be read.
+12	Week of %s
+13	Responses by period
+14	Date
+15	Week (starting Monday)
+16	Month
+17	Cumulative
+18	Cumulative (%)
+19	Week
+20	Period
+21	Responses (n = %d) were received from %s to %s. 
+22	The largest number of responses was on %s (%d), and half of all responses had been received by %s. 
+23	Counts responses and cumulative totals per day, week or month from the timestamp. Used to check how responses came in.
+24	Date-time column
+25	Google Forms timestamp
+26	Group by
+27	Day
+28	No word-split results.
+29	Fewer than three responses yielded words (
+30	 or more responses contain no words. Lower the “Minimum occurrences of a word”.
+31	Text mining (frequent words and co-occurrence)
+32	Frequent words
+33	Word
+34	Responses containing the word
+35	% of responses
+36	Occurrences
+37	Counted over the %d responses from which words were extracted. “Responses containing the word” counts a word once per response, however many times it appears.
+38	The free-text responses to %s (%d responses from which words were extracted) were split into words and counted. 
+39	The most frequent words were %s. 
+40	Word pairs that tended to be used together in the same response (highest Jaccard coefficients) were %s. 
+41	Word use by group (%)
+42	 (n = 
+43	For each word, the proportion of responses using it was compared between groups (chi-square test; p adjusted for the number of words with the Holm method). For significant words, the group with the highest proportion is in bold.
+44	Comparing by %s, %s
+45	the following words were used more often: %s (Holm-adjusted p < %s). 
+46	%s in %s
+47	no word differed significantly in usage between the groups. 
+48	Distinct words
+49	Of the %2$d free-text responses to %1$s, the %3$d responses from which words were extracted were analyzed. 
+50	Text was normalized with Unicode NFKC and Latin letters were converted to lower case; 
+51	text was then split into words at changes of character type (kanji, katakana, hiragana, alphanumerics), because the browser used did not support Japanese word segmentation. 
+52	text was then split into words with the browser's built-in word segmentation (Intl.Segmenter, based on the ICU dictionary). 
+53	Consecutive kanji or katakana words were joined into one word (e.g., 自然 + 環境 → 自然環境). 
+54	Words with little meaning, such as Japanese particles and auxiliary verbs and English articles, pronouns and prepositions (a prepared list%s), words consisting only of digits, hiragana words of two characters or fewer, and single non-kanji characters were removed. 
+55	 of %s words
+56	In addition, %s were removed. 
+57	A word was counted once per response however many times it appeared; among words appearing in %s or more responses, the top %s words by number of responses (ties broken by number of occurrences) were analyzed (%d words in this analysis). 
+58	The strength of association between two words was expressed by the Jaccard coefficient: the number of responses containing both words divided by the number containing either. Among pairs appearing together in two or more responses, up to %s pairs with the largest coefficients (%s in this analysis) were drawn as lines in the co-occurrence network. Words were laid out with the Fruchterman–Reingold algorithm and grouped by color with label propagation. 
+59	Differences by %s were examined for each word with a chi-square test comparing the numbers of responses that did and did not use the word across groups (2 × %d table), with p values adjusted with the Holm method for the number of words analyzed (%d words). The significance level was %s. 
+60	Words are split with the browser's built-in word segmentation (Intl.Segmenter), and words with little meaning, such as particles, articles and common verbs, are removed.
+61	The figure can be switched between “Word cloud”, “Bar chart of frequent words” and “Co-occurrence network”. Lines in the co-occurrence network connect words that appear in the same responses, and colors show strongly connected groups.
+62	Text mining (free text)
+63	Splits free-text responses into words and examines frequent words, words used together (co-occurrence network), and words used more often by each group.
+64	Free-text question
+65	e.g., comments, opinions
+66	Select to compare the words used more often by each group
+67	Number of words to extract
+68	30 words
+69	60 words
+70	100 words
+71	Minimum occurrences of a word (responses)
+72	Words appearing in fewer responses than this are removed.
+73	Number of lines in the co-occurrence network
+74	30 lines
+75	60 lines
+76	100 lines
+77	Join consecutive kanji / katakana words (e.g., 自然 + 環境 → 自然環境)
+78	Words to exclude (separated by commas)
+79	Write words to leave out of the count. e.g., nothing, none, really
+80	Select the items for factor 1.
+81	Factor 
+82	 has only one item. Select at least two items per factor (at least three when there is only one factor).
+83	The same item is in two factors. Put each item in only one factor.
+84	With one factor, select at least three items (fit cannot be assessed with two items).
+85	Confirmatory factor analysis (maximum likelihood)
+86	Fit indices
+87	Model
+88	RMSEA 90% CI lower
+89	Guidelines (Hu & Bentler, 1999): good fit is indicated by CFI and TLI of 0.95 or more, RMSEA of 0.06 or less, and SRMR of 0.08 or less. With large samples, the χ² test becomes significant even for small discrepancies.
+90	Standardized loading
+91	Loading
+92	SE
+93	Items with standardized loadings below 0.4 are in bold.
+94	Reliability by factor
+95	ω (composite reliability)
+96	AVE is the mean of the squared standardized loadings (average variance extracted). 0.5 or more is the usual guideline.
+97	Factor correlations
+98	The model has zero degrees of freedom (e.g., one factor with three items). It always fits the data perfectly, so the fit indices cannot be used. Look only at the loadings and reliability.
+99	A confirmatory factor analysis (maximum likelihood) was conducted on a model with %d factor(s) and %d items (n = %d). 
+100	Because the model has zero degrees of freedom, its fit cannot be assessed. 
+101	The fit indices were χ²(%s) = %s, %s, CFI = %s, TLI = %s, RMSEA = %s (90%% CI [%s, %s]), and SRMR = %s, %s
+102	indicating a good fit. 
+103	indicating an insufficient fit. 
+104	indicating a generally acceptable fit. 
+105	Standardized loadings ranged from %s to %s. 
+106	Items with loadings below 0.4 were %s. 
+107	Parameters were estimated by maximum likelihood from the variance–covariance matrix of the item scores (level scores with the first option as the highest; reverse-scored items reversed). Each item loaded on only one factor, factor variances were fixed at 1, and factor correlations were estimated. 
+108	Respondents who answered all items were included (listwise deletion).
+109	The calculation did not fully converge. Review the items or how they are grouped into factors.
+110	Some items have error variances of almost 0 (possibly an improper solution). Remove those items or review how they are grouped into factors.
+111	Some pairs of factors correlate above 0.9. The two factors may not be distinguishable.
+112	Ordinal responses are treated as numeric. With few levels (four or fewer) or skewed responses, estimation methods for categorical data (such as WLSMV) may be more appropriate.
+113	Tests whether a predefined grouping of items into factors fits the data. Gives fit indices (CFI, RMSEA, etc.), factor loadings and reliability by factor.
+114	Items of factor 1
+115	e.g., items measuring “likes the ocean”
+116	Items of factor 2
+117	Select for two or more factors
+118	Items of factor 3
+119	Items of factor 4
+120	Select at least one independent variable.
+121	 has only one option with responses, so it was removed from the independent variables.
+122	No usable independent variables.
+123	Ordinal responses are entered as level scores (%s).
+124	The dependent variable is also selected as an independent variable. Remove it from the independent variables.
+125	 have the same value for all included respondents, so they cannot be used as independent variables.
+126	The number of respondents (
+127	) is too small for the number of independent variables.
+128	Independent variables
+129	 are completely determined by other independent variables (multicollinearity), so the coefficients cannot be calculated. Remove one of them.
+130	All values of the dependent variable are the same, so regression analysis cannot be performed.
+131	: “
+132	Regression coefficients
+133	B is the partial regression coefficient and β the standardized partial regression coefficient.
+134	Single-choice variables are dummy-coded, with 
+135	 as the reference (0).
+136	Model fit
+137	Adjusted R²
+138	df1
+139	df2
+140	Standardized coefficient β (95% CI)

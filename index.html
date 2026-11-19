@@ -21,9 +21,9 @@
 </head>
 <body>
 <div id="md_boot"><img src="icons/icon-192.png" width="76" height="76" alt="">
-<h1>CrossTab Studio</h1><p>アンケートの集計と検定</p><div class="md-boot-bar"><i></i></div>
-<div class="md-boot-row"><span class="md-boot-msg">起動しています</span><span class="md-boot-sec"></span></div>
-<div class="md-boot-steps"><div data-step="1">計算に使う R を読み込んでいます</div><div data-step="2">集計と検定の部品を読み込んでいます</div><div data-step="3">画面を用意しています</div></div>
+<h1>CrossTab Studio</h1><p data-i18n>アンケートの集計と検定</p><div class="md-boot-bar"><i></i></div>
+<div class="md-boot-row"><span class="md-boot-msg" data-i18n>起動しています</span><span class="md-boot-sec"></span></div>
+<div class="md-boot-steps"><div data-step="1" data-i18n>計算に使う R を読み込んでいます</div><div data-step="2" data-i18n>集計と検定の部品を読み込んでいます</div><div data-step="3" data-i18n>画面を用意しています</div></div>
 <div class="md-boot-note"></div></div>
 <div class="md-app">
   <div class="md-titlebar" id="md_title"></div>
@@ -36,22 +36,24 @@
     </div>
     <div class="md-pane" id="md_pane">
       <div class="md-pane-head">
-        <select id="md_pane_sel" data-tip="作業ウィンドウに出す内容を選びます。上のタブと連動します。"></select>
-        <button data-act="panePrev" data-tip="前のタブへ">‹</button>
-        <button data-act="paneNext" data-tip="次のタブへ">›</button>
-        <button data-act="togglePane" data-tip="作業ウィンドウを閉じます。">×</button>
+        <select id="md_pane_sel" data-i18n-tip data-tip="作業ウィンドウに出す内容を選びます。上のタブと連動します。"></select>
+        <button data-act="panePrev" data-i18n-tip data-tip="前のタブへ">‹</button>
+        <button data-act="paneNext" data-i18n-tip data-tip="次のタブへ">›</button>
+        <button data-act="togglePane" data-i18n-tip data-tip="作業ウィンドウを閉じます。">×</button>
       </div>
       <div class="md-pane-body" id="md_pane_body"></div>
     </div>
   </div>
   <div class="md-status" id="md_status"></div>
 </div>
-<div class="md-dropveil">ここにドロップして読み込む</div>
+<div class="md-dropveil" data-i18n>ここにドロップして読み込む</div>
 <div class="md-toasts" id="md_toasts"></div>
-<div class="md-busy" id="md_busy"><div class="md-busy-row"><span class="md-busy-spin"></span><span class="md-busy-text">計算しています</span><span class="md-busy-sec"></span></div><div class="md-busy-long">処理は続いています。止まってはいません。そのままお待ちください。</div><div class="md-busy-bar"><i></i></div></div>
+<div class="md-busy" id="md_busy"><div class="md-busy-row"><span class="md-busy-spin"></span><span class="md-busy-text" data-i18n>計算しています</span><span class="md-busy-sec"></span></div><div class="md-busy-long" data-i18n>処理は続いています。止まってはいません。そのままお待ちください。</div><div class="md-busy-bar"><i></i></div></div>
 <div id="md_tip"></div>
 <datalist id="dl_fs"><option value="8"><option value="9"><option value="10"><option value="10.5"><option value="11"><option value="12"><option value="14"><option value="16"><option value="18"><option value="20"><option value="24"><option value="28"></datalist>
 <datalist id="dl_lw"><option value="0"><option value="0.25"><option value="0.5"><option value="0.75"><option value="1"><option value="1.5"><option value="2"><option value="3"></datalist>
+<script src="js/i18n_en.js"></script>
+<script src="js/i18n.js"></script>
 <script src="js/changelog.js"></script>
 <script src="js/bridge.js"></script>
 <script src="js/touch.js"></script>

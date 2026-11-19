@@ -1,0 +1,2 @@
+1	Added English. Switch it under File → Settings → Language. The screens, the result sentences, the reports (PDF, Word, text), the Excel workbook and the R code are all in English. If the device language is not Japanese, the app opens in English from the start. 
+2	English surveys can now be loaded (scales such as Strongly agree, Yes / No, English number formats), and text mining handles English free-text answers. 

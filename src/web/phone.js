@@ -88,7 +88,7 @@
     var t = document.getElementById('md_title'); if (!t) return;
     var b = t.querySelector('.md-pane-open');
     if (!b) { b = document.createElement('button'); b.className = 'md-pane-open'; b.setAttribute('data-act', 'togglePane'); t.appendChild(b); }
-    var on = !!S.ui.pane; b.classList.toggle('on', on); b.textContent = on ? '詳細を閉じる' : '詳細';
+    var on = !!S.ui.pane; b.classList.toggle('on', on); b.textContent = on ? _t('詳細を閉じる') : _t('詳細');
     if (on && !paneWas && root.classList.contains('md-phone')) setTimeout(showSelFig, 60);
     paneWas = on;
   }

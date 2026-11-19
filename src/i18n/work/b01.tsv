@@ -1,0 +1,70 @@
+1	Criterion for residuals
+2	Significance level as set (no correction)
+3	Bonferroni correction
+4	The criterion for judging which cells are higher or lower than expected. Correcting reduces false positives in tables with many cells.
+5	Expected frequencies are below 5 in 
+6	 cell(s) (
+7	%)
+8	 (including cells below 1)
+9	. This meets the rule of thumb for an inaccurate chi-square approximation (more than 20% of cells below 5, or any cell below 1). Use Fisher's exact test or combine options.
+10	 has no responses.
+11	Responses per option (multiple choice)
+12	Responses
+13	% of respondents
+14	Percentages are based on the number of respondents (n = 
+15	). Because multiple answers were allowed, the total can exceed 100%.
+16	Respondents
+17	Most frequent
+18	 (multiple choice, respondents n = 
+19	), the option chosen most often was 
+20	, 
+21	, followed by 
+22	%).
+23	Frequency distribution
+24	Frequency
+25	 (n = 
+26	), the most common response was 
+27	The goodness-of-fit test requires at least two options.
+28	Chi-square goodness-of-fit test
+29	Some options have expected frequencies below 5. The approximation of the goodness-of-fit test may be inaccurate.
+30	A chi-square goodness-of-fit test against equal proportions for all options showed that the deviation in responses was 
+31	statistically significant
+32	not statistically significant
+33	Counts and percentages for each option of one question. Also works for multiple-choice questions.
+34	Question to tabulate
+35	Test whether responses are uneven (goodness-of-fit test)
+36	Compares the responses with the assumption that all options are chosen equally often. Single-choice questions only.
+37	Select at least two questions to compare (currently 
+38	The same question is selected twice. Select a different question.
+39	All options are excluded. Check at least one option in “Option settings”.
+40	Some questions have no responses (
+41	). Remove those questions.
+42	Question
+43	 items (
+44	: responses were tabulated (respondents 
+45	The most common response was 
+46	 was chosen by 
+47	Percentages are based on the number of respondents to each question.
+48	Fewer than two respondents answered all questions, so the Friedman test cannot be run.
+49	Frequencies of multiple questions (Friedman test)
+50	Kendall's W
+51	Mean rank by question (Friedman test)
+52	Mean rank
+53	For the 
+54	 respondents who answered all questions, ranks were assigned to the questions within each respondent, with 
+55	 as the higher end.
+56	 respondents who answered all questions, a Friedman test showed that the difference in responses between the questions was 
+57	 (χ²(
+58	, Kendall's W = 
+59	Mean ranks were highest in the order 
+60	.
+61	The Friedman test examines whether response tendencies differ among several questions answered by the same respondents. Kendall's W is the effect size (0–1).
+62	Tabulates several questions that share the same options (e.g., frequency of use for each service) side by side, with one color per question in the chart.
+63	Questions to compare (same options)
+64	e.g., each service in Q4
+65	Compare response tendencies across questions (Friedman test)
+66	For ordinal responses, tests whether several questions answered by the same respondents differ. Uses only respondents who answered all questions.
+67	No one answered both questions. Check the pair of questions or the filter.
+68	The test requires at least two options with responses in both the rows and the columns (currently 
+69	 rows × 
+70	 columns). Check the option settings or the filter.

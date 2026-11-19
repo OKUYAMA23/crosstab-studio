@@ -1,0 +1,130 @@
+1	" data-tip="Returns to the standard text generated from the results.">Reset text</button>
+2	@この文を書き換えたあとで結果が変わりました。数値が合っているか確かめるか、「定型文に戻す」を押してください。=>The results changed after you edited this text. Check that the numbers are correct, or press “Reset text”.
+3	No.
+4	Test
+5	Statistic
+6	Effect size
+7	Summary of tests
+8	The significance level is {0}%.
+9	Adjusted p values are the p values of the {0} tests in this report adjusted together with the Holm method. Because repeated testing makes chance significant results more likely even without real associations, the adjusted p should also be considered when drawing conclusions.
+10	Data: {0} ({1} responses)  Significance level: {2}%  Created: 
+11	APA (7th ed.)
+12	 ({0}, {1})
+13	MLA (9th ed.)
+14	Chicago (17th ed., author–date)
+15	Example for Japanese papers (SIST 02 style)
+16	. CrossTab Studio. バージョン {0}, {1}. {2}, (参照 
+17	R (APA 7th ed.)
+18	Software used
+19	CrossTab Studio (version {0}) was used for tabulation, statistical tests and figures, and R{1} for the calculations. Example citation (APA 7th ed.):
+20	 (version {0})
+21	(No analyses are marked with ☑)
+22	No columns have been selected yet.
+23	[Methods] 
+24	[Results] 
+25	@報告書の題名です。=>Title of the report. || ☑ を付けた {0} 件の解析を、上から順にまとめています。PDF には図と表も入ります。文は各解析の「報告書の文」で書き換えられます。=>Combines the {0} analyses marked with ☑, from top to bottom. The PDF also includes figures and tables. The text can be edited in each analysis's “Report text”. || PDF で保存（図・表を含む）=>Save as PDF (with figures and tables) || Word で保存=>Save as Word || テキストで保存=>Save as text || 全文をコピー=>Copy all text || 解析に戻る=>Back to analyses
+26	@作業ウィンドウの設定は、この解析に効きます。解析の見出しや図をクリックすると切り替わります。=>Settings in the task pane apply to this analysis. Click an analysis heading or figure to switch. || 対象：=>Target: 
+27	Click an analysis heading to select the target analysis.
+28	Create an analysis with “Start analysis”.
+29	Load a CSV file first.
+30	<button class="md-btn md-btn-primary" data-act="openCsv">Open CSV</button>
+31	Getting started (workflow)
+32	Load a CSV
+33	Drop the response file onto the screen.
+34	Add analyses
+35	Each type you choose is added below in order.
+36	Select questions
+37	Select questions in an analysis section to see the p value, tables, figures and text immediately.
+38	Adjust figures and tables
+39	Click a figure or table to change its text, lines and colors.
+40	Saves the figures, Excel file and reports of the analyses marked with ☑.
+41	Current status
+42	No data yet.
+43	Data: {0} ({1} responses, {2} columns). {3} analyses.
+44	Collapse analyses with ∨ in the heading. Significant analyses have names in bold red even when collapsed.
+45	Save
+46	“Save” stores the data (the CSV contents), analyses, and figure and table settings in the app as one project. Next time, open it with “Open project” without the CSV.
+47	Current project: 
+48	>Save</button><button class="md-btn" data-act="openProject">Open project</button></div>
+49	Column settings
+50	Click a column in the list on the left to see its type and response breakdown here.
+51	How types are detected
+52	Single choice: questions where one option is chosen. Ordinal: questions with levels such as “agree to disagree”. Multiple choice: questions where all applicable options are chosen. If the automatic detection is wrong, choose the type again.
+53	Settings for column {0}
+54	<label class="md-field"><span>Display name</span><input type="text" data-varlabel="
+55	<label class="md-field"><span>Type</span><select data-var="type">
+56	<label class="md-field"><span>Answer separator</span><select data-var="delim">
+57	Semicolon (;)
+58	Comma and space (, )
+59	Japanese comma (、)
+60	Display names appear in figures, tables and reports. Shorter names are easier to read.
+61	Question text
+62	Response breakdown ({0} respondents)
+63	" data-tip="Moves this option up one place."
+64	Options are treated as “higher” from the top. If the order is wrong, fix it with ▲ (applies to analyses created afterward).
+65	For multiple-choice questions, the number of respondents choosing each option is counted.
+66	The order is used for tables and figures in analyses created afterward.
+67	<button class="md-btn" data-act="freqOfVar">Tabulate this column</button>
+68	Numeric summary
+69	Min {0}, median {1}, mean {2}, max {3} ({4} respondents)
+70	Responses
+71	 respondents answered. Columns of this type are not used in analyses.
+72	(not used)
+73	(select)
+74	</option><optgroup label="Usable columns">
+75	<optgroup label="Columns not usable here">
+76	 data-tip="Uncheck to exclude respondents who chose this option from the analysis.">
+77	" data-tip="Original response: 
+78	. You can rename it. Giving it the same name as another option combines them.">
+79	@同じ名前の選択肢とまとめています。押すと、この選択肢だけ元の名前に戻して分けます。=>Combined with an option of the same name. Press to restore this option's original name and separate it. || まとめ=>Combined
+80	:-1" data-tip="Up one"
+81	:1" data-tip="Down one"
+82	<div class="md-orig">Original response: 
+83	@チェックの入った選択肢を、上半分と下半分の 2 つにまとめます。=>Combines the checked options into two: the upper half and the lower half. || 上下 2 つにまとめる=>Split into top / bottom
+84	" data-tip="Returns the names, order and checks to their initial state.">Reset</button></div>
+85	Analysis type
+86	<button class="md-btn" data-act="changeType">Change type</button>
+87	: {0} questions
+88	Independent variables use each question's responses as they are (excluding “no answer”, etc.). For single-choice questions, the first option is the reference.
+89	: {0} questions (counts are totals)
+90	No questions have been selected yet. Select them in the analysis section in the center.
+91	Option settings
+92	Option names can be edited. Options given the same name are combined, and unchecked options are excluded from the analysis.
+93	For multiple-choice questions, answers chosen by fewer than 1% of respondents (free text) are combined into “Other” from the start.
+94	Filter (analyze only some respondents)
+95	@条件にする質問=>Question used as the condition || （絞り込まない）=>(no filter)
+96	Only respondents who gave the checked responses are analyzed.
+97	Check responses to filter (currently all respondents are analyzed).
+98	Example: analyze only respondents who use Instagram.
+99	Test settings
+100	No fill (transparent)
+101	Auto
+102	Use the question as the legend title
+103	@凡例の背景の色を選びます。「塗りなし」で透明になります。=>Choose the legend background color. “No fill” makes it transparent. || 背景の色=>Background color
+104	With “Auto”, a light white background is used only when the legend is placed inside the figure. Series names can be changed in the “Colors” section below, or by double-clicking a name in the figure's legend.
+105	Once results are available, you can adjust the figure here. First select columns under “Analysis”.
+106	<button class="md-btn" data-act="goTab" data-arg="analysis">Go to analysis settings</button>
+107	This analysis has no figures.
+108	<button class="md-btn md-btn-primary" data-act="addFig">Add figure</button>
+109	">Figure 
+110	Figure type
+111	The figure is redrawn immediately whenever settings change.
+112	Plot frame
+113	With “All sides”, the plot area is enclosed in a frame. Its width can be changed under “Axes and frame” in “Line widths”.
+114	Axis titles
+115	Top heading
+116	Numeric axis title
+117	Category axis title
+118	Leave blank for the automatic title. To remove it, double-click the text in the figure and clear it. No title is placed inside the figure.
+119	Color bar (colors and values)
+120	Value that sets the color
+121	<div class="md-sub">Position</div>{0}<div class="md-sub">Shape</div>
+122	You can also drag the legend in the figure to move it.
+123	<div class="md-sub">Position</div>
+124	Min
+125	Max
+126	Interval
+127	<div class="md-sub">Tick direction</div>{0}<div class="md-sub">Grid lines</div>
+128	Tick length
+129	Grid line color
+130	Leave the range blank for automatic. Overlapping numbers are thinned out automatically.

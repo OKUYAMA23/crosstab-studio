@@ -1,0 +1,7 @@
+1	The file could not be read as an Excel file. Check that the file is not corrupted.
+2	Old-format Excel files (.xls) cannot be read. In Excel, use “Save As” to save as .xlsx or CSV, then load it.
+3	This browser cannot read Excel files. Save as CSV and load that instead.
+4	The file could not be read as an Excel file.
+5	No sheet was found.
+6	The first sheet could not be read.
+7	The first sheet is empty.

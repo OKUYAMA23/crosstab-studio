@@ -1,0 +1,130 @@
+1	Expected frequencies are below 5 in %d cells (%s%%)%s. This meets the rule of thumb for an inaccurate chi-square approximation (more than 20%% of cells below 5, or any cell below 1). Use Fisher's exact test or combine options.
+2	For %s (multiple choice, respondents n = %d), the option chosen most often was %s (%d, %s%%)
+3	, followed by %s (%d, %s%%). 
+4	. 
+5	For %s (n = %d), the most common response was %s (%d, %s%%)
+6	A chi-square goodness-of-fit test against equal proportions for all options showed that the deviation in responses was %s (%s). 
+7	the items of %s (%s)
+8	Responses to %s were tabulated (respondents %s). 
+9	The most common response was %s. 
+10	The proportion answering %s was %s. 
+11	Calculated for the %d respondents who answered all questions. Ranks were assigned to the questions within each respondent, with %s as the higher end.
+12	A Friedman test for the %d respondents who answered all questions showed that the difference in responses between the questions was %s (χ²(%s) = %s, %s, Kendall's W = %s). 
+13	Mean ranks were highest in the order %s. 
+14	Options with no responses (
+15	) were removed from the table.
+16	Chi-square test (Yates' correction)
+17	Note that %d of the %d cells (%s%%) had expected frequencies below 5, so the chi-square approximation may be inaccurate. 
+18	Odds ratio = 
+19	Odds ratio
+20	The odds ratio is the odds of answering %3$s in %1$s relative to %2$s (conditional maximum likelihood estimate).
+21	Because the table is large and the exact calculation would take too long, the p value is a Monte Carlo estimate (200,000 replicates, fixed random seed).
+22	The p value is a Monte Carlo estimate (200,000 replicates). 
+23	%s and %s were cross-tabulated (valid responses n = %d). 
+24	The %s showed that %s (%s). 
+25	the association between the two was statistically significant
+26	there was no statistically significant association between the two
+27	Tests whether the answers to two questions are associated. The basic test for a cross-tabulation.
+28	Rows (groups to compare)
+29	e.g., gender, grade
+30	Columns (responses)
+31	e.g., yes / no
+32	Use Yates' correction (2×2 tables)
+33	A correction that makes the p value more conservative in 2×2 tables. For 2×2 tables with few respondents, Fisher's exact test is more appropriate.
+34	A test of association for tables with cells that have few respondents. Also gives the odds ratio for 2×2 tables.
+35	Summary by group
+36	SD
+37	Median
+38	Q1
+39	Q3
+40	Rank summary by group
+41	Median response
+42	Ranks were assigned with %s as the higher end.
+43	%s tended to have larger values than %s
+44	%1$s gave more responses toward %3$s than %2$s
+45	The Mann–Whitney U test compares two groups. 
+46	 currently has 
+47	 groups. Reduce it to two in “Option settings” (combine or uncheck options), or use the Kruskal–Wallis test for three or more groups.
+48	All responses have the same value, so the test cannot be run.
+49	The p value is based on the normal approximation (with corrections for ties and continuity). The effect size r is |Z| / √N.
+50	Responses to %6$s were compared between the two groups of %1$s (%2$s n = %3$d, %4$s n = %5$d). 
+51	The Mann–Whitney U test showed %s in the distribution of responses between the two groups (%s). 
+52	a statistically significant difference
+53	no statistically significant difference
+54	The mean rank was higher in %1$s (%2$s) than in %3$s (%4$s); %5$s. 
+55	The median response was %2$s for %1$s and %4$s for %3$s. 
+56	Tests whether responses on an ordinal scale (e.g., agree to disagree) differ between two groups.
+57	Groups (2 groups)
+58	e.g., gender
+59	Response to compare (ordinal)
+60	An ordinal question or a numeric value
+61	To compare groups, 
+62	 needs at least two groups with responses.
+63	Multiple comparisons (Mann–Whitney U tests, Holm correction)
+64	Pair
+65	Multiple comparisons (Mann–Whitney U tests with Holm correction) showed significant differences for %s. 
+66	Multiple comparisons (Mann–Whitney U tests with Holm correction) found no pair with a significant difference. 
+67	The effect size ε² is H / (N − 1).
+68	Responses to %3$s were compared among the %2$d groups of %1$s (n = %4$d). 
+69	The Kruskal–Wallis test showed %s between the groups (%s). 
+70	Tests whether responses on an ordinal scale differ among three or more groups. Also shows which pairs differ.
+71	Groups (3 or more)
+72	e.g., grade, frequency of use
+73	A correlation requires at least four respondents who answered both (currently 
+74	).
+75	One of the responses has the same value for everyone, so the correlation cannot be calculated.
+76	very weak
+77	weak
+78	moderate
+79	strong
+80	larger values
+81	answers toward %s
+82	The labels for correlation strength (|ρ| below 0.2: very weak, below 0.4: weak, below 0.7: moderate, 0.7 or above: strong) are rules of thumb, and criteria differ between fields.
+83	A correlation shows that two responses are related; it does not show that one causes the other.
+84	The association between %s and %s was examined with Spearman's rank correlation coefficient. %s (%s). 
+85	A %s %s correlation was found
+86	positive
+87	negative
+88	No statistically significant correlation was found
+89	Respondents with %2$s on %1$s tended to give %4$s on %3$s. 
+90	Respondents with %2$s on %1$s were less likely to give %4$s on %3$s. 
+91	Tests whether two ordinal responses are related so that when one is higher, the other is also higher (or lower).
+92	Response 1 (ordinal)
+93	Response 2 (ordinal)
+94	No one answered both questions.
+95	 n
+96	Selection rate by option, with tests
+97	Percentages are based on the number of respondents in each group (
+98	). Adjusted p values use the Holm method.
+99	Options
+100	Significant options
+101	Smallest adjusted p
+102	Significant options 
+103	Because a test is repeated for each option, the p values are adjusted with the Holm method.
+104	Options with expected frequencies below 5 in any cell use Fisher's exact test; the others use the chi-square test.
+105	The proportion choosing each option of %s (multiple choice) was tabulated by %s (n = %d). 
+106	For each option, a %s was performed; after Holm adjustment of the p values, %s
+107	 or 
+108	significant differences between the groups were found for %s. 
+109	, adjusted 
+110	no option showed a significant difference between the groups. 
+111	For “select all that apply” questions, compares the proportion choosing each option between groups.
+112	Multiple-choice question
+113	Groups
+114	For this test, the two questions must have the same options (names and order). Align them in “Option settings” (currently: 
+115	 / 
+116	McNemar's test compares two yes/no questions. Combine the options into two in “Option settings” (currently 
+117	The two responses are the same for everyone, so the test cannot be run.
+118	Change in responses
+119	 higher
+120	Same
+121	Higher means toward %s.
+122	The p value is based on the normal approximation. |Z| is derived from the p value; the effect size r is |Z| / √(number of non-zero differences).
+123	Responses to %s and %s were compared within the same respondents (n = %d). 
+124	The Wilcoxon signed-rank test showed %s between the two responses (%s). 
+125	The number answering more toward %2$s was %3$d for %1$s and %5$d for %4$s; %6$d gave the same response. 
+126	Compares two questions answered with the same options (e.g., frequency of use of two services) within the same respondents.
+127	Response 2 (same options)
+128	discordant 
+129	 vs 
+130	McNemar's test (exact binomial test)
