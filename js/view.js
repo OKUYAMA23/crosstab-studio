@@ -810,8 +810,8 @@
     var tab = A.curTab(), res = tab ? S.results[tab.id] : null;
     var h = sec('書き出す解析（☑）', S.P.tabs.length ? '<div class="md-cats">' + S.P.tabs.map(function (t, i) { var r = S.results[t.id], sig = r && r.ok && r.sig; return '<label class="md-cat" style="cursor:pointer"><input type="checkbox" data-ancheck="' + t.id + '"' + (t.checked ? ' checked' : '') + '><span style="flex:1;padding:4px" class="' + (sig ? 'md-sigtext' : '') + '">' + (i + 1) + '. ' + esc(t.name) + '</span><span class="md-n">図 ' + t.figs.length + '</span></label>'; }).join('') + '</div>' : hint('解析がまだありません。'),
       '<div class="md-row"><button class="md-btn md-btn-sm" data-act="checkAll" data-arg="1">すべて選ぶ</button><button class="md-btn md-btn-sm" data-act="checkAll" data-arg="0">すべて外す</button></div>');
-    h += sec('まとめて書き出す', hint('☑ を付けた解析について、次の 3 種類を、選んだフォルダーに書き出します。'),
-      '<div class="md-hint" style="color:var(--t-1e2f26)">・図：「解析の名前_図1.png」のように、解析ごとに 1 から番号を付けます。画面に出ている形と大きさのままです。<br>・Excel ファイル：CSV をシートにし、その右側に Excel の関数で解析を再現します（値の貼り付けはしません）。<br>・報告書：すべての解析の文と表を 1 つのテキストにまとめます。</div>',
+    h += sec('まとめて書き出す', hint('☑ を付けた解析について、次のものから選んで、選んだフォルダーに書き出します。'),
+      '<div class="md-hint" style="color:var(--t-1e2f26)">・図：「解析の名前_図1.png」のように、解析ごとに 1 から番号を付けます。画面に出ている形と大きさのままです。<br>・Excel ファイル：CSV をシートにし、その右側に Excel の関数で解析を再現します（値の貼り付けはしません）。<br>・R のコード：解析を R の標準の関数で計算し直すスクリプトと、そのデータです。<br>・報告書：すべての解析の文と表を、PDF・Word・テキストのいずれかにまとめます。</div>',
       '<button class="md-btn md-btn-primary" data-act="exportAll"' + (S.P.tabs.length ? '' : ' disabled') + '>まとめて書き出す</button>');
     h += sec('報告書に入れる内容', fCheck('各解析の表を入れる', 'rep.tables'), fCheck('ホルム法で補正した p を一覧に入れる', 'rep.holm'), hint('補正後の p は、検定を何度も行うと偶然に有意となる結果が増える問題に対応するための値です。'));
     if (tab && res && res.ok) h += sec('選んだ解析の文', target(tab), '<textarea class="md-in" data-auto data-reptext="' + tab.id + '" rows="5">' + esc(tab.reportText !== null ? tab.reportText : res.report) + '</textarea>',

@@ -1009,7 +1009,7 @@
     }
     var newer = list.filter(function (c) { return vcmp(c.v, seen) > 0; });
     if (!newer.length) { mark(); return; }
-    var body = hello + '<p>新しい版（バージョン ' + esc(cur) + '）に更新しました。前回からの変更点は次のとおりです。</p></div>' + newer.map(function (c) { return '<div class="md-chg"><div class="md-chg-v">' + esc(c.v) + (c.date ? '<span>' + esc(c.date) + '</span>' : '') + '</div><ul>' + c.items.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></div>'; }).join('');
+    var body = hello + '<p>新しい版（バージョン ' + esc(cur) + '）に更新しました。この端末でお使いだったバージョン ' + esc(seen) + ' からの変更点' + (newer.length > 1 ? '（' + newer.length + ' 版分、新しい順）' : '') + 'は次のとおりです。</p></div>' + newer.map(function (c) { return '<div class="md-chg"><div class="md-chg-v">' + esc(c.v) + (c.date ? '<span>' + esc(c.date) + '</span>' : '') + '</div><ul>' + c.items.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></div>'; }).join('');
     modal('CrossTab Studio', body, '<button class="md-btn md-btn-primary" id="md_chg_ok">わかりました</button>', 560);
     $('#md_chg_ok').onclick = function () { mark(); closeModal(); };
     var back = $('#md_modal'); if (back) back.addEventListener('mousedown', mark);
