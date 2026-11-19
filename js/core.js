@@ -216,6 +216,7 @@
     d.slots.forEach(function (s) {
       var sl = tab.slots[s.id], onCats = sl.cats.filter(function (c) { return c.on; }).map(function (c) { return { label: c.label, values: [c.v] }; });
       if (s.many) {
+        if (s.optional && !(sl.cols || []).length) return;                      // 任意の欄（項目の組）を使わないとき
         var vs = sl.cols.map(v);
         slots[s.id] = { many: true, cols: sl.cols, type: vs[0].type, delim: vs[0].delim, labels: vs.map(function (x) { return x.label; }), fulls: vs.map(function (x) { return x.full || x.label; }),
           items: vs.map(function (x) { return x.item || ''; }), stems: vs.map(function (x) { return x.stem || ''; }), cats: onCats, reverse: (sl.reverse || []).filter(function (c) { return sl.cols.indexOf(c) >= 0; }), vars: sl.cols.map(itemSlot).filter(Boolean) };

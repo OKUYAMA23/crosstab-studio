@@ -256,24 +256,33 @@ an_alpha <- function(df, req) {
   itc <- vapply(seq_len(k), function(j) stats::cor(X[, j], tot - X[, j]), 0)
   adel <- if (k > 2) vapply(seq_len(k), function(j) cron_alpha(X[, -j, drop = FALSE]), 0) else rep(NA, k)
   chk <- list(alpha = a, astd = astd, itc = itc, adel = adel)
-  res <- list(test = "尺度の信頼性（クロンバックの α）", n = n_info(nrow(df), n))
-  res$grids <- list(list(kind = "grid", title = "項目ごとの統計量", corner = "項目", rows = A(colnames(X)), cols = A(c("平均", "標準偏差", "修正済み項目−合計相関", "その項目を除いたときの α")),
-                         fmt = A(c("num2", "num2", "num2", "num2")), cells = mat(cbind(colMeans(X), apply(X, 2, stats::sd), itc, adel)),
-                         mark = lapply(seq_len(k), function(j) A(c(FALSE, FALSE, itc[j] < 0.3, !is.na(adel[j]) && adel[j] > a))),
-                         note = "修正済み項目−合計相関は、その項目と残りの項目の合計点との相関。0.3 未満、または除くと α が上がる項目を太字にした。"),
-                    list(kind = "grid", title = "尺度全体", corner = "", rows = A("合計点"), cols = A(c("項目数", "n", "α", "標準化 α", "項目間相関の平均", "合計点の平均", "合計点の標準偏差")),
-                         fmt = A(c("int", "int", "num2", "num2", "num2", "num2", "num2")), cells = mat(matrix(c(k, n, a, astd, rb, mean(tot), stats::sd(tot)), nrow = 1))))
-  res$headline <- list(hl("α", fmt_num(a)), hl("項目", as.character(k)), hl("n", as.character(n)))
+  # ω 係数（1 因子の最尤法の因子分析の負荷量から。3 項目以上のとき）
+  om <- NA_real_
+  if (k >= 3) { fa1 <- tryCatch(suppressWarnings(stats::factanal(covmat = R, factors = 1, n.obs = n)), error = function(e) NULL)
+    if (!is.null(fa1)) { lam <- as.numeric(fa1$loadings[, 1]); if (sum(lam) < 0) lam <- -lam; om <- sum(lam)^2 / (sum(lam)^2 + sum(fa1$uniquenesses)) } }
+  # 天井効果・床効果：平均 ± 標準偏差が、選択肢の得点の範囲（1〜段階の数）を超える項目
+  L <- length(sm$it$lev); mu <- colMeans(X); sdv <- apply(X, 2, stats::sd)
+  cf <- ifelse(mu + sdv > L, "天井効果", ifelse(mu - sdv < 1, "床効果", ""))
+  res <- list(test = "尺度の信頼性（α 係数・ω 係数）", n = n_info(nrow(df), n))
+  res$grids <- list(list(kind = "grid", title = "項目ごとの統計量（項目分析）", corner = "項目", rows = A(colnames(X)), cols = A(c("平均", "標準偏差", "天井・床効果", "修正済み項目−合計相関", "その項目を除いたときの α")),
+                         fmt = A(c("num2", "num2", "text", "num2", "num2")), cells = lapply(seq_len(k), function(j) list(mu[j], sdv[j], cf[j], itc[j], adel[j])),
+                         mark = lapply(seq_len(k), function(j) A(c(FALSE, FALSE, nzchar(cf[j]), itc[j] < 0.3, !is.na(adel[j]) && adel[j] > a))),
+                         note = paste0("得点は 1〜", L, " 点。天井効果は平均 + 標準偏差が ", L, " を超える項目、床効果は平均 − 標準偏差が 1 を下回る項目。修正済み項目−合計相関は、その項目と残りの項目の合計点との相関。0.3 未満、または除くと α が上がる項目を太字にした。")),
+                    list(kind = "grid", title = "尺度全体", corner = "", rows = A("合計点"), cols = A(c("項目数", "n", "α", "標準化 α", "ω", "項目間相関の平均", "合計点の平均", "合計点の標準偏差")),
+                         fmt = A(c("int", "int", "num2", "num2", "num2", "num2", "num2", "num2")), cells = list(list(k, n, a, astd, if (is.na(om)) NULL else om, rb, mean(tot), stats::sd(tot)))))
+  res$headline <- c(list(hl("α", fmt_num(a))), if (!is.na(om)) list(hl("ω", fmt_num(om))), list(hl("項目", as.character(k)), hl("n", as.character(n))))
   res$row <- list(stat = paste0("α = ", fmt_num(a)), effect = "")
   lvl <- if (a >= 0.9) "非常に高い" else if (a >= 0.8) "高い" else if (a >= 0.7) "許容できる" else if (a >= 0.6) "やや低い" else "低い"
   low <- colnames(X)[itc < 0.3]; up <- colnames(X)[!is.na(adel) & adel > a]
   res$report <- paste0(k, " 項目（", paste(colnames(X), collapse = "、"), "）の内的一貫性をクロンバックの α 係数で調べた。すべての項目に答えた ", n, " 人で、α = ", fmt_num(a),
-                       "（標準化 α = ", fmt_num(astd), "）であり、内的一貫性は", lvl, "水準であった。",
+                       "（標準化 α = ", fmt_num(astd), if (!is.na(om)) paste0("、ω = ", fmt_num(om)) else "", "）であり、内的一貫性は", lvl, "水準であった。",
+                       if (any(nzchar(cf))) paste0(paste(paste0(colnames(X)[nzchar(cf)], "（", cf[nzchar(cf)], "）"), collapse = "、"), "は、回答が選択肢の端に偏っていた。") else "",
                        if (length(low)) paste0("修正済み項目−合計相関が 0.3 未満の項目は", paste(low, collapse = "、"), "であった。") else "",
                        if (length(up)) paste0(paste(up, collapse = "、"), "を除くと α が上がる。") else "",
                        if (sm$nrev) paste0(paste(sm$revnames, collapse = "、"), "は逆転項目として得点を反転した。") else "",
                        "得点は、選択肢に", q(sm$it$lev[1]), "の側から ", length(sm$it$lev), "〜1 点を付けた。")
   res$notes <- c("α の目安は 0.7 以上（0.8 以上なら高い）とされることが多いですが、項目数が多いほど高くなりやすい点に注意してください。",
+                 if (is.na(om)) "ω 係数は、項目が 3 つ以上のときに計算します。" else "ω 係数は、1 因子の因子分析（最尤法）の負荷量から求めた値です（項目ごとに負荷量の大きさが違ってもよい点で、α より前提が緩い）。",
                  "逆の向きの項目（逆転項目）は、作業ウィンドウの「逆転項目」で指定すると、得点を反転して計算します。")
   # α が負：多くは逆転項目の指定漏れ（項目間の相関が負）
   if (a < 0) {
@@ -285,7 +294,7 @@ an_alpha <- function(df, req) {
   res$chk <- chk
   finish(res, alpha)
 }
-register("alpha", "尺度の信頼性（クロンバックの α）", "尺度・多変量", "同じ内容を測る複数の段階の質問（尺度）について、まとまりの良さ（内的一貫性）を α 係数で調べ、項目ごとの問題も示します。",
+register("alpha", "尺度の信頼性（α 係数・ω 係数）", "尺度・多変量", "同じ内容を測る複数の段階の質問（尺度）について、まとまりの良さ（内的一貫性）を α 係数と ω 係数で調べ、項目ごとの平均・天井効果・床効果・項目と合計の相関などの問題も示します。",
          list(S("items", "尺度の項目（同じ選択肢）", "ordinal", "例：海への関心の 8 項目", FALSE, TRUE)), list(), an_alpha)
 
 # ---------------------------------------------------------------- 探索的因子分析
@@ -516,6 +525,106 @@ register("textmine", "テキストマイニング（自由記述）", "自由記
               O_select("edges", "共起ネットワークの線の数", list("30" = "30 本", "60" = "60 本", "100" = "100 本"), "60"),
               O_check("compound", "漢字・カタカナの続く語をつなげる（例：自然＋環境 → 自然環境）", TRUE),
               list(id = "stop", kind = "text", label = "除く語（読点「、」で区切る）", default = "", hint = "集計から外したい語を書きます。例：特に、なし、自然")), an_textmine)
+
+# ---------------------------------------------------------------- 確認的因子分析（最尤法。基本の R だけで計算する）
+# 項目の得点（逆転項目は反転）を、欠損を残したまま返す
+scale_raw <- function(df, s) {
+  it <- items_setup(df, s)
+  X <- sapply(it$F, function(f) length(it$lev) + 1L - as.integer(f)); if (!is.matrix(X)) X <- matrix(X, ncol = length(it$F)); colnames(X) <- it$names
+  rev <- unlist(s$reverse); if (length(rev)) for (j in which(it$cols %in% rev)) X[, j] <- length(it$lev) + 1L - X[, j]
+  list(X = X, it = it, revnames = colnames(X)[it$cols %in% rev])
+}
+# 各項目は 1 つの因子だけに負荷する。因子の分散は 1 に固定し、因子間の相関を推定する
+cfa_fit <- function(S, n, grp) {
+  p <- nrow(S); m <- max(grp); np <- m * (m - 1) / 2; ldS <- determinant(S, logarithm = TRUE)$modulus
+  lw <- which(lower.tri(diag(m)), arr.ind = TRUE)
+  unpack <- function(par) {
+    lam <- par[1:p]; th <- exp(par[p + 1:p]); Ph <- diag(m)
+    if (np) { r <- tanh(par[2 * p + seq_len(np)]); Ph[lw] <- r; Ph[lw[, 2:1, drop = FALSE]] <- r }
+    L <- matrix(0, p, m); L[cbind(1:p, grp)] <- lam
+    list(lam = lam, th = th, Ph = Ph, L = L, Sig = L %*% Ph %*% t(L) + diag(th, p))
+  }
+  fn <- function(par) { u <- unpack(par); ch <- tryCatch(chol(u$Sig), error = function(e) NULL); if (is.null(ch)) return(1e10)
+    Si <- chol2inv(ch); 2 * sum(log(diag(ch))) + sum(S * Si) - ldS - p }
+  gr <- function(par) {
+    u <- unpack(par); ch <- tryCatch(chol(u$Sig), error = function(e) NULL); if (is.null(ch)) return(rep(0, length(par)))
+    Si <- chol2inv(ch); G <- Si - Si %*% S %*% Si
+    GL <- 2 * G %*% u$L %*% u$Ph; g <- c(GL[cbind(1:p, grp)], diag(G) * u$th)
+    if (np) { M <- t(u$L) %*% G %*% u$L; g <- c(g, 2 * M[lw] * (1 - u$Ph[lw]^2)) }
+    g
+  }
+  start <- c(sqrt(diag(S)) * 0.7, log(diag(S) * 0.5), rep(atanh(0.3), np))
+  o <- stats::optim(start, fn, gr, method = "BFGS", control = list(maxit = 2000, reltol = 1e-12))
+  u <- unpack(o$par)
+  H <- tryCatch(stats::optimHess(o$par, fn, gr), error = function(e) NULL)
+  V <- if (!is.null(H)) tryCatch(solve(H) * 2 / n, error = function(e) NULL) else NULL
+  se <- if (!is.null(V)) sqrt(pmax(diag(V)[1:p], 0)) else rep(NA, p)
+  list(F = o$value, conv = o$convergence == 0, lam = u$lam, th = u$th, Ph = u$Ph, Sig = u$Sig, se = se, np = 2 * p + np)
+}
+an_cfa <- function(df, req) {
+  alpha <- opt(req, "alpha", 0.05); lead0 <- opt(req, "lead0", TRUE)
+  ids <- c("f1", "f2", "f3", "f4"); used <- Filter(function(id) !is.null(req$slots[[id]]) && length(unlist(req$slots[[id]]$cols)), ids)
+  if (!length(used)) stop_user("因子 1 の項目を選んでください。")
+  parts <- lapply(used, function(id) scale_raw(df, req$slots[[id]]))
+  for (k in seq_along(parts)) if (ncol(parts[[k]]$X) < 2) stop_user("因子 ", k, " の項目が 1 つしかありません。1 つの因子に 2 つ以上（因子が 1 つだけのときは 3 つ以上）の項目を選んでください。")
+  X <- do.call(cbind, lapply(parts, function(z) z$X)); grp <- rep(seq_along(parts), vapply(parts, function(z) ncol(z$X), 1L))
+  if (anyDuplicated(colnames(X))) stop_user("同じ項目が 2 つの因子に入っています。1 つの項目は 1 つの因子にだけ入れてください。")
+  m <- length(parts); p <- ncol(X)
+  if (m == 1 && p < 3) stop_user("因子が 1 つのときは、項目を 3 つ以上選んでください（2 項目では当てはまりを調べられません）。")
+  ok <- stats::complete.cases(X); X <- X[ok, , drop = FALSE]; n <- nrow(X)
+  if (n < p + 10) stop_user("すべての項目に答えた人が少なすぎます（", n, " 人）。")
+  sdz <- apply(X, 2, stats::sd); if (any(sdz == 0)) stop_user("全員が同じ回答をした項目があります（", paste(colnames(X)[sdz == 0], collapse = "、"), "）。")
+  S <- stats::cov(X) * (n - 1) / n
+  fit <- cfa_fit(S, n, grp)
+  dfm <- p * (p + 1) / 2 - fit$np; chi <- n * fit$F; pchi <- if (dfm > 0) stats::pchisq(chi, dfm, lower.tail = FALSE) else NA
+  chib <- n * (sum(log(diag(S))) - determinant(S, logarithm = TRUE)$modulus); dfb <- p * (p - 1) / 2
+  ident <- dfm > 0                                                    # 自由度 0（例：1 因子 3 項目）では当てはまりを評価できない
+  cfi <- if (ident) 1 - max(chi - dfm, 0) / max(chib - dfb, chi - dfm, 0) else NA
+  tli <- if (ident) ((chib / dfb) - (chi / dfm)) / ((chib / dfb) - 1) else NA
+  rmsea <- if (ident) sqrt(max((chi - dfm) / (n * dfm), 0)) else NA
+  ncp_at <- function(prob) { if (stats::pchisq(chi, dfm) < prob) return(0); stats::uniroot(function(l) stats::pchisq(chi, dfm, ncp = l) - prob, c(0, max(chi * 3, 10)))$root }
+  rl <- if (ident) sqrt(ncp_at(0.95) / (n * dfm)) else NA; rh <- if (ident) sqrt(ncp_at(0.05) / (n * dfm)) else NA
+  D <- sqrt(diag(S)); E <- (S - fit$Sig) / outer(D, D); srmr <- sqrt(mean(E[upper.tri(E, diag = TRUE)]^2))
+  std <- fit$lam / sqrt(diag(fit$Sig)); z <- fit$lam / fit$se; pz <- 2 * stats::pnorm(-abs(z))
+  fac <- paste0("因子 ", seq_len(m))
+  rel <- t(vapply(seq_len(m), function(f) { j <- grp == f; c(sum(j), sum(fit$lam[j])^2 / (sum(fit$lam[j])^2 + sum(fit$th[j])), mean(std[j]^2)) }, numeric(3)))
+  res <- list(test = "確認的因子分析（最尤法）", n = n_info(nrow(df), n), notes = character(0))   # χ² の p は当てはまりの表にだけ載せる（「有意」の判定はしない）
+  res$grids <- list(
+    list(kind = "grid", title = "当てはまりの指標", corner = "", rows = A("モデル"), cols = A(c("χ²", "自由度", "p", "CFI", "TLI", "RMSEA", "RMSEA の 90% 信頼区間の下限", "上限", "SRMR")),
+         fmt = A(c("num2", "int", "p", "num3", "num3", "num3", "num3", "num3", "num3")), cells = list(lapply(list(chi, dfm, pchi, cfi, tli, rmsea, rl, rh, srmr), function(v) if (is.na(v)) NULL else v)),
+         note = "目安（Hu & Bentler, 1999）：CFI・TLI は 0.95 以上、RMSEA は 0.06 以下、SRMR は 0.08 以下で当てはまりがよいとされる。χ² 検定は人数が多いとわずかなずれでも有意になる。"),
+    list(kind = "grid", title = "因子負荷量", corner = "項目", rows = A(colnames(X)), cols = A(c("因子", "標準化負荷量", "負荷量", "標準誤差", "z", "p")),
+         fmt = A(c("text", "num2", "num2", "num2", "num2", "p")), cells = lapply(seq_len(p), function(i) list(fac[grp[i]], std[i], fit$lam[i], fit$se[i], z[i], pz[i])),
+         mark = lapply(seq_len(p), function(i) A(c(FALSE, std[i] < 0.4, FALSE, FALSE, FALSE, FALSE))),
+         note = "標準化負荷量が 0.4 未満の項目を太字にした。"),
+    list(kind = "grid", title = "因子ごとの信頼性", corner = "", rows = A(fac), cols = A(c("項目数", "ω（合成信頼性）", "AVE")), fmt = A(c("int", "num2", "num2")),
+         cells = lapply(seq_len(m), function(f) as.list(rel[f, ])), note = "AVE は標準化負荷量の 2 乗の平均（平均分散抽出）。0.5 以上が目安とされる。"))
+  if (m > 1) res$grids <- c(res$grids, list(list(kind = "grid", title = "因子間の相関", corner = "", rows = A(fac), cols = A(fac), fmt = A(rep("num2", m)), cells = mat(fit$Ph))))
+  res$headline <- if (ident) list(hl("CFI", fmt_num(cfi, 3)), hl("RMSEA", fmt_num(rmsea, 3)), hl("SRMR", fmt_num(srmr, 3)), hl(paste0("χ²(", dfm, ")"), fmt_num(chi)), hl("n", as.character(n))) else list(hl("自由度", "0"), hl("n", as.character(n)))
+  res$row <- list(stat = paste0("χ²(", dfm, ") = ", fmt_num(chi)), effect = paste0("CFI = ", fmt_num(cfi, 3), ", RMSEA = ", fmt_num(rmsea, 3)))
+  res$fig <- list(type = "box", cats = A(colnames(X)), box = lapply(seq_len(p), function(i) list(stats = A(rep(std[i], 5)), out = A(numeric(0)), n = n, mean = std[i], lo = NULL, hi = NULL)),
+                  catTitle = "項目", valueTitle = "標準化負荷量", coef = "標準化負荷量", ref = 0)
+  good <- ident && cfi >= 0.95 && rmsea <= 0.06 && srmr <= 0.08; poor <- ident && (cfi < 0.90 || rmsea > 0.10)
+  if (!ident) res$notes <- c(res$notes, "モデルの自由度が 0 です（1 因子 3 項目など）。データに必ず完全に当てはまるので、当てはまりの指標では評価できません。負荷量と信頼性だけを見てください。")
+  res$report <- paste0(m, " 因子 ", p, " 項目のモデルについて、最尤法による確認的因子分析を行った（n = ", n, "）。",
+                       if (!ident) paste0("モデルの自由度が 0 のため、当てはまりは評価できない。") else paste0("当てはまりは χ²(", dfm, ") = ", fmt_num(chi), ", ", fmt_p(pchi, lead0), "、CFI = ", fmt_num(cfi, 3), "、TLI = ", fmt_num(tli, 3), "、RMSEA = ", fmt_num(rmsea, 3),
+                       "（90%CI [", fmt_num(rl, 3), ", ", fmt_num(rh, 3), "]）、SRMR = ", fmt_num(srmr, 3), "であり、",
+                       if (good) "よい当てはまりを示した。" else if (poor) "当てはまりは不十分であった。" else "おおむね許容できる当てはまりであった。"),
+                       "標準化負荷量は ", fmt_num(min(std)), "〜", fmt_num(max(std)), " であった。",
+                       if (any(std < 0.4)) paste0("負荷量が 0.4 未満の項目は", paste(colnames(X)[std < 0.4], collapse = "、"), "であった。") else "")
+  res$method <- paste0("各項目の得点（選択肢の並びの先頭を高い点とした段階の得点。逆転項目は反転）の分散共分散行列から、最尤法で推定した。各項目は 1 つの因子にだけ負荷するとし、因子の分散を 1 に固定して因子間の相関を推定した。",
+                       "すべての項目に回答した人を対象とした（リストワイズ除去）。")
+  if (!fit$conv) res$notes <- c(res$notes, "計算が十分に収束しませんでした。項目や因子の組み方を見直してください。")
+  if (any(fit$th < 1e-3 * diag(S))) res$notes <- c(res$notes, "誤差分散がほぼ 0 の項目があります（不適解の可能性）。その項目を除くか、因子の組み方を見直してください。")
+  if (m > 1 && any(abs(fit$Ph[lower.tri(fit$Ph)]) > 0.9)) res$notes <- c(res$notes, "相関が 0.9 を超える因子の組があります。2 つの因子を区別できていない可能性があります。")
+  res$notes <- c(res$notes, "段階の回答を数値とみなして計算しています。段階が少ない（4 段階以下）ときや回答が偏っているときは、カテゴリカルなデータ向けの推定（WLSMV など）の方が適している場合があります。")
+  res$chk <- list(chi = chi, cfi = cfi, rmsea = rmsea, srmr = srmr, std = std)
+  finish(res, alpha)
+}
+register("cfa", "確認的因子分析", "尺度・多変量", "あらかじめ決めた「因子と項目の組み合わせ」が、データに当てはまっているかを調べます。当てはまりの指標（CFI・RMSEA など）と因子負荷量、因子ごとの信頼性を出します。",
+         list(S("f1", "因子 1 の項目", "ordinal", "例：「海が好き」を測る項目", FALSE, TRUE), S("f2", "因子 2 の項目", "ordinal", "2 因子以上のときに選ぶ", FALSE, TRUE, TRUE),
+              S("f3", "因子 3 の項目", "ordinal", "", FALSE, TRUE, TRUE), S("f4", "因子 4 の項目", "ordinal", "", FALSE, TRUE, TRUE)),
+         list(), an_cfa)
 
 # ---------------------------------------------------------------- 回帰分析（重回帰・ロジスティック回帰）
 # 説明変数の行列を作る。単一回答はダミー変数（先頭の選択肢を基準）、順序のある回答は段階の得点、数値はそのまま

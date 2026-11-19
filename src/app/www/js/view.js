@@ -494,16 +494,16 @@
     var sl = tab.slots[sd.id], cols = sl.cols || [], first = cols.length ? A.v(cols[0]) : null;
     var list = cols.map(function (c, i) { var x = A.v(c); return '<div class="md-item"><span class="md-item-no">' + (i + 1) + '</span><span class="md-item-name">' + esc(x ? x.label : '') + '</span>' +
       '<button class="md-mv" data-act="itemMove" data-arg="' + tab.id + ':' + sd.id + ':' + i + ':-1" data-tip="1 つ上へ"' + (i === 0 ? ' disabled' : '') + '>▲</button><button class="md-mv" data-act="itemMove" data-arg="' + tab.id + ':' + sd.id + ':' + i + ':1" data-tip="1 つ下へ"' + (i === cols.length - 1 ? ' disabled' : '') + '>▼</button>' +
-      (tab.type === 'alpha' || tab.type === 'factor' ? '<button class="md-mv md-rev' + ((sl.reverse || []).indexOf(c) >= 0 ? ' on' : '') + '" data-act="itemRev" data-arg="' + tab.id + ':' + sd.id + ':' + c + '" data-tip="逆の向きの項目（逆転項目）として、得点を反転して計算します。">逆転</button>' : '') +
+      (tab.type === 'alpha' || tab.type === 'factor' || tab.type === 'cfa' ? '<button class="md-mv md-rev' + ((sl.reverse || []).indexOf(c) >= 0 ? ' on' : '') + '" data-act="itemRev" data-arg="' + tab.id + ':' + sd.id + ':' + c + '" data-tip="逆の向きの項目（逆転項目）として、得点を反転して計算します。">逆転</button>' : '') +
       '<button class="md-mv md-danger" data-act="itemRemove" data-arg="' + tab.id + ':' + sd.id + ':' + i + '" data-tip="この設問を外します。">×</button></div>'; }).join('');
-    var opts = '<option value="">' + (cols.length ? '＋ 設問を追加' : '（1 つ目の設問を選んでください）') + '</option>' + S.P.vars.filter(function (x) { return cols.indexOf(x.col) < 0; }).map(function (x) {
+    var opts = '<option value="">' + (cols.length ? '＋ 設問を追加' : sd.optional ? '（使わない。使うときは設問を選ぶ）' : '（1 つ目の設問を選んでください）') + '</option>' + S.P.vars.filter(function (x) { return cols.indexOf(x.col) < 0; }).map(function (x) {
       var ok = sd.types.indexOf(x.type) >= 0, mark = first && ok && sameChoices(first, x);
       return '<option value="' + x.col + '"' + (ok ? '' : ' disabled') + '>' + (mark ? '◎ ' : '') + esc(x.label) + '　〔' + esc(A.TYPE_NAMES[x.type] || x.type) + '〕</option>';
     }).join('');
     var same = first ? S.P.vars.filter(function (x) { return cols.indexOf(x.col) < 0 && sd.types.indexOf(x.type) >= 0 && sameChoices(first, x); }) : [];
     return '<div class="md-qrow md-qrow-many"><span class="md-qlab">' + esc(sd.label) + (sd.hint ? '<small>' + esc(sd.hint) + '</small>' : '') + '</span><div>' +
       (list ? '<div class="md-items">' + list + '</div>' : '') +
-      '<select class="md-in' + (cols.length < 2 ? ' md-empty-sel' : '') + '" data-additem="' + sd.id + '" data-tab="' + tab.id + '">' + opts + '</select>' +
+      '<select class="md-in' + (cols.length < 2 && !(sd.optional && !cols.length) ? ' md-empty-sel' : '') + '" data-additem="' + sd.id + '" data-tab="' + tab.id + '">' + opts + '</select>' +
       (same.length ? '<div class="md-qact" style="text-align:left;margin-top:6px"><button class="md-btn md-btn-sm" data-act="itemAddSame" data-arg="' + tab.id + ':' + sd.id + '" data-tip="選んだ設問と同じ選択肢の設問（◎ の付いたもの）を、すべて追加します。">同じ選択肢の設問をすべて追加（' + same.length + ' 個）</button></div>' : '') +
       (cols.length === 1 ? '<div class="md-hint" style="margin:6px 0 0">比べる設問をもう 1 つ以上選んでください。◎ は、選んだ設問と同じ選択肢の設問です。</div>' : '') + '</div></div>';
   }
