@@ -185,6 +185,15 @@
     var enc = new TextEncoder(), files = Object.keys(d.files).map(function (k) { return { name: k, data: enc.encode(d.files[k]) }; });
     return { blob: await A.zip(files, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'), notes: d.notReproduced || [], skipped: d.skipped || [] };
   }
+  // R のコード：アプリの解析を R の標準の関数で計算し直すスクリプトと、そのためのデータ（CSV）
+  async function rFiles(tabs) {
+    var items = tabs.map(function (t) { return { name: t.name, req: A.buildReq(t) }; });
+    var d = await A.apiData('/api/rscript', { items: items, dataName: '解析用データ.csv', date: new Date().toLocaleDateString('ja-JP') });
+    if (!d.ok) throw new Error(d.message || 'R のコードを作れませんでした。');
+    var enc = new TextEncoder();
+    return [{ name: '解析.R', data: enc.encode(d.script) }, { name: '解析用データ.csv', data: enc.encode(d.data) }];
+  }
+  A.rFiles = rFiles;
   function okTabs() { return S.P.tabs.filter(function (t) { return t.checked && resOf(t) && resOf(t).ok; }); }
   function excelNote(x) { return (x.notes.length ? 'Excel の関数で再現していないもの：' + x.notes.join('、') + '。' : '') + (x.skipped.length ? '書けなかった解析：' + x.skipped.join('、') + '。' : ''); }
   // ☑ を付けた解析の図・Excel・報告書をまとめて書き出す。dir：選んだフォルダー（選べない環境では ZIP にまとめる）
@@ -197,6 +206,7 @@
         if (used[base]) { used[base]++; base += '(' + used[base] + ')'; } else used[base] = 1;           // 同じ名前の解析があるときは (2) を付ける
         for (var k = 0; k < figs.length; k++) { A.busy(true, '図を画像にしています（' + (i + 1) + ' / ' + tabs.length + '）'); try { out.push({ name: base + '_図' + (k + 1) + '.png', blob: await pngBlob(figs[k]) }); } finally { A.busy(false); } }
       }
+      if (opt.r) { A.busy(true, 'R のコードを作っています'); try { (await rFiles(tabs)).forEach(function (f) { out.push({ name: f.name === '解析.R' ? A.baseName() + '_解析.R' : f.name, blob: new Blob([f.data]) }); }); } finally { A.busy(false); } }
       if (opt.excel) { A.busy(true, 'Excel ファイルを作っています'); try { var x = await excelBlob(tabs); out.push({ name: A.baseName() + '_解析.xlsx', blob: x.blob }); note = excelNote(x); } finally { A.busy(false); } }
       if (opt.pdf) out.push({ name: A.baseName() + '_報告書.pdf', blob: await A.reportPdf() });
       if (opt.docx) out.push({ name: A.baseName() + '_報告書.docx', blob: await A.reportDocx() });
@@ -429,6 +439,14 @@
     numClean: function (arg) { numCleanDialog(+arg); },
     repTxt: async function () { await A.ensureHolmAsync(); if (await A.saveBlob(new Blob(['﻿' + A.reportPlain()], { type: 'text/plain' }), A.baseName() + '_報告書.txt', 'テキスト', '.txt')) A.toast('報告書をテキストで保存しました。'); },
     repCopy: async function () { await A.ensureHolmAsync(); if (await copyText(A.reportPlain())) A.toast('報告書の全文をコピーしました。'); },
+    rOnly: async function () {
+      var tabs = okTabs(); if (!tabs.length) { A.toast('☑ を付けた解析のうち、結果が出ているものがありません。', true); return; }
+      A.busy(true, 'R のコードを作っています');
+      try { var fs = await rFiles(tabs); var blob = await A.zip(fs, 'application/zip'); A.busy(false);
+        if (await A.saveBlob(blob, A.baseName() + '_Rコード.zip', 'ZIP', '.zip')) A.toast('R のコード（解析.R）とデータ（解析用データ.csv）を ZIP で保存しました。展開して同じフォルダーで実行すると、R の結果と「アプリの値」を見比べられます。'); return; }
+      catch (e) { A.toast(e.message, true); }
+      A.busy(false);
+    },
     excelOnly: async function () {
       var tabs = okTabs(); if (!tabs.length) { A.toast('☑ を付けた解析のうち、結果が出ているものがありません。', true); return; }
       A.busy(true, 'Excel ファイルを作っています');
@@ -441,13 +459,14 @@
       modal('まとめて書き出す', '<p>☑ を付けた <b>' + tabs.length + ' 件</b>の解析を書き出します。</p>' +
         '<label class="md-check"><input type="checkbox" id="md_ex_fig" checked>図（PNG、' + nfig + ' 個）　名前は「解析の名前_図1.png」</label>' +
         '<label class="md-check"><input type="checkbox" id="md_ex_xl" checked>Excel ファイル（データと、関数で再現した解析）</label>' +
+        '<label class="md-check"><input type="checkbox" id="md_ex_r">R のコード（解析を R の標準の関数で計算し直すスクリプトと、そのデータ）</label>' +
         '<label class="md-check"><input type="checkbox" id="md_ex_pdf" checked>報告書（PDF。文・表・図をすべて含む）</label>' +
         '<label class="md-check"><input type="checkbox" id="md_ex_docx">報告書（Word。表は Word の表で、あとから直せる）</label>' +
         '<label class="md-check"><input type="checkbox" id="md_ex_rep">報告書（テキスト。文と表だけ）</label>' +
         '<p class="md-hint" style="margin-top:8px">' + (canDir ? '次の画面で書き出し先のフォルダーを選びます。同じ名前のファイルがあるときは上書きします。' : 'この環境ではフォルダーを選べないため、1 つの ZIP ファイルにまとめて保存します。') + '</p>',
         '<button class="md-btn" data-act="closeModal">やめる</button><button class="md-btn md-btn-primary" id="md_ex_go">' + (canDir ? 'フォルダーを選んで書き出す' : 'ZIP にまとめて保存') + '</button>', 520);
       $('#md_ex_go').onclick = async function () {
-        var opt = { figs: $('#md_ex_fig').checked, excel: $('#md_ex_xl').checked, report: $('#md_ex_rep').checked, pdf: $('#md_ex_pdf').checked, docx: $('#md_ex_docx').checked }, dir = null;
+        var opt = { figs: $('#md_ex_fig').checked, excel: $('#md_ex_xl').checked, report: $('#md_ex_rep').checked, pdf: $('#md_ex_pdf').checked, docx: $('#md_ex_docx').checked, r: $('#md_ex_r').checked }, dir = null;
         if (opt.pdf && A.askLocalFonts) A.askLocalFonts();                 // MS 明朝・Times New Roman を使う許可は、押した直後にしかたずねられない
         if (canDir) { try { dir = await window.showDirectoryPicker({ mode: 'readwrite' }); } catch (e) { return; } }       // フォルダーを選ぶ画面（OS 標準）
         closeModal(); exportAll(dir, opt);
@@ -655,6 +674,8 @@
       '<li>尺度の信頼性の ω 係数と、確認的因子分析（反復計算で求めるため）</li>' +
       '<li>ロジスティック回帰分析（係数を反復計算で求めるため。重回帰分析は X\'X の逆行列で再現します）</li></ul>' +
       '<p style="margin:4px 0 0">自由度が小数になるウェルチの検定の p は、Excel の T.DIST・F.DIST が自由度の小数を切り捨てるため、BETA.DIST で求めています。</p>' +
+      h('R のコードでの確かめ') +
+      '<p style="margin:0">「書き出し」→「R のコード」で、☑ を付けた解析を R の標準の関数（chisq.test、t.test、lm など）で計算し直すスクリプト（解析.R）と、そのためのデータ（解析用データ.csv）を保存できます。選択肢のまとめ方、絞り込み、尺度得点の作り方もスクリプトの中にコードとして書きます。数値の列は、アプリが直した値（「40分」→ 40 など）をデータに足して使います。実行すると、各解析の結果のあとに「>> アプリの値」が表示されます。テキストマイニングと回答日時の推移は、アプリの中の処理を使うためコードにしていません。確認的因子分析は、パッケージ lavaan があればそれで計算し直します。</p>' +
       h('報告書（PDF）の字体') +
       '<p style="margin:0">本文と表は、和文を MS 明朝、英数字を Times New Roman で書きます（' + (web ? 'パソコンの Chrome・Edge で、字体の使用を許可したとき' : 'パソコンに入っているとき') + '）。使えないときは、形の近い BIZ UD明朝と Tinos で書きます。見出しと図は BIZ UDPゴシックです。</p>' +
       h('論文などでの引用のしかた') +

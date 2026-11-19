@@ -12,7 +12,7 @@ for f in ['bridge.js', 'touch.js', 'web.js', 'phone.js']: shutil.copy(WEB + '/' 
 import re as _re
 VERSION = _re.search(r"v: '([0-9.]+)'", open(ROOT + '/app/www/js/changelog.js', encoding='utf-8').read()).group(1)
 _b = open(OUT + '/js/bridge.js', encoding='utf-8').read().replace('__CTS_VERSION__', VERSION); open(OUT + '/js/bridge.js', 'w', encoding='utf-8').write(_b)
-for f in ['data.R', 'stats.R', 'analyses.R', 'analyses2.R', 'excel.R', 'server.R']: shutil.copy(ROOT + '/app/R/' + f, OUT + '/R/' + f)
+for f in ['data.R', 'stats.R', 'analyses.R', 'analyses2.R', 'excel.R', 'rexport.R', 'server.R']: shutil.copy(ROOT + '/app/R/' + f, OUT + '/R/' + f)
 for f in ['web_json.R', 'web_server.R']: shutil.copy(WEB + '/' + f, OUT + '/R/' + f)
 # webR：この一式で使うもの（npm の webr 0.6.1。配布元の整合性ハッシュと一致することを確かめたもの）だけを入れる
 # 置き場（Claude のページ）が .so と拡張子なしのファイルを置けないため、.so は .so.wasm に名前を変え、webR の worker の

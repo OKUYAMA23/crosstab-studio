@@ -3,11 +3,11 @@
 // プロジェクトは端末のブラウザの中（IndexedDB）に保存する。
 (function () {
   'use strict';
-  var R_FILES = ['data.R', 'stats.R', 'analyses.R', 'analyses2.R', 'excel.R', 'server.R', 'web_json.R', 'web_server.R'];
+  var R_FILES = ['data.R', 'stats.R', 'analyses.R', 'analyses2.R', 'excel.R', 'rexport.R', 'server.R', 'web_json.R', 'web_server.R'];
   var realFetch = window.fetch.bind(window), webR = null, rVersion = null, rYear = null, bootErr = null;
   var bootStep = function () {};
   window.CTS_WEB = true;
-  window.CTS_VERSION = '0.9.5';
+  window.CTS_VERSION = '0.9.6';
 
   // ---------------- R（webR）を起動する
   // ホーム画面のアプリとして開いたときは、先に一式を端末に保存する（2 回目からは通信なしで起動できる）

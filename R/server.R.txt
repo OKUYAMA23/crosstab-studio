@@ -1,7 +1,7 @@
 # server.R ― 画面（ブラウザ）と R をつなぐ小さなローカルサーバー。127.0.0.1 だけで待ち受ける。
 
 APP_ID <- "CrossTabStudio"
-APP_VERSION <- "0.9.5"
+APP_VERSION <- "0.9.6"
 STORE <- new.env()          # 読み込んだデータ（id → data.frame）
 STATE <- new.env()
 STATE$last_ping <- Sys.time(); STATE$had_client <- FALSE; STATE$bye_at <- NULL
@@ -118,6 +118,7 @@ route <- function(req) {
   }
   if (path == "/api/analyze") return(json_resp(score_method(run_analysis(df, body), body)))
   if (path == "/api/excel") return(json_resp(c(list(ok = TRUE), build_excel(df, body$items))))
+  if (path == "/api/rscript") { r <- build_rscript(df, body$items, if (is.null(body$dataName)) "解析用データ.csv" else body$dataName, APP_VERSION, if (is.null(body$date)) "" else body$date); return(json_resp(list(ok = TRUE, script = r$script, data = csv_text(rscript_data(df, r$numcols))))) }
   if (path == "/api/padjust") {
     p <- vapply(body$p, function(v) if (is.null(v)) NA_real_ else as.numeric(v), 0)
     return(json_resp(list(ok = TRUE, p = A(stats::p.adjust(p, method = "holm")))))

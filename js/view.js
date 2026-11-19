@@ -337,7 +337,8 @@
         rbLarge({ act: 'repTxt', name: 'テキストで保存', ic: 'txt', tip: '報告書を 1 つのテキストファイル（.txt）で保存します。', off: !has }),
         rbStack(rbToggle('rep.tables', '表を入れる', 'table', '報告書に各解析の表を入れます。', !has), rbToggle('rep.holm', '補正後の p', 'holm', '検定を繰り返したことを考えて、ホルム法で補正した p を一覧に入れます。', !has),
           rbSmall({ act: 'resetAllText', name: '定型文に戻す', ic: 'refresh', tip: '書き換えた文をすべて、結果から作った定型文に戻します。', off: !anyEdited }))) +
-      rbGroup('Excel', rbLarge({ act: 'excelOnly', name: 'Excel で保存', ic: 'excel', tip: 'データと、☑ を付けた解析を Excel の関数で再現したシートを保存します。', off: !has || !S.P.tabs.length })) +
+      rbGroup('計算の確かめ', rbLarge({ act: 'excelOnly', name: 'Excel で保存', ic: 'excel', tip: 'データと、☑ を付けた解析を Excel の関数で再現したシートを保存します。', off: !has || !S.P.tabs.length }) +
+        rbLarge({ act: 'rOnly', name: 'R のコード', ic: 'rcode', tip: '☑ を付けた解析を R の標準の関数で計算し直すスクリプト（.R）と、そのためのデータ（CSV）を ZIP で保存します。R で実行すると、結果と「アプリの値」を見比べられます。', off: !has || !S.P.tabs.length })) +
       rbGroup('プロジェクト', rbLarge({ act: 'projFile', name: 'ファイルに書き出す', ic: 'saveas', tip: 'プロジェクトを 1 つのファイル（.prj）にして保存します。別の端末やパソコン版でも開けます。', off: !has }));
     h.settings = rbGroup('判定と表記', rbStack(rbSelect('有意水準', 'set.alpha', [[0.05, '5%（0.05）'], [0.01, '1%（0.01）'], [0.1, '10%（0.10）']], '「有意」と判定する基準です。すべての解析に使われます。', false, 'num'),
         rbSelect('p の表記', 'set.lead0', [['true', 'p = 0.012'], ['false', 'p = .012']], 'p 値の書き方です。投稿先や指導者の指定に合わせます。', false, 'boolstr'))) +

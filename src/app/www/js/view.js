@@ -337,7 +337,8 @@
         rbLarge({ act: 'repTxt', name: 'テキストで保存', ic: 'txt', tip: '報告書を 1 つのテキストファイル（.txt）で保存します。', off: !has }),
         rbStack(rbToggle('rep.tables', '表を入れる', 'table', '報告書に各解析の表を入れます。', !has), rbToggle('rep.holm', '補正後の p', 'holm', '検定を繰り返したことを考えて、ホルム法で補正した p を一覧に入れます。', !has),
           rbSmall({ act: 'resetAllText', name: '定型文に戻す', ic: 'refresh', tip: '書き換えた文をすべて、結果から作った定型文に戻します。', off: !anyEdited }))) +
-      rbGroup('Excel', rbLarge({ act: 'excelOnly', name: 'Excel で保存', ic: 'excel', tip: 'データと、☑ を付けた解析を Excel の関数で再現したシートを保存します。', off: !has || !S.P.tabs.length })) +
+      rbGroup('計算の確かめ', rbLarge({ act: 'excelOnly', name: 'Excel で保存', ic: 'excel', tip: 'データと、☑ を付けた解析を Excel の関数で再現したシートを保存します。', off: !has || !S.P.tabs.length }) +
+        rbLarge({ act: 'rOnly', name: 'R のコード', ic: 'rcode', tip: '☑ を付けた解析を R の標準の関数で計算し直すスクリプト（.R）と、そのためのデータ（CSV）を ZIP で保存します。R で実行すると、結果と「アプリの値」を見比べられます。', off: !has || !S.P.tabs.length })) +
       rbGroup('プロジェクト', rbLarge({ act: 'projFile', name: 'ファイルに書き出す', ic: 'saveas', tip: 'プロジェクトを 1 つのファイル（.prj）にして、好きな場所に保存します。別のパソコンに移すときに使います。', off: !has }));
     h.settings = rbGroup('判定と表記', rbStack(rbSelect('有意水準', 'set.alpha', [[0.05, '5%（0.05）'], [0.01, '1%（0.01）'], [0.1, '10%（0.10）']], '「有意」と判定する基準です。すべての解析に使われます。', false, 'num'),
         rbSelect('p の表記', 'set.lead0', [['true', 'p = 0.012'], ['false', 'p = .012']], 'p 値の書き方です。投稿先や指導者の指定に合わせます。', false, 'boolstr'))) +
@@ -809,8 +810,8 @@
     var tab = A.curTab(), res = tab ? S.results[tab.id] : null;
     var h = sec('書き出す解析（☑）', S.P.tabs.length ? '<div class="md-cats">' + S.P.tabs.map(function (t, i) { var r = S.results[t.id], sig = r && r.ok && r.sig; return '<label class="md-cat" style="cursor:pointer"><input type="checkbox" data-ancheck="' + t.id + '"' + (t.checked ? ' checked' : '') + '><span style="flex:1;padding:4px" class="' + (sig ? 'md-sigtext' : '') + '">' + (i + 1) + '. ' + esc(t.name) + '</span><span class="md-n">図 ' + t.figs.length + '</span></label>'; }).join('') + '</div>' : hint('解析がまだありません。'),
       '<div class="md-row"><button class="md-btn md-btn-sm" data-act="checkAll" data-arg="1">すべて選ぶ</button><button class="md-btn md-btn-sm" data-act="checkAll" data-arg="0">すべて外す</button></div>');
-    h += sec('まとめて書き出す', hint('☑ を付けた解析について、次の 3 種類を、選んだフォルダーに書き出します。'),
-      '<div class="md-hint" style="color:var(--t-1e2f26)">・図：「解析の名前_図1.png」のように、解析ごとに 1 から番号を付けます。画面に出ている形と大きさのままです。<br>・Excel ファイル：CSV をシートにし、その右側に Excel の関数で解析を再現します（値の貼り付けはしません）。<br>・報告書：すべての解析の文と表を 1 つのテキストにまとめます。</div>',
+    h += sec('まとめて書き出す', hint('☑ を付けた解析について、次のものから選んで、選んだフォルダーに書き出します。'),
+      '<div class="md-hint" style="color:var(--t-1e2f26)">・図：「解析の名前_図1.png」のように、解析ごとに 1 から番号を付けます。画面に出ている形と大きさのままです。<br>・Excel ファイル：CSV をシートにし、その右側に Excel の関数で解析を再現します（値の貼り付けはしません）。<br>・R のコード：解析を R の標準の関数で計算し直すスクリプトと、そのデータです。<br>・報告書：すべての解析の文と表を、PDF・Word・テキストのいずれかにまとめます。</div>',
       '<button class="md-btn md-btn-primary" data-act="exportAll"' + (S.P.tabs.length ? '' : ' disabled') + '>まとめて書き出す</button>');
     h += sec('報告書に入れる内容', fCheck('各解析の表を入れる', 'rep.tables'), fCheck('ホルム法で補正した p を一覧に入れる', 'rep.holm'), hint('補正後の p は、検定を何度も行うと偶然に有意となる結果が増える問題に対応するための値です。'));
     if (tab && res && res.ok) h += sec('選んだ解析の文', target(tab), '<textarea class="md-in" data-auto data-reptext="' + tab.id + '" rows="5">' + esc(tab.reportText !== null ? tab.reportText : res.report) + '</textarea>',
