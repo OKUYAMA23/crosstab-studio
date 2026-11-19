@@ -817,8 +817,28 @@
       hint('文は書き換えられます。定型文は結果の数値から決まった型で作っています。考察（なぜそうなったか）は含まれないため、自分で書き足してください。'), tab.reportText !== null ? '<button class="md-btn" data-act="resetTextAt" data-arg="' + tab.id + '">定型文に戻す</button>' : '');
     return h;
   }
+  // 既定の設定：新しく始めるときに、初期設定とカスタム設定のどちらを使うか
+  function defaultsSec() {
+    var mode = A.defMode(), c = A.customGet();
+    var seg = function (v, label) { return '<button class="md-btn' + (mode === v ? ' md-btn-primary' : '') + '" data-act="defMode" data-arg="' + v + '"' + (v === 'custom' && !c ? ' disabled' : '') + '>' + label + '</button>'; };
+    var info = '';
+    if (c) {
+      var d = new Date(c.savedAt || 0), pal = c.figDefault && c.figDefault.palette && Chart.PALETTES[c.figDefault.palette], des = c.tstyleDefault && T_DESIGNS.filter(function (x) { return x[0] === c.tstyleDefault.design; })[0];
+      var st = c.settings || {}, rp = c.report || {};
+      info = '<table class="md-t0" style="width:100%;margin:6px 0"><tr><th class="md-rh" style="text-align:left">保存した日時</th><td style="text-align:left">' + (isNaN(d) ? '–' : d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate() + ' ' + d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0')) + '</td></tr>' +
+        '<tr><th class="md-rh" style="text-align:left">有意水準</th><td style="text-align:left">' + (st.alpha != null ? (st.alpha * 100) + '%' : '–') + '</td></tr>' +
+        '<tr><th class="md-rh" style="text-align:left">p 値の表記</th><td style="text-align:left">' + (st.lead0 === false ? '.05（0 を省く）' : '0.05') + '</td></tr>' +
+        '<tr><th class="md-rh" style="text-align:left">報告書</th><td style="text-align:left">表を' + (rp.tables === false ? '入れない' : '入れる') + '、補正後の p を' + (rp.holm === false ? '入れない' : '入れる') + '</td></tr>' +
+        '<tr><th class="md-rh" style="text-align:left">図の配色</th><td style="text-align:left">' + (pal ? esc(pal.name) : '初期のまま') + '</td></tr>' +
+        '<tr><th class="md-rh" style="text-align:left">表のデザイン</th><td style="text-align:left">' + (des ? esc(des[1]) : '初期のまま') + '</td></tr></table>';
+    }
+    return sec('既定の設定（新しく始めるとき）', '<div class="md-row" style="gap:6px">' + seg('init', '初期設定') + seg('custom', 'カスタム設定') + '</div>' + info +
+      '<div class="md-row" style="gap:6px;flex-wrap:wrap;margin-top:6px"><button class="md-btn" data-act="customSave">今の設定をカスタム設定に保存</button><button class="md-btn" data-act="customApply"' + (S.data ? '' : ' disabled') + '>開いているプロジェクトに当てはめる</button></div>' +
+      '<div class="md-row" style="gap:6px;flex-wrap:wrap;margin-top:6px"><button class="md-btn" data-act="customExport"' + (c ? '' : ' disabled') + '>書き出す</button><button class="md-btn" data-act="customImport">読み込む</button><button class="md-btn" data-act="customDelete"' + (c ? '' : ' disabled') + '>消す</button></div>',
+      hint('カスタム設定には、判定と表記（有意水準・p 値の表記）、報告書の設定（表・ホルム法で補正した p を入れるか）、図の言葉と画像の細かさ、選んでいる図の書式（配色・字体・大きさ）、選んでいる表のデザインが入ります。この端末に保存するので、新しい版になっても残ります。「初期設定」を選んでいる間も消えません。保存したプロジェクトを開いたときは、プロジェクトの設定を使います。別の端末で使うときは、書き出したファイルを読み込んでください。'));
+  }
   function paneSettings() {
-    return sec('判定と表記', grid2(fSelect('有意水準', 'set.alpha', [[0.05, '5%（0.05）'], [0.01, '1%（0.01）'], [0.1, '10%（0.10）']], 'num'), fSelect('p 値の表記', 'set.lead0', [['true', 'p = 0.012'], ['false', 'p = .012']], 'boolstr')),
+    return defaultsSec() + sec('判定と表記', grid2(fSelect('有意水準', 'set.alpha', [[0.05, '5%（0.05）'], [0.01, '1%（0.01）'], [0.1, '10%（0.10）']], 'num'), fSelect('p 値の表記', 'set.lead0', [['true', 'p = 0.012'], ['false', 'p = .012']], 'boolstr')),
       hint('有意水準を変えると、すべての解析の判定と定型文が変わります。')) +
       sec('図', grid2(fSelect('自動で入る文字', 'set.figLang', [['ja', '日本語'], ['en', '英語']]), fSelect('画像の細かさ', 'set.pngScale', [[1, '標準'], [2, '2 倍（資料向け）'], [4, '4 倍（印刷向け）']], 'num')),
         hint('画像の細かさを上げても、Word や PowerPoint に貼ったときの大きさは画面と同じです（解像度の情報を画像に書き込みます）。回答の選択肢の名前はデータのまま表示します。')) +

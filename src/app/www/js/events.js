@@ -476,6 +476,47 @@
       var n0 = S.data ? S.data.nrow : 0;
       try { await A.loadUrl(S.P.srcUrl, true); A.toast('最新の回答に更新しました（' + S.data.nrow + ' 件。前回より ' + (S.data.nrow - n0 >= 0 ? '+' : '') + (S.data.nrow - n0) + ' 件）。'); } catch (e) { A.toast(e.message, true); }
     },
+    // ---- 既定の設定（初期設定・カスタム設定）
+    defMode: function (arg) {
+      if (arg === 'custom' && !A.customGet()) { A.toast('まだカスタム設定がありません。設定を整えてから「今の設定をカスタム設定に保存」を押してください。', true); return; }
+      A.setDefMode(arg); A.render('pane');
+      A.toast(arg === 'custom' ? 'これから新しく始めるときは、カスタム設定を使います。' : 'これから新しく始めるときは、初期設定を使います。カスタム設定は残してあります。');
+    },
+    customSave: function () {
+      var c = customFromNow();
+      if (A.customGet() && !confirm('保存してあるカスタム設定を、今の設定で置き換えますか。')) return;
+      if (!A.customSet(c)) { A.toast('この端末に保存できませんでした（ブラウザの保存の設定を確かめてください）。', true); return; }
+      A.setDefMode('custom'); A.render('pane');
+      A.toast('今の設定をカスタム設定に保存しました。これから新しく始めるときに使います。');
+    },
+    customApply: function () {
+      var c = A.defMode() === 'custom' ? A.customGet() : null, base = A.baseProject();
+      A.commit(function () {
+        if (c) A.applyDefaults(S.P, c);
+        else { S.P.settings = Object.assign(base.settings, { autoSave: S.P.settings.autoSave }); S.P.report = base.report; S.P.figDefault = null; S.P.tstyleDefault = null; }
+      });
+      A.applyZoom(); A.syncResults && A.syncResults(); A.render();
+      A.toast((c ? 'カスタム設定' : '初期設定') + 'を、開いているプロジェクトに当てはめました（判定と表記、報告書、これから作る図と表の書式）。今ある図と表を同じ書式にするには、「すべての図にそろえる」「すべての表にそろえる」を使ってください。');
+    },
+    customExport: async function () {
+      var c = A.customGet(); if (!c) { A.toast('まだカスタム設定がありません。', true); return; }
+      var blob = new Blob([JSON.stringify({ app: 'CrossTab Studio', kind: 'custom-settings', custom: c }, null, 1)], { type: 'application/json' });
+      try { if (await A.saveBlob(blob, 'CrossTabStudio_カスタム設定.json', 'カスタム設定', '.json')) A.toast('カスタム設定を書き出しました。別の端末の「設定」タブで読み込めます。'); } catch (e) { if (!(e && e.name === 'AbortError')) A.toast('書き出せませんでした（' + (e && e.message || e) + '）。', true); }
+    },
+    customImport: async function () {
+      var f = await A.pickFile('.json'); if (!f) return;
+      try {
+        var j = JSON.parse(await f.text()), c = j && j.kind === 'custom-settings' ? j.custom : null;
+        if (!c || typeof c !== 'object') throw new Error('CrossTab Studio のカスタム設定のファイルではありません。');
+        if (A.customGet() && !confirm('保存してあるカスタム設定を、読み込んだ設定で置き換えますか。')) return;
+        A.customSet(c); A.setDefMode('custom'); A.render('pane'); A.toast('カスタム設定を読み込みました。これから新しく始めるときに使います。');
+      } catch (e) { A.toast(e.message || '読み込めませんでした。', true); }
+    },
+    customDelete: function () {
+      if (!A.customGet()) return;
+      if (!confirm('この端末に保存してあるカスタム設定を消しますか。消すと元に戻せません（書き出したファイルがあれば読み込み直せます）。')) return;
+      A.customSet(null); A.setDefMode('init'); A.render('pane'); A.toast('カスタム設定を消しました。初期設定を使います。');
+    },
     scoreNew: function () { scoreDialog(null); },
     guide: function () { guideDialog(); },
     scoreEdit: function (arg) { scoreDialog(+arg); },
@@ -1112,6 +1153,18 @@
     });
     drawQ();
   }
+  // 今の設定からカスタム設定を作る。図と表の書式は、選んでいる図・表があればそれを、なければ「これからの既定」を使う
+  function customFromNow() {
+    var tab = A.curTab(), fig = tab && tab.figs && tab.figs.length ? A.curFig() : null, set = A.clone(S.P.settings);
+    delete set.autoSave;
+    var fd = null;
+    if (fig) { fd = {}; FIG_STYLE_KEYS.concat(['w', 'h', 'orient']).forEach(function (k) { if (fig[k] !== undefined) fd[k] = A.clone(fig[k]); }); delete fd.colors; delete fd.colorMode; }
+    else if (S.P.figDefault) fd = A.clone(S.P.figDefault);
+    var td = tab ? A.clone(tab.tstyle) : S.P.tstyleDefault ? A.clone(S.P.tstyleDefault) : null;
+    if (td) delete td.heat;
+    return { v: 1, savedAt: new Date().toISOString(), settings: set, report: A.clone(S.P.report), figDefault: fd, tstyleDefault: td };
+  }
+  A.customFromNow = customFromNow;
   // 報告に書き込む端末の情報（アンケートのデータは含めない）
   function envText() {
     var ua = navigator.userAgent, os = /iPhone/.test(ua) ? 'iPhone' : /iPad|Macintosh.*Mobile/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) ? 'iPad' : /Android/.test(ua) ? 'Android' : /Windows/.test(ua) ? 'Windows' : /Mac OS X/.test(ua) ? 'Mac' : /CrOS/.test(ua) ? 'Chromebook' : 'その他';

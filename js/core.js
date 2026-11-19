@@ -11,10 +11,24 @@
     return { design: 'grid', fontJa: 'Yu Gothic', fontEn: 'Arial', fs: 13, lw: 1, ls: 'solid', lc: '#7F7F7F', headFill: '#F2F2F2', headInk: '#000000', ink: '#000000',
       stripe: '#F5F5F5', heat: 'none', heatPal: 'green', bar: 'right', barShape: 'smooth' };
   }
-  function newProject() {
+  function baseProject() {
     return { title: '集計と検定の報告', tabs: [], vars: [], seq: 0, figDefault: null, tstyleDefault: null,
       settings: { alpha: 0.05, lead0: true, figLang: 'ja', zoom: 100, pngScale: 2, autoSave: false }, report: { tables: true, holm: true } };
   }
+  // ---- 既定の設定：初期設定か、自分のカスタム設定か。カスタム設定は端末（ブラウザ）に保存し、新しい版が出ても残す
+  var CUSTOM_KEY = 'cts-custom', MODE_KEY = 'cts-defmode';
+  function customGet() { try { var c = JSON.parse(localStorage.getItem(CUSTOM_KEY) || 'null'); return c && typeof c === 'object' ? c : null; } catch (e) { return null; } }
+  function customSet(c) { try { if (c) localStorage.setItem(CUSTOM_KEY, JSON.stringify(c)); else localStorage.removeItem(CUSTOM_KEY); return true; } catch (e) { return false; } }
+  function defMode() { try { return localStorage.getItem(MODE_KEY) === 'custom' && customGet() ? 'custom' : 'init'; } catch (e) { return 'init'; } }
+  function setDefMode(m) { try { localStorage.setItem(MODE_KEY, m); } catch (e) {} }
+  // 既定の値を、プロジェクトに当てはめる（設定・報告書・これからの図と表の書式）
+  function applyDefaults(P, c) {
+    if (!c) return P;
+    Object.assign(P.settings, c.settings || {}); Object.assign(P.report, c.report || {});
+    P.figDefault = c.figDefault ? clone(c.figDefault) : null; P.tstyleDefault = c.tstyleDefault ? clone(c.tstyleDefault) : null;
+    return P;
+  }
+  function newProject() { return defMode() === 'custom' ? applyDefaults(baseProject(), customGet()) : baseProject(); }
   S.P = newProject();
 
   // ---------------- 小さな道具
@@ -344,8 +358,8 @@
     if (!j || j.app !== 'CrossTabStudio' || !j.data || !j.project) throw new Error('CrossTab Studio のプロジェクトではありません。');
     var bytes = b64ToBytes(j.data.b64), d = await uploadData(bytes, j.data.name);
     setData(d, bytes, j.data.name);
-    var P = Object.assign(newProject(), j.project);
-    P.settings = Object.assign(newProject().settings, j.project.settings || {}); P.report = Object.assign(newProject().report, j.project.report || {});
+    var P = Object.assign(baseProject(), j.project);                // 保存したプロジェクトは、プロジェクトの設定のまま開く
+    P.settings = Object.assign(baseProject().settings, j.project.settings || {}); P.report = Object.assign(baseProject().report, j.project.report || {});
     P.tabs = (P.tabs || []).filter(function (t) { return def(t.type); }).slice(0, MAX_TABS).map(normalizeTab);
     // 以前の版で省略された表示名（「…」で終わるもの）は、省略しない名前に直す。報告書に使う名前（full）も足す
     var fixed = false;
@@ -437,7 +451,7 @@
   }
 
   window.App = window.App || {};
-  Object.assign(window.App, { loadUrl: loadUrl, sheetCsvUrl: sheetCsvUrl, xlsxIn: xlsxIn, compVars: compVars, compDefs: compDefs, errLog: errLog, clearErrLog: clearErrLog, logErr: logErr, S: S, MAX_TABS: MAX_TABS, TYPE_NAMES: TYPE_NAMES, $: $, esc: esc, clone: clone, toast: toast, busy: busy, api: api, apiData: apiData, zip: zip, safeName: safeName,
+  Object.assign(window.App, { baseProject: baseProject, customGet: customGet, customSet: customSet, defMode: defMode, setDefMode: setDefMode, applyDefaults: applyDefaults, loadUrl: loadUrl, sheetCsvUrl: sheetCsvUrl, xlsxIn: xlsxIn, compVars: compVars, compDefs: compDefs, errLog: errLog, clearErrLog: clearErrLog, logErr: logErr, S: S, MAX_TABS: MAX_TABS, TYPE_NAMES: TYPE_NAMES, $: $, esc: esc, clone: clone, toast: toast, busy: busy, api: api, apiData: apiData, zip: zip, safeName: safeName,
     v: v, def: def, tabById: tabById, slotCols: slotCols, sameChoices: sameChoices, setItems: setItems, defaultCatsMany: defaultCatsMany, curTab: curTab, curFig: curFig, isCat: isCat, defaultCats: defaultCats, setSlot: setSlot, autoName: autoName, newTab: newTab, newFig: newFig, tabReady: tabReady,
     buildReq: buildReq, markDirty: markDirty, schedule: schedule, scheduleAll: scheduleAll, syncResults: syncResults, commit: commit, undo: undo, redo: redo, fixSel: fixSel, tableDefaults: tableDefaults,
     pickFile: pickFile, saveBlob: saveBlob, baseName: baseName, loadCsv: loadCsv, handleFile: handleFile, newProject: newProject,
