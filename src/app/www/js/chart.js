@@ -159,6 +159,7 @@
     var W = Math.max(160, +st.w || 560), H = Math.max(120, +st.h || 340), F = fam(st), o = [], defs = [], kind = kindOf(m, st), id = 'c' + (++uid);
     var L = lang === 'en' ? { pct: 'Percentage (%)', count: 'Count', n: 'n = ', row: 'Row %', col: 'Column %', resid: 'Adjusted residual' } : { pct: '割合 (%)', count: '人数（人）', n: 'n = ', row: '行の割合 (%)', col: '列の割合 (%)', resid: '調整済み標準化残差' };
     var dec = Math.max(0, Math.min(2, isNum(st.labelDec) ? +st.labelDec : 1));
+    var omitted = 0;                                                  // 場所が足りずに書かなかった値のラベルの数（作業ウィンドウで知らせる）
     // 積み上げた棒・円グラフは図の中に空きがないので、凡例を「図の中」にしたときは右に出す（棒や文字と重ねない）
     if ((kind === 'stack100' || kind === 'stack' || kind === 'pie') && (st.legend === 'inTR' || st.legend === 'inTL')) st.legend = 'right';
     // 複数の設問の単純集計：集合棒は「横軸＝回答、色＝設問」、それ以外は「行＝設問、色＝回答」にする
@@ -311,7 +312,7 @@
     var cTitle, vTitle, plot;
     if (kind === 'heat') drawHeat(); else if (kind === 'scatter') drawScatter(); else if (kind === 'pie') drawPie(); else if (kind === 'hist') drawHist(); else if (kind === 'map') drawMap(); else if (kind === 'cloud') drawCloud(); else if (kind === 'net') drawNet(); else drawAxes();
     drawLegend(plot);
-    return { svg: '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">' + (defs.length ? '<defs>' + defs.join('') + '</defs>' : '') + o.join('') + '</svg>', w: W, h: H, kind: kind };
+    return { svg: '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">' + (defs.length ? '<defs>' + defs.join('') + '</defs>' : '') + o.join('') + '</svg>', w: W, h: H, kind: kind, omitted: omitted };
 
     function frameAndAxes(x0, y0, x1, y1) {
       if (st.frame === 'box') { line(x0, y0, x1, y0, st.lwAxis); line(x1, y0, x1, y1, st.lwAxis); }
@@ -348,7 +349,7 @@
             if (R >= 24 && ang * lr >= lwP + 6 && ang * lr >= hP + 2 && lr + hP / 2 < R + 2) {
               var ly = cy + lr * Math.sin(mid) - (parts.length - 1) * lhP / 2 + st.fsLabel * 0.35;
               parts.forEach(function (t, q) { T(cx + lr * Math.cos(mid), ly + q * lhP, t, { size: st.fsLabel, anchor: 'middle', fill: colors[j] === 'pat:solid' ? '#FFFFFF' : inkOn(colors[j]), halo: isPat, tip: tip }); });
-            }
+            } else omitted++;
           }
           a = b;
         });
@@ -430,14 +431,14 @@
             if (horiz ? (segLen > lwid + 4 && tt > st.fsLabel + 2) : (segLen > st.fsLabel + 3 && tt > lwid + 2)) {
               if (horiz) T((a + b2) / 2, t0 + tt / 2 + st.fsLabel * 0.35, lab, { size: st.fsLabel, anchor: 'middle', fill: ink, halo: isPat, tip: tip });
               else T(t0 + tt / 2, (a + b2) / 2 + st.fsLabel * 0.35, lab, { size: st.fsLabel, anchor: 'middle', fill: ink, halo: isPat, tip: tip });
-            }
+            } else omitted++;
           } else if (horiz) {
-            if (tt < st.fsLabel * 0.95) continue;
+            if (tt < st.fsLabel * 0.95) { omitted++; continue; }
             if (x1 - b2 >= lwid + 6 || segLen < lwid + 8) T(b2 + 4, t0 + tt / 2 + st.fsLabel * 0.35, lab, { size: st.fsLabel });
             else T(b2 - 4, t0 + tt / 2 + st.fsLabel * 0.35, lab, { size: st.fsLabel, anchor: 'end', fill: ink, halo: isPat });        // 先に空きがないときは棒の中に書く
           } else {
             var upright = tt >= lwid + 1, need = (upright ? st.fsLabel : lwid) + 6;
-            if (!upright && tt < st.fsLabel * 0.95) continue;
+            if (!upright && tt < st.fsLabel * 0.95) { omitted++; continue; }
             if (b2 - y0 >= need || segLen < need + 2) { if (upright) T(t0 + tt / 2, b2 - 4, lab, { size: st.fsLabel, anchor: 'middle' }); else T(t0 + tt / 2 + st.fsLabel * 0.35, b2 - 4, lab, { size: st.fsLabel, rot: -90 }); }
             else if (upright) T(t0 + tt / 2, b2 + st.fsLabel + 2, lab, { size: st.fsLabel, anchor: 'middle', fill: ink, halo: isPat });
             else T(t0 + tt / 2 + st.fsLabel * 0.35, b2 + 4, lab, { size: st.fsLabel, rot: -90, anchor: 'end', fill: ink, halo: isPat });
@@ -499,6 +500,18 @@
       var y0 = top + aRes(tL) + 4 + hl * lhT + 4, y1 = H - bottom; if (y1 - y0 < 30) y1 = y0 + 30;
       var cellH = (y1 - y0) / nr, maxL = Math.max(1, Math.floor((cellH - 2) / lhT)), rl = m.cats.map(function (c) { return clampLines(wrap(c, cw, st.fsTick, st), maxL, cw, st.fsTick, st); });
       plot = { x0: x0, y0: y0, x1: x1, y1: y1 };
+      // 値のラベルは、すべてのマスで同じ大きさ・同じ形にする（入りきらないマスだけ数字を消さない）
+      //   2 行（人数と割合）→ 1 行の順に、文字を 0.5 ずつ小さくして（下限は設定の 7 割）すべてのマスに入る大きさを探す。入らなければ全部省く
+      var LB = (function () {
+        if (!st.labels) return null;
+        var cells = [], hasTwo = st.value !== 'count' && by !== 'count';
+        for (var a = 0; a < nr; a++) for (var b = 0; b < nc; b++) cells.push({ l1: String(m.count[a][b]), l2: by === 'resid' ? m.resid[a][b].toFixed(2) : by === 'count' ? '' : '(' + V[a][b].toFixed(dec) + '%)' });
+        function one(c) { return hasTwo ? c.l2.replace(/[()]/g, '') : c.l1; }
+        function fits(f, two) { var w = maxOf(cells.map(function (c) { return two ? Math.max(tw(c.l1, f, st), tw(c.l2, f, st)) : tw(one(c), f, st); })); return w < cellW - 2 && cellH > (two ? f * 2.6 : f); }
+        var modes = hasTwo ? [true, false] : [false];
+        for (var q = 0; q < modes.length; q++) for (var f = st.fsLabel; f >= st.fsLabel * 0.7 - 1e-9; f -= 0.5) if (fits(f, modes[q])) return { two: modes[q], f: f, one: one };
+        omitted += nr * nc; return null;
+      })();
       drawTopTitle(tL, (x0 + x1) / 2, top, 'vTitle', vTitle); drawSideTitle(sL, (y0 + y1) / 2, 'cTitle', cTitle);
       cl.forEach(function (l, j) { TL(x0 + cellW * (j + 0.5), y0 - 6 - (l.length - 1) * lhT, l, { anchor: 'middle' }); });
       for (var i = 0; i < nr; i++) {
@@ -506,11 +519,10 @@
         for (var j = 0; j < nc; j++) {
           var fill = heatColor(st, by, tOf(V[i][j])), ink = inkOn(fill), cx = x0 + cellW * (j + 0.5), cy = y0 + cellH * (i + 0.5), cnt = m.count[i][j], pr = rowTot[i] ? cnt / rowTot[i] * 100 : 0;
           rect(x0 + cellW * j, y0 + cellH * i, cellW, cellH, fill, m.cats[i] + ' / ' + m.series[j] + _t('：{0}人（行の {1}%{2}）', cnt, pr.toFixed(1), m.resid ? _t('、残差 ') + m.resid[i][j].toFixed(2) : ''));
-          if (!st.labels) continue;
-          var l1 = String(cnt), l2 = by === 'resid' ? m.resid[i][j].toFixed(2) : by === 'count' ? '' : '(' + V[i][j].toFixed(dec) + '%)';
-          if (st.value === 'count' || !l2) { if (tw(l1, st.fsLabel, st) < cellW - 2 && cellH > st.fsLabel) T(cx, cy + st.fsLabel * 0.35, l1, { size: st.fsLabel, anchor: 'middle', fill: ink }); }
-          else if (cellH > st.fsLabel * 2.6 && tw(l2, st.fsLabel, st) < cellW - 2) { T(cx, cy - 1, l1, { size: st.fsLabel, anchor: 'middle', fill: ink }); T(cx, cy + st.fsLabel * 1.15, l2, { size: st.fsLabel, anchor: 'middle', fill: ink }); }
-          else if (cellH > st.fsLabel && tw(l2, st.fsLabel, st) < cellW - 2) T(cx, cy + st.fsLabel * 0.35, l2.replace(/[()]/g, ''), { size: st.fsLabel, anchor: 'middle', fill: ink });
+          if (!LB) continue;
+          var c1 = { l1: String(cnt), l2: by === 'resid' ? m.resid[i][j].toFixed(2) : by === 'count' ? '' : '(' + V[i][j].toFixed(dec) + '%)' };
+          if (LB.two) { T(cx, cy - 1, c1.l1, { size: LB.f, anchor: 'middle', fill: ink }); T(cx, cy + LB.f * 1.15, c1.l2, { size: LB.f, anchor: 'middle', fill: ink }); }
+          else T(cx, cy + LB.f * 0.35, LB.one(c1), { size: LB.f, anchor: 'middle', fill: ink });
         }
       }
       if (!barOn) return;
@@ -585,6 +597,7 @@
           var c = C[k][s2] || 0; if (!c) continue;
           var lab = (m.intBins ? fmtTick(E[k] + 0.5) : fmtTick(E[k]) + _t('〜') + fmtTick(E[k + 1])) + (ns > 1 ? _t('（{0}）', m.series[s2]) : '') + _t('：') + c;
           rect(xa + off + sw * s2, py(c), sw, py(0) - py(c), colors[s2], lab);
+          if (st.labels && ns === 1 && sw < tw(String(c), st.fsLabel, st) * 0.9) omitted++;
           if (st.labels && ns === 1 && sw >= tw(String(c), st.fsLabel, st) * 0.9) T(xa + off + sw * (s2 + 0.5), py(c) - 3, String(c), { size: st.fsLabel, anchor: 'middle' });
         }
       }

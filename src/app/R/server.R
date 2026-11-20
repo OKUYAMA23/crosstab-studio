@@ -1,7 +1,7 @@
 # server.R ― 画面（ブラウザ）と R をつなぐ小さなローカルサーバー。127.0.0.1 だけで待ち受ける。
 
 APP_ID <- "CrossTabStudio"
-APP_VERSION <- "0.10.0"
+APP_VERSION <- "0.10.1"
 STORE <- new.env()          # 読み込んだデータ（id → data.frame）
 STATE <- new.env()
 STATE$last_ping <- Sys.time(); STATE$had_client <- FALSE; STATE$bye_at <- NULL

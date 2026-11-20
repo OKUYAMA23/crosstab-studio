@@ -225,7 +225,7 @@
       var ox = M + (CW - W * s) / 2, oy = y, defs = {};
       [].forEach.call(root.querySelectorAll('pattern, linearGradient'), function (d) { defs[d.getAttribute('id')] = d; });
       // 模様で塗る図形が四角形以外にあるときは、画像にして入れる（PDF の切り抜きを使わずに済ませる）
-      var rasterize = [].some.call(root.querySelectorAll('path, circle, polygon'), function (e) { return /^url\(/.test(e.getAttribute('fill') || '') && !e.closest('pattern'); });
+      var rasterize = o.raster || [].some.call(root.querySelectorAll('path, circle, polygon'), function (e) { return /^url\(/.test(e.getAttribute('fill') || '') && !e.closest('pattern'); });
       if (rasterize) {
         if (used) { y += h; return; }                                // 1 回目は文字を集めるだけなので、画像は作らない
         var png = await Chart.toPng(svgStr, 3), img = await doc.embedPng(await png.arrayBuffer());
@@ -351,7 +351,7 @@
   async function compose(doc, FS, final) {
     doc.setTitle(S.P.title || _t('CrossTab Studio 報告書')); doc.setCreator('CrossTab Studio'); doc.setProducer('CrossTab Studio'); try { doc.setLanguage('ja-JP'); } catch (e) {}
     var B = new Builder(doc, FS), items = A.repItems(), lang = S.P.settings.figLang, figNo = 0;
-    var fontOver = { fontJa: FAMILY, fontEn: FAMILY }, serifOver = { fontJa: 'CTSMincho', fontEn: 'CTSTimes' };   // 図はゴシック、表は明朝＋Times
+    var serifOver = { fontJa: 'CTSMincho', fontEn: 'CTSTimes' };   // 表は明朝＋Times
     B.newPage();
     B.text(S.P.title || _t('報告書'), { size: 17, bold: true, lh: 26 });
     B.text(A.repMeta(), { size: 9, color: '#404040', lh: 15 });
@@ -384,9 +384,10 @@
       if (S.P.report.figs !== false) {
         var m = Chart.model(x.res);
         for (var k = 0; m && k < x.tab.figs.length; k++) {
-          var st = Object.assign({}, x.tab.figs[k], fontOver), r = Chart.render(m, st, lang);
+          // 図は画面と同じ字体・同じ配置で描き、そのまま画像（画面の 3 倍の細かさ）で入れる。PDF 用の字体で描き直すと、文字の幅が変わって配置や値のラベルが画面と違ってしまうため
+          var r = Chart.render(m, x.tab.figs[k], lang);
           figNo++;
-          await B.svg(r.svg, { below: 22 });
+          await B.svg(r.svg, { below: 22, raster: true });
           B.gap(4);
           B.text(_t('図 {0}　', figNo) + x.tab.name + (x.tab.figs.length > 1 ? _t('（{0}）', k + 1) : ''), { size: 9, align: 'center', lh: 15 });
           B.gap(10);

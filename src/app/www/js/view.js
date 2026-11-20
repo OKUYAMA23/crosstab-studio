@@ -771,7 +771,9 @@
     if (!heat && kind !== 'box' && kind !== 'scatter' && kind !== 'line') h += sec(_t('値のラベル'), '<div class="md-row">' + fCheck(_t('値のラベルを出す'), 'fig.labels') + '</div>',
       grid2(fSelect(_t('書く内容'), 'fig.labelWhat', [['value', _t('軸と同じ値')], ['pct', _t('割合 (%)')], ['n', _t('人数（件数）')], ['both', _t('割合と人数の両方')]]), fText(_t('割合の小数の桁'), 'fig.labelDec', { type: 'num' })),
       hint(pie ? _t('「両方」にすると、割合と人数を 2 行で書きます。扇が小さくて入りきらないところは書きません。') : _t('「両方」にすると「45.0% (9)」のように書きます。人数の軸のときは「9 (45.0%)」です。入りきらないところは自動で省きます。')));
-    h += sec(_t('表示'), '<div class="md-row">' + (heat ? fCheck(_t('値のラベル'), 'fig.labels') : '') + fCheck(_t('人数 (n)'), 'fig.showN') + fCheck(_t('背景を透明にする'), 'fig.transparent') + '</div>');
+    var omit = st.labels ? Chart.render(m, st, S.P.settings.figLang).omitted : 0;      // 場所が足りずに省いた値のラベル
+    h += sec(_t('表示'), '<div class="md-row">' + (heat ? fCheck(_t('値のラベル'), 'fig.labels') : '') + fCheck(_t('人数 (n)'), 'fig.showN') + fCheck(_t('背景を透明にする'), 'fig.transparent') + '</div>',
+      omit ? hint(_t('場所が足りないため、{0} か所の値のラベルを省いています。図を大きくするか、数値の文字を小さくしてください。', omit)) : '');
     h += sec(_t('書式の使い回し'), _t('<div class="md-row"><button class="md-btn" data-act="figDefault" data-tip="文字・線・色・大きさの設定を、これから作る図の最初の状態にします。">これからの図の既定にする</button><button class="md-btn" data-act="figApplyAll" data-tip="文字・線・色・凡例・目盛りの設定を、すべての図にそろえます。">すべての図にそろえる</button><button class="md-btn" data-act="figReset">最初の状態に戻す</button></div>'));
     return h;
   }
