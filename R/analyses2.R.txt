@@ -308,7 +308,7 @@ an_factor <- function(df, req) {
   fa <- tryCatch(stats::factanal(covmat = R, factors = nf, n.obs = n, rotation = if (nf > 1) rot else "none"),
                  error = function(e) stop_user(tr_("因子分析の計算が収束しませんでした（"), conditionMessage(e), tr_("）。因子の数を変えるか、項目を見直してください。")))
   L <- unclass(fa$loadings); L <- L[, seq_len(nf), drop = FALSE]
-  for (j in seq_len(nf)) if (sum(L[, j]) < 0) L[, j] <- -L[, j]
+  sgn <- ifelse(colSums(L) < 0, -1, 1); L <- sweep(L, 2, sgn, "*")      # 負荷量の合計が正になるよう因子の向きをそろえる
   prim <- apply(abs(L), 1, which.max); o <- order(prim, -abs(L[cbind(seq_len(p), prim)])); L <- L[o, , drop = FALSE]
   h2 <- 1 - fa$uniquenesses[o]
   fn <- trf("第%d因子", seq_len(nf))
@@ -318,7 +318,10 @@ an_factor <- function(df, req) {
                     list(kind = "grid", title = tr_("相関行列の固有値"), corner = "", rows = A(paste0(seq_len(min(p, 10)))), cols = A(c(tr_("固有値"), tr_("累積寄与率 (%)"))), fmt = A(c("num2", "num1")),
                          cells = mat(cbind(ev[seq_len(min(p, 10))], 100 * cumsum(ev)[seq_len(min(p, 10))] / p)), note = tr_("固有値が 1 を超える数（カイザー基準）を、因子の数の目安とした（「自動」のとき）。")))
   if (nf > 1 && rot == "promax" && !is.null(fa$rotmat)) {
-    Ti <- solve(fa$rotmat); Phi <- Ti %*% t(Ti)
+    # 因子間相関：回転前の負荷量 L0 と回転後の負荷量 L から、L0 L0' = L Φ L' を解いて求める
+    #   （factanal の rotmat は、返す負荷量と向きがそろっていないことがあるため使わない）
+    L0 <- unclass(stats::factanal(covmat = R, factors = nf, n.obs = n, rotation = "none")$loadings)[o, , drop = FALSE]
+    Lp <- solve(crossprod(L), t(L)); Phi <- Lp %*% L0 %*% t(L0) %*% t(Lp); Phi <- (Phi + t(Phi)) / 2; Phi <- Phi / sqrt(outer(diag(Phi), diag(Phi)))
     res$grids <- c(res$grids, list(list(kind = "grid", title = tr_("因子間相関"), corner = "", rows = A(fn), cols = A(fn), fmt = A(rep("num2", nf)), cells = mat(Phi))))
   }
   pv <- if (rot == "promax" && nf > 1) NULL else colSums(L^2) / p
@@ -707,7 +710,7 @@ an_logit <- function(df, req) {
   if (nlevels(f) != 2) stop_user(tr_("ロジスティック回帰分析の目的変数は 2 択です。"), q(sy$label), tr_("は現在 "), nlevels(f), tr_(" 個の選択肢があります。「選択肢の設定」でまとめるか、チェックを外して 2 つにしてください。"))
   ev <- levels(f)[1]; rc <- reg_common(df, req, ifelse(is.na(f), NA_real_, as.numeric(f == ev))); X <- rc$X; y <- rc$y; n <- rc$n; k <- rc$k
   if (length(unique(y)) < 2) stop_user(tr_("対象の人の目的変数の回答がすべて同じなので、分析できません。"))
-  fit <- suppressWarnings(stats::glm(y ~ X, family = stats::binomial())); reg_rankcheck(fit, X)
+  fit <- suppressWarnings(stats::glm(y ~ X, family = stats::binomial(), control = stats::glm.control(epsilon = 1e-12, maxit = 100))); reg_rankcheck(fit, X)
   co <- summary(fit)$coefficients; z975 <- stats::qnorm(0.975)
   or <- exp(co[, 1]); lo <- exp(co[, 1] - z975 * co[, 2]); hi <- exp(co[, 1] + z975 * co[, 2]); vif <- reg_vif(X)
   lr <- fit$null.deviance - fit$deviance; dfl <- fit$df.null - fit$df.residual; pL <- stats::pchisq(lr, dfl, lower.tail = FALSE)

@@ -1,0 +1,2 @@
+1	Fixed an error in exploratory factor analysis (promax rotation) where the sign of a factor correlation could be shown reversed. Its magnitude was correct. 
+2	Tightened the convergence check in logistic regression. With small samples, standard errors and related values could differ slightly in the fourth digit. 
