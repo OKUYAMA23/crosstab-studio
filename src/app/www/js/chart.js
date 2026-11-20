@@ -413,6 +413,26 @@
       if (isBox && isNum(m.ref) && m.ref > sc.min && m.ref < sc.max) { var pr = pos(m.ref); if (horiz) line(pr, y0, pr, y1, Math.max(0.75, st.lwAxis), '#000000', '4 3'); else line(x0, pr, x1, pr, Math.max(0.75, st.lwAxis), '#000000', '4 3'); }   // 回帰係数の図の基準線（β = 0、オッズ比 = 1）
       var band = (horiz ? y1 - y0 : x1 - x0) / nc, thick = band * Math.max(10, Math.min(100, +st.barW || 70)) / 100;
       var skipK = horiz ? Math.max(1, Math.ceil(lhT / Math.max(1, band))) : isLine ? Math.max(1, Math.ceil((maxOf(labs.map(function (l) { return tw(l[0], st.fsTick, st); })) + 8) / Math.max(1, band))) : Math.max(1, Math.ceil(st.fsTick * 1.3 / Math.max(1, band)));   // 折れ線の日付は折り返さずに間引く       // 帯が細すぎるときは名前を間引く
+      // 縦の棒の値のラベルの向きは、図全体で 1 つに決める：すべて横書きで置いて重ならなければ横書き、どこかで重なれば全部を縦書きにする
+      var uprightAll = true;
+      if (!horiz && !stacked && !isBox && !isLine && st.labels) {
+        var bx = [];
+        for (var c9 = 0; c9 < nc; c9++) {
+          var bb0 = x0 + band * c9 + (band - thick) / 2, tt9 = thick / ns;
+          for (var s9 = 0; s9 < ns; s9++) {
+            var lab9 = labelText(m.count[c9][s9], pctOf(c9, s9), mode === 'count'), lw9 = tw(lab9, st.fsLabel, st), t09 = bb0 + tt9 * s9;
+            var a9 = pos(Math.max(sc.min, 0)), b9 = pos(val(c9, s9)), seg9 = Math.abs(b9 - a9), need9 = st.fsLabel + 6, cx9 = t09 + tt9 / 2;
+            if (b9 - y0 >= need9 || seg9 < need9 + 2) bx.push({ l: cx9 - lw9 / 2, r: cx9 + lw9 / 2, t: b9 - 4 - st.fsLabel, b: b9 - 4 });
+            else if (lw9 > tt9 - 1) { uprightAll = false; break; }            // 棒の中に書くのに幅が足りない
+            else bx.push({ l: cx9 - lw9 / 2, r: cx9 + lw9 / 2, t: b9 + 2, b: b9 + st.fsLabel + 2 });
+          }
+          if (!uprightAll) break;
+        }
+        for (var p9 = 0; uprightAll && p9 < bx.length; p9++) for (var q9 = p9 + 1; q9 < bx.length; q9++) {
+          var A9 = bx[p9], B9 = bx[q9];
+          if (A9.l < B9.r - 0.5 && B9.l < A9.r - 0.5 && A9.t < B9.b && B9.t < A9.b) { uprightAll = false; break; }
+        }
+      }
       for (var c = 0; c < nc; c++) {
         var b0 = (horiz ? y0 : x0) + band * c + (band - thick) / 2, mid = b0 + thick / 2;
         if (c % skipK === 0) { if (horiz) TL(x0 - tickPad - 1, mid - (labs[c].length - 1) * lhT / 2 + st.fsTick * 0.35, labs[c], { anchor: 'end' }); else TL(mid, y1 + tickPad + st.fsTick * 0.9, labs[c], { anchor: 'middle' }); }
@@ -437,7 +457,7 @@
             if (x1 - b2 >= lwid + 6 || segLen < lwid + 8) T(b2 + 4, t0 + tt / 2 + st.fsLabel * 0.35, lab, { size: st.fsLabel });
             else T(b2 - 4, t0 + tt / 2 + st.fsLabel * 0.35, lab, { size: st.fsLabel, anchor: 'end', fill: ink, halo: isPat });        // 先に空きがないときは棒の中に書く
           } else {
-            var upright = tt >= lwid + 1, need = (upright ? st.fsLabel : lwid) + 6;
+            var upright = uprightAll, need = (upright ? st.fsLabel : lwid) + 6;
             if (!upright && tt < st.fsLabel * 0.95) { omitted++; continue; }
             if (b2 - y0 >= need || segLen < need + 2) { if (upright) T(t0 + tt / 2, b2 - 4, lab, { size: st.fsLabel, anchor: 'middle' }); else T(t0 + tt / 2 + st.fsLabel * 0.35, b2 - 4, lab, { size: st.fsLabel, rot: -90 }); }
             else if (upright) T(t0 + tt / 2, b2 + st.fsLabel + 2, lab, { size: st.fsLabel, anchor: 'middle', fill: ink, halo: isPat });

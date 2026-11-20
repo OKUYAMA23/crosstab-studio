@@ -156,6 +156,69 @@ guess_delim <- function(x) {
   NA_character_
 }
 
+# 数の範囲の選択肢を小さい順に並べる。並べられないときは NULL
+#   すべての選択肢が数を 1 つ（ちょうどの値、「〜以下・未満」「〜以上・超」）か 2 つ（範囲）含み、
+#   数以外の部分（単位など）が同じで、範囲どうしが重ならないときだけ並べる
+range_order <- function(x) {
+  if (length(x) < 2) return(NULL)
+  y <- gsub("(?<=[0-9]),(?=[0-9]{3})", "", x, perl = TRUE)               # 桁区切りのコンマを外す
+  # すべてに共通する頭の部分（「1日1回」「1日2回」の「1日」）は比べる対象から外す
+  ch <- strsplit(y, ""); m <- min(lengths(ch)); p <- 0
+  while (p < m && length(unique(vapply(ch, `[`, "", p + 1))) == 1) p <- p + 1
+  while (p > 0 && grepl("[0-9.]", ch[[1]][p + 1])) p <- p - 1                # 数の途中では切らない
+  if (p > 0) y <- substring(y, p + 1)
+  nums <- regmatches(y, gregexpr("[0-9]+(\\.[0-9]+)?", y))
+  k <- lengths(nums); if (any(k < 1 | k > 2)) return(NULL)
+  low <- grepl("以下|未満|まで|以内|より少な|less|under|below|fewer", y, ignore.case = TRUE)
+  high <- grepl("以上|超|より多|or more|more than|over|above", y, ignore.case = TRUE)
+  if (any(low & high) || any(k == 2 & (low | high))) return(NULL)
+  rest <- gsub("[0-9]+(\\.[0-9]+)?|以下|未満|まで|以内|より少ない|以上|超|より多い|程度|くらい|ぐらい|約|[-～~ー–—・/]|or less|less than|under|below|fewer than|or more|more than|over|above", "", y, ignore.case = TRUE)
+  rest <- gsub("[[:space:]]", "", rest)
+  repeat { r2 <- gsub("(.+)\\1", "\\1", rest, perl = TRUE); if (identical(r2, rest)) break; rest <- r2 }   # 「円～円」の「円円」を「円」にする
+  if (length(unique(rest)) != 1) return(NULL)
+  lo <- hi <- numeric(length(y))
+  for (i in seq_along(y)) {
+    v <- as.numeric(nums[[i]])
+    if (k[i] == 2) { if (v[1] > v[2]) return(NULL); lo[i] <- v[1]; hi[i] <- v[2] }
+    else if (low[i]) { lo[i] <- -Inf; hi[i] <- v }
+    else if (high[i]) { lo[i] <- v; hi[i] <- Inf }
+    else lo[i] <- hi[i] <- v
+  }
+  o <- order(lo, hi)
+  if (anyDuplicated(lo[o]) || any(hi[o][-length(o)] > lo[o][-1])) return(NULL)   # 範囲が重なるときは並べない
+  o
+}
+
+# 頻度の選択肢を、1 週間あたりの回数に直して多い順に並べる（「ほぼ毎日」を先頭にする既存の頻度の尺度と同じ向き）。並べられないときは NULL
+#   すべての選択肢を回数に直せて、回数がすべて異なり、期間（日・週・月・年）を含む選択肢があるときだけ並べる
+freq_order <- function(x) {
+  if (length(x) < 3 || !any(grepl("毎日|日|週|月|年", x))) return(NULL)
+  key <- vapply(x, function(s) {
+    s <- gsub("(?<=[にで週月年日])数(?=[回日])", "3", s, perl = TRUE)        # 「週に数回」は 3 回とみなす
+    day <- NA_real_
+    if (grepl("[0-9]+日に?[0-9]", s)) { day <- as.numeric(sub("^.*?([0-9]+)日に?[0-9].*$", "\\1", s)); s <- sub("[0-9]+日に?(?=[0-9])", "", s, perl = TRUE) }   # 「1日に2回」
+    v <- as.numeric(regmatches(s, gregexpr("[0-9]+(\\.[0-9]+)?", s))[[1]])
+    adj <- if (grepl("以下|未満|より少な", s)) -0.5 else if (grepl("以上|より多|超", s)) 0.5 else 0
+    if (!length(v)) {
+      if (grepl("まったく|全く|一度も|したことがない|使ったことがない", s)) return(0)
+      if (grepl("ほとんど", s) && grepl("ない", s)) return(0.1)
+      if (!grepl("あまり|たまに|時々|ときどき", s) && grepl("しない|使わない|行かない|やらない|なし$|ない$", s)) return(0)
+      if (grepl("ほぼ毎日", s)) return(6)
+      if (grepl("毎日", s)) return(7)
+      if (grepl("毎週", s)) return(1)
+      if (grepl("毎月", s)) return(1 / 4.345)
+      if (grepl("毎年", s)) return(1 / 52)
+      return(NA_real_)
+    }
+    if (length(v) > 2) return(NA_real_)
+    n <- mean(v)
+    per <- if (!is.na(day)) 7 / day else if (grepl("週", s)) 1 else if (grepl("月", s)) 1 / 4.345 else if (grepl("年", s)) 1 / 52 else if (grepl("日", s)) 7 else NA_real_
+    (n + adj) * per
+  }, 0)
+  if (anyNA(key) || anyDuplicated(key)) return(NULL)
+  order(-key)
+}
+
 # 選択肢の並びを決める。戻り値：list(order = 並べた選択肢, ordinal = 順序があるか)
 order_categories <- function(vals, counts) {
   nv <- norm_label(vals)
@@ -174,10 +237,16 @@ order_categories <- function(vals, counts) {
       if (!anyDuplicated(n1)) return(list(order = put(core[order(n1)]), ordinal = TRUE))
     }
   }
+  # 数の範囲の選択肢（499円以下・500-2,999円・10,000円以上、1日1回 など）：範囲の小さい順（「高校1年」の規則と同じ向き）
+  rk <- range_order(nv[core])
+  if (!is.null(rk)) return(list(order = put(core[rk]), ordinal = TRUE))
   for (sc in SCALES) {
     pos <- match(nv[core], norm_label(sc))
     if (!anyNA(pos) && length(core) >= 2) return(list(order = put(core[order(pos)]), ordinal = TRUE))
   }
+  # 頻度の選択肢（ほぼ毎日・週に2～3回程度・週に1回以下・まったく使用しない など）：多い順
+  fk <- freq_order(nv[core])
+  if (!is.null(fk)) return(list(order = put(core[fk]), ordinal = TRUE))
   for (sc in BINARIES) {
     pos <- match(nv[core], norm_label(sc))
     if (!anyNA(pos)) return(list(order = put(core[order(pos)]), ordinal = FALSE))
