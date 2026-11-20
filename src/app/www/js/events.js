@@ -664,13 +664,13 @@
       h(_t('報告書（PDF）の字体')) +
       _t('<p style="margin:0">本文と表は、和文を MS 明朝、英数字を Times New Roman で書きます（') + (web ? _t('パソコンの Chrome・Edge で、字体の使用を許可したとき') : _t('パソコンに入っているとき')) + _t('）。使えないときは、形の近い BIZ UD明朝と Tinos で書きます。見出しと図は BIZ UDPゴシックです。</p>') +
       h(_t('論文などでの引用のしかた')) +
-      _t('<p style="margin:0">このアプリは広く配布されている一般的なソフトではないため、APA 方式などでは、本文で使ったことと版を書き、参考文献にも挙げます。計算に使った R も挙げるのが一般的です。投稿先や提出先に決まりがあるときは、そちらに合わせてください。本文の書き方の例：「集計と検定には CrossTab Studio（バージョン ') + esc(window.CTS_APP_VERSION || '') + '; ' + A.citeList()[0].inText.replace(/^（|）、.*$/g, '') + _t('）を用いた。」</p>') +
+      _t('<p style="margin:0">論文・レポート・発表などでこのアプリを使ったときは、引用していただけると幸いです。このアプリは広く配布されている一般的なソフトではないため、APA 方式などでは、本文で使ったことと版を書き、参考文献にも挙げます。計算に使った R も挙げるのが一般的です。投稿先や提出先に決まりがあるときは、そちらに合わせてください。本文の書き方の例：「集計と検定には CrossTab Studio（バージョン ') + esc(window.CTS_APP_VERSION || '') + '; ' + A.citeList()[0].inText.replace(/^（|）、.*$/g, '') + _t('）を用いた。」</p>') +
       '<table class="md-t0" style="width:100%;margin-top:6px">' + A.citeList().map(function (c) {
         return '<tr><th class="md-rh" style="width:24%;white-space:normal">' + esc(c.name) + '</th><td class="md-tx" style="white-space:normal;overflow-wrap:anywhere">' + c.ref(true) + (c.inText ? _t('<br><span class="md-hint" style="margin:0">本文中：') + esc(c.inText) + '</span>' : '') + '</td></tr>';
       }).join('') + '</table>' +
       _t('<p class="md-hint" style="margin:4px 0 0">版の番号は、使った版に合わせてください（報告書の末尾にも、作ったときの版で書き出します）。SIST 02 の形の（参照 …）は、アプリを使った日に直してください。</p>') +
-      h(_t('ソースコード')) +
-      _t('<p style="margin:0">このアプリのソースコードは、MIT ライセンスで GitHub に公開しています（https://github.com/OKUYAMA23/crosstab-studio）。計算の中身を確かめたり、改良したりできます。同梱している部品は、それぞれのライセンスに従います。</p>') +
+      h(_t('作者とソースコード')) +
+      _t('<p style="margin:0">作者は奥山泰冴（Taiga Okuyama）です（© 2026 Taiga Okuyama）。このアプリのソースコードは、MIT ライセンスで GitHub に公開しています（https://github.com/OKUYAMA23/crosstab-studio）。計算の中身を確かめたり、改良したりできます。同梱している部品は、それぞれのライセンスに従います。</p>') +
       h(_t('使っている部品')) +
       _t('<p style="margin:0">R（GPL）') + (web ? _t('、webR（配布している一式は GPL-3.0）') : _t('、httpuv・jsonlite（R のパッケージ）')) + _t('、pdf-lib・fontkit（MIT ライセンス）、HarfBuzz（MIT ライセンス）、BIZ UDPゴシック・BIZ UD明朝・Tinos（SIL Open Font License 1.1）。</p>');
   }

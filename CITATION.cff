@@ -5,7 +5,7 @@ title: "CrossTab Studio"
 abstract: >-
   A browser-based application for tabulating and testing questionnaire data
   (e.g., Google Forms CSV exports). It runs R in the browser (webR), offers
-  21 analyses including cross tabulation, chi-square tests, t tests, ANOVA,
+  25 analyses including cross tabulation, chi-square tests, t tests, ANOVA,
   reliability analysis and text mining, and produces figures, a PDF report and
   an Excel workbook that reproduces the calculations with spreadsheet formulas.
   Data never leave the user's device.
