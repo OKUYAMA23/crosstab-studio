@@ -7,6 +7,8 @@ rx_s <- function(x) encodeString(enc2utf8(as.character(x)), quote = "\"")
 rx_vec <- function(x) if (length(x) == 1) rx_s(x) else paste0("c(", paste(vapply(x, rx_s, ""), collapse = ", "), ")")
 rx_map <- function(cats) paste0("list(", paste(vapply(cats, function(c) paste0(rx_s(c$label), " = ", rx_vec(unlist(c$values))), ""), collapse = ", "), ")")
 rx_cmt <- function(x) gsub("[\r\n]+", " ", as.character(x))
+# 配点を変えた設問は、score() に点を渡す（既定の「先頭を高い点」なら何も足さない）
+rx_pts <- function(s) if (is.null(s[["points"]]) && is.null(s$pointsList)) "" else paste0(", c(", paste(fmt_pts(lev_points(s, unique(slot_labels(s)), if (is.null(s[["points"]])) 1 else NULL)), collapse = ", "), ")")
 
 # 変数を作るコード。名前 nm のベクトルを作る（順序の得点が要るときは score = TRUE）
 rx_var <- function(nm, s, score = FALSE, numcols) {
@@ -18,16 +20,17 @@ rx_var <- function(nm, s, score = FALSE, numcols) {
   }
   if (identical(s$type, "multi")) return(c(lab, sprintf("  %s <- multi_mat(dd[[%d]], %s, %s)", nm, as.integer(s$col), rx_map(s$cats), rx_s(if (is.null(s$delim)) ";" else s$delim))))
   out <- c(lab, sprintf("  %s <- cat_var(dd[[%d]], %s)", nm, as.integer(s$col), rx_map(s$cats)))
-  if (score) out <- c(out, sprintf(tr_("  %s <- score(%s)                       # 先頭の選択肢を高い点にした段階の得点"), nm, nm))
+  if (score) out <- c(out, if (nzchar(rx_pts(s))) sprintf(tr_("  %s <- score(%s%s)                       # 段階の得点（アプリで選んだ配点）"), nm, nm, rx_pts(s))
+                         else sprintf(tr_("  %s <- score(%s)                       # 先頭の選択肢を高い点にした段階の得点"), nm, nm))
   out
 }
 # 複数の項目（同じ選択肢）の得点の行列
 rx_items <- function(nm, s, numcols) {
   cols <- unlist(s$cols); rev <- unlist(s$reverse)
   c(sprintf("  # %s", rx_cmt(paste(unlist(s$labels), collapse = " / "))),
-    sprintf("  %s <- sapply(%s, function(j) score(cat_var(dd[[j]], %s)))", nm, paste0("c(", paste(cols, collapse = ", "), ")"), rx_map(s$cats)),
+    sprintf("  %s <- sapply(%s, function(j) score(cat_var(dd[[j]], %s)%s))", nm, paste0("c(", paste(cols, collapse = ", "), ")"), rx_map(s$cats), rx_pts(s)),
     sprintf("  colnames(%s) <- %s", nm, rx_vec(unlist(s$labels))),
-    if (length(rev)) sprintf(tr_("  for (j in which(%s %%in%% %s)) %s[, j] <- %d + 1 - %s[, j]   # 逆転項目"), paste0("c(", paste(cols, collapse = ", "), ")"), paste0("c(", paste(rev, collapse = ", "), ")"), nm, length(unique(vapply(s$cats, function(c) as.character(c$label), ""))), nm) else NULL)
+    if (length(rev)) sprintf(tr_("  for (j in which(%s %%in%% %s)) %s[, j] <- %s - %s[, j]   # 逆転項目"), paste0("c(", paste(cols, collapse = ", "), ")"), paste0("c(", paste(rev, collapse = ", "), ")"), nm, { pp <- lev_points(s, unique(slot_labels(s)), 1); fmt_pts(min(pp) + max(pp)) }, nm) else NULL)
 }
 rx_filter <- function(f) {
   if (is.null(f) || is.null(f$col) || !length(f$values)) return("  dd <- d")
@@ -47,8 +50,8 @@ rx_computed <- function(defs, numcols) {
     rev <- unlist(d$reverse)
     out <- c(out, "", sprintf(tr_("# 尺度得点「%s」：%d 項目の%s点（すべての項目に答えた人だけ）"), rx_cmt(d$name), length(d$items), tolower(if (identical(d$method, "sum")) tr_("合計") else tr_("平均"))),
              sprintf("sc <- cbind(%s)", paste(vapply(d$items, function(s) {
-               v <- if (identical(s$type, "numeric")) { numcols[[as.character(s$col)]] <- s; sprintf(tr_("as.numeric(d[[\"%d_数値\"]])"), as.integer(s$col)) } else sprintf("score(cat_var(d[[%d]], %s))", as.integer(s$col), rx_map(s$cats))
-               if (s$col %in% rev) sprintf("%d + 1 - %s", length(s$cats), v) else v
+               v <- if (identical(s$type, "numeric")) { numcols[[as.character(s$col)]] <- s; sprintf(tr_("as.numeric(d[[\"%d_数値\"]])"), as.integer(s$col)) } else sprintf("score(cat_var(d[[%d]], %s)%s)", as.integer(s$col), rx_map(s$cats), rx_pts(s))
+               if (s$col %in% rev && !identical(s$type, "numeric")) { pp <- lev_points(s, unique(slot_labels(s))); sprintf("%s - %s", fmt_pts(min(pp) + max(pp)), v) } else v
              }, ""), collapse = ",\n            ")),
              sprintf(tr_("d[[\"%d_数値\"]] <- ifelse(complete.cases(sc), %s(sc), NA)"), as.integer(d$col), if (identical(d$method, "sum")) "rowSums" else "rowMeans"))
   }
@@ -71,7 +74,7 @@ rx_analysis <- function(req, res, numcols) {
       if (identical(s$a$type, "multi")) add("  ok <- !is.na(a[, 1]); print(colSums(a[ok, , drop = FALSE])); print(round(100 * colMeans(a[ok, , drop = FALSE]), 1))")
       else { add(tr_("  tab <- table(a); print(cbind(人数 = tab, 割合 = round(100 * prop.table(tab), 1)))"))
         if (isTRUE(o$gof)) add(tr_("  print(chisq.test(tab))                         # 適合度検定（すべての選択肢が同じ割合か）")) } },
-    freqmulti = { add(rx_items("X", s$items, numcols)); add("  print(apply(X, 2, function(x) table(factor(x, levels = max(X, na.rm = TRUE):1))))")
+    freqmulti = { add(rx_items("X", s$items, numcols)); add("  print(apply(X, 2, function(x) table(factor(x, levels = sort(unique(c(X)), decreasing = TRUE)))))")
       if (isTRUE(o$friedman)) add(tr_("  m <- X[complete.cases(X), , drop = FALSE]; print(friedman.test(m)); cat(\"Kendall の W =\", friedman.test(m)$statistic / (nrow(m) * (ncol(m) - 1)), \"\\n\")")) },
     chisq = { v("a", s$a); v("b", s$b); add(tab2, sprintf("  ct <- chisq.test(tab, correct = %s); print(ct)", if (isTRUE(o$yates)) "TRUE" else "FALSE"),
       tr_("  cat(\"Cramér の V =\", sqrt(unname(suppressWarnings(chisq.test(tab, correct = FALSE))$statistic) / (sum(tab) * (min(dim(tab)) - 1))), \"\\n\")"),
@@ -90,7 +93,7 @@ rx_analysis <- function(req, res, numcols) {
     wsr = { v("x", s$x, TRUE); v("y", s$y, TRUE); add("  ok <- !is.na(x) & !is.na(y)", "  print(wilcox.test(x[ok], y[ok], paired = TRUE, exact = FALSE, correct = TRUE))") },
     mcnemar = { v("a", s$x); v("b", s$y); add("  ok <- !is.na(a) & !is.na(b); tab <- table(a[ok], b[ok]); print(tab)",
       tr_("  if (tab[1, 2] + tab[2, 1] < 25) print(binom.test(tab[1, 2], tab[1, 2] + tab[2, 1], 0.5)) else print(mcnemar.test(tab, correct = TRUE))   # 不一致が 25 未満なら正確二項検定")) },
-    trend = { v("b", s$b); v("o", s$o); add("  ok <- !is.na(b) & !is.na(o); tab <- table(droplevels(o[ok]), droplevels(b[ok])); print(tab)", "  print(prop.trend.test(tab[, 1], rowSums(tab)))") },
+    trend = { v("b", s$b); v("o", s$o); add("  ok <- !is.na(b) & !is.na(o); tab <- table(droplevels(o[ok]), droplevels(b[ok])); print(tab)", if (is.null(s$o[["points"]])) "  print(prop.trend.test(tab[, 1], rowSums(tab)))" else sprintf("  print(prop.trend.test(tab[, 1], rowSums(tab), score = c(%s)[match(rownames(tab), %s)]))", paste(fmt_pts(lev_points(s$o, unique(slot_labels(s$o)))), collapse = ", "), rx_vec(unique(slot_labels(s$o))))) },
     strat = { v("a", s$a); v("b", s$b); v("z", s$z); add("  ok <- !is.na(a) & !is.na(b) & !is.na(z); t3 <- table(droplevels(a[ok]), droplevels(b[ok]), droplevels(z[ok]))",
       "  t3 <- t3[, , apply(t3, 3, sum) > 1, drop = FALSE]; print(t3)", "  print(mantelhaen.test(t3, correct = FALSE))") },
     numsum = { v("y", s$y, TRUE); if (!is.null(s$g)) { v("g", s$g); add("  ok <- !is.na(y) & !is.na(g)", tr_("  print(do.call(rbind, tapply(y[ok], droplevels(g[ok]), function(x) c(n = length(x), 平均 = mean(x), 標準偏差 = sd(x), 中央値 = median(x), 最小 = min(x), 最大 = max(x)))))")) }
@@ -161,8 +164,8 @@ build_rscript <- function(df, items, data_name, app_version, date = "") {
             "",
             tr_("# 選択肢をまとめる：map は「表示する名前 = 元の回答」の一覧。一覧にない回答（外した選択肢・無回答）は欠損にする"),
             "cat_var <- function(x, map) { out <- rep(NA_character_, length(x)); for (lb in names(map)) out[!is.na(x) & x %in% map[[lb]]] <- lb; factor(out, levels = names(map)) }",
-            tr_("# 段階の得点：先頭の選択肢を最も高い点にする（5 段階なら 5〜1 点）"),
-            "score <- function(f) nlevels(f) + 1L - as.integer(f)",
+            tr_("# 段階の得点：pts は選択肢の並びごとの点。省略すると先頭の選択肢を最も高い点にする（5 段階なら 5〜1 点）"),
+            "score <- function(f, pts = rev(seq_len(nlevels(f)))) pts[as.integer(f)]",
             tr_("# 複数回答：回答者 × 選択肢の TRUE / FALSE の行列（無回答は NA）"),
             "multi_mat <- function(x, map, delim) {",
             "  M <- matrix(FALSE, length(x), length(map), dimnames = list(NULL, names(map)))",

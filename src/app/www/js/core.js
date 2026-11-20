@@ -128,7 +128,29 @@
     var vr = v(c); if (!vr) return null;
     var s = { col: vr.col, type: vr.type, delim: vr.delim, label: vr.label, cats: (vr.cats || []).filter(function (k) { return !k.special; }).map(function (k) { return { label: k.v, values: [k.v] }; }) };
     if (vr.type === 'numeric') { if (vr.fix) s.fix = vr.fix; if (vr.unit) s.unit = vr.unit; }
+    var p = pointsFor(vr, s.cats); if (p) s.points = p;
     return s;
+  }
+  // 順序のある設問の配点。cats（{label, values}）と同じ並びの点を返す。既定（上の選択肢ほど高い点）のときは null
+  //   asc：まとめた後の選択肢に上から 1, 2, … 点。custom：元の回答ごとに入れた点（まとめた選択肢は、先頭の回答の点）
+  function scoreMode(vr) { return vr && vr.type === 'ordinal' && vr.score && vr.score.mode && vr.score.mode !== 'desc' ? vr.score.mode : 'desc'; }
+  function pointsFor(vr, cats, force) {
+    var mode = scoreMode(vr); if (mode === 'desc' && !force) return null;
+    var labs = [], first = {};
+    cats.forEach(function (c) { if (labs.indexOf(c.label) < 0) { labs.push(c.label); first[c.label] = c.values[0]; } });
+    return cats.map(function (c) {
+      var i = labs.indexOf(c.label);
+      if (mode === 'asc') return i + 1;
+      if (mode === 'desc') return labs.length - i;
+      var p = (vr.score.pts || {})[first[c.label]];
+      return p === '' || p === null || p === undefined || !isFinite(+p) ? null : +p;
+    });
+  }
+  // 元の回答（vr.cats の並び）ごとの点。画面の表示と「自由に入れる」の初期値に使う
+  function catPoints(vr) {
+    var cs = (vr.cats || []).filter(function (k) { return !k.special; }), k = cs.length, mode = scoreMode(vr), out = {};
+    cs.forEach(function (c, i) { out[c.v] = mode === 'asc' ? i + 1 : mode === 'desc' ? k - i : ((vr.score.pts || {})[c.v] !== undefined ? vr.score.pts[c.v] : ''); });
+    return out;
   }
   function compDefs() {
     return compVars().map(function (x) {
@@ -223,12 +245,14 @@
         var vs = sl.cols.map(v);
         slots[s.id] = { many: true, cols: sl.cols, type: vs[0].type, delim: vs[0].delim, labels: vs.map(function (x) { return x.label; }), fulls: vs.map(function (x) { return x.full || x.label; }),
           items: vs.map(function (x) { return x.item || ''; }), stems: vs.map(function (x) { return x.stem || ''; }), cats: onCats, reverse: (sl.reverse || []).filter(function (c) { return sl.cols.indexOf(c) >= 0; }), vars: sl.cols.map(itemSlot).filter(Boolean) };
+        if (vs.some(function (x) { return scoreMode(x) !== 'desc'; })) slots[s.id].pointsList = vs.map(function (x) { return pointsFor(x, onCats, true); });
         return;
       }
       if (s.optional && (sl.col === null || sl.col === undefined)) return;       // 任意の欄を使わないとき
       var vr = v(sl.col);
       slots[s.id] = { col: vr.col, type: vr.type, delim: vr.delim, label: vr.label, full: vr.full || vr.label, cats: sl.cats.filter(function (c) { return c.on; }).map(function (c) { return { label: c.label, values: [c.v] }; }) };
       if (vr.type === 'numeric') { if (vr.fix) slots[s.id].fix = vr.fix; if (vr.unit) slots[s.id].unit = vr.unit; }
+      var pts = pointsFor(vr, slots[s.id].cats); if (pts) slots[s.id].points = pts;
     });
     var flt = null;
     if (tab.filter && tab.filter.col !== null && tab.filter.values && tab.filter.values.length) { var fv = v(tab.filter.col); if (fv) flt = { col: fv.col, type: fv.type, delim: fv.delim, label: fv.label, full: fv.full || fv.label, values: tab.filter.values }; }
@@ -326,7 +350,7 @@
       var nv = clone(d.vars), map = {};
       nv.forEach(function (x) {
         var o = oldVars.find(function (y) { return y.header === x.header; });
-        if (o) { map[o.col] = x.col; if (!/…$/.test(o.label)) x.label = o.label; if (o.type !== x.type && ['nominal', 'ordinal'].indexOf(o.type) >= 0 && ['nominal', 'ordinal'].indexOf(x.type) >= 0) x.type = o.type; }
+        if (o) { map[o.col] = x.col; if (!/…$/.test(o.label)) x.label = o.label; if (o.type !== x.type && ['nominal', 'ordinal'].indexOf(o.type) >= 0 && ['nominal', 'ordinal'].indexOf(x.type) >= 0) x.type = o.type; if (o.score) x.score = clone(o.score); }
       });
       // 尺度得点の列は、元の列の番号を付け直して右に足し直す
       oldVars.filter(function (o) { return o.comp; }).sort(function (a, b) { return a.col - b.col; }).forEach(function (o) {
@@ -466,7 +490,7 @@
 
   window.App = window.App || {};
   Object.assign(window.App, { theme: theme, setTheme: setTheme, baseProject: baseProject, customGet: customGet, customSet: customSet, defMode: defMode, setDefMode: setDefMode, applyDefaults: applyDefaults, loadUrl: loadUrl, sheetCsvUrl: sheetCsvUrl, xlsxIn: xlsxIn, compVars: compVars, compDefs: compDefs, errLog: errLog, clearErrLog: clearErrLog, logErr: logErr, S: S, MAX_TABS: MAX_TABS, TYPE_NAMES: TYPE_NAMES, $: $, esc: esc, clone: clone, toast: toast, busy: busy, api: api, apiData: apiData, zip: zip, safeName: safeName,
-    v: v, def: def, tabById: tabById, slotCols: slotCols, sameChoices: sameChoices, setItems: setItems, defaultCatsMany: defaultCatsMany, curTab: curTab, curFig: curFig, isCat: isCat, defaultCats: defaultCats, setSlot: setSlot, autoName: autoName, newTab: newTab, newFig: newFig, tabReady: tabReady,
+    v: v, def: def, tabById: tabById, slotCols: slotCols, sameChoices: sameChoices, setItems: setItems, defaultCatsMany: defaultCatsMany, curTab: curTab, curFig: curFig, isCat: isCat, catPoints: catPoints, scoreMode: scoreMode, defaultCats: defaultCats, setSlot: setSlot, autoName: autoName, newTab: newTab, newFig: newFig, tabReady: tabReady,
     buildReq: buildReq, markDirty: markDirty, schedule: schedule, scheduleAll: scheduleAll, syncResults: syncResults, commit: commit, undo: undo, redo: redo, fixSel: fixSel, tableDefaults: tableDefaults,
     pickFile: pickFile, saveBlob: saveBlob, baseName: baseName, loadCsv: loadCsv, handleFile: handleFile, newProject: newProject,
     saveProjectAs: saveProjectAs, listProjects: listProjects, openProjectByName: openProjectByName, exportProjectFile: exportProjectFile });

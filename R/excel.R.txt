@@ -79,10 +79,10 @@ xl_keys <- function(W, r, c, slot, title, levels = NULL, score = TRUE) {
   lev <- if (is.null(levels)) xl_levels(slot) else levels; k <- length(lev)
   vals <- character(0); labs <- character(0)
   for (ct in slot$cats) if (as.character(ct$label) %in% lev) for (v in unlist(ct$values)) { vals <- c(vals, v); labs <- c(labs, as.character(ct$label)) }
-  code <- if (score) k + 1L - match(labs, lev) else match(labs, lev)
+  code <- if (score) lev_points(slot, lev)[match(labs, lev)] else match(labs, lev)
   S_(W, r, c, title, 1L); S_(W, r + 1, c + 0:2, c(tr_("元の回答"), tr_("まとめた名前"), if (score) tr_("得点") else tr_("番号")), 6L)
   m <- length(vals); S_(W, r + 1 + seq_len(m), c, vals); S_(W, r + 1 + seq_len(m), c + 1, labs); N_(W, r + 1 + seq_len(m), c + 2, code)
-  list(keys = rg(r + 2, c, r + 1 + m, c), codes = rg(r + 2, c + 2, r + 1 + m, c + 2), lev = lev, k = k, nxt = r + m + 3)
+  list(keys = rg(r + 2, c, r + 1 + m, c), codes = rg(r + 2, c + 2, r + 1 + m, c + 2), lev = lev, k = k, nxt = r + m + 3, pts = if (score) lev_points(slot, lev) else NULL)
 }
 xl_valid <- function(slot, cell, keys) if (identical(slot$type, "numeric")) paste0("ISNUMBER(", cell, ")") else paste0("SUMPRODUCT((", keys$keys, "=", cell, ")*1)>0")
 xl_value <- function(slot, cell, keys) if (identical(slot$type, "numeric")) cell else paste0("SUMPRODUCT((", keys$keys, "=", cell, ")*", keys$codes, ")")
@@ -261,7 +261,7 @@ xl_trend <- function(W, X, req, res, c0) {
   A <- vapply(rown, function(l) xl_member(X$rng(so$col), xl_vals(so, l)), ""); B <- vapply(coln, function(l) xl_member(X$rng(sb$col), xl_vals(sb, l)), "")
   t <- xl_table(W, 3, c0, paste0(so$label, tr_(" ＼ "), sb$label), rown, coln, function(i, j) xl_count(c(A[i], B[j], flt)))
   cs <- c0 + length(coln) + 2; S_(W, 3, cs + 0:1, c(tr_("得点"), paste0(coln[1], tr_(" の割合 (%)"))), 6L)
-  N_(W, 3 + seq_len(R), cs, seq_len(R)); F_(W, 3 + seq_len(R), cs + 1, vapply(seq_len(R), function(i) paste0(t$cell(i, 1), "/", t$rtot(i), "*100"), ""), 4L)
+  N_(W, 3 + seq_len(R), cs, if (is.null(so[["points"]])) seq_len(R) else lev_points(so, rown)); F_(W, 3 + seq_len(R), cs + 1, vapply(seq_len(R), function(i) paste0(t$cell(i, 1), "/", t$rtot(i), "*100"), ""), 4L)
   sR <- rg(4, cs, 3 + R, cs); x <- t$colr(1); nn <- t$rtots; r <- t$nxt
   P <- xl_stat(W, r, c0, tr_("全体の割合"), paste0(t$ctot(1), "/", t$grand), 3L)
   sb2 <- xl_stat(W, r + 1, c0, tr_("得点の平均"), sprintf("SUMPRODUCT(%s,%s)/%s", nn, sR, t$grand), 5L)
@@ -530,12 +530,12 @@ xl_alpha <- function(W, X, req, res, c0) {
   kk <- xl_keys(W, 3, s, sl, tr_("得点（すべての項目に共通）")); r <- kk$nxt; L <- length(kk$lev)
   okall <- xl_and(xl_filter(req$filter, rowref(req$filter$col)), vapply(cols, function(j) xl_valid(sl, rowref(j), kk), ""))
   for (j in seq_len(k)) {
-    v <- xl_value(sl, rowref(cols[j]), kk); if (cols[j] %in% rev) v <- paste0("(", L + 1, "-", v, ")")
+    v <- xl_value(sl, rowref(cols[j]), kk); if (cols[j] %in% rev) v <- paste0("(", fmt_pts(min(kk$pts) + max(kk$pts)), "-", v, ")")
     xl_rows(W, X, h + j - 1, paste0("IF(", okall, ",", v, ',"")'))
   }
   xl_rows(W, X, h + k, paste0("IF(ISNUMBER($", xl_L(h), XL_MARK, "),SUM($", xl_L(h), XL_MARK, ":$", xl_L(h + k - 1), XL_MARK, '),"")'))
   IR <- function(j) rg(2, h + j - 1, X$last, h + j - 1); TR <- rg(2, h + k, X$last, h + k)
-  if (length(rev)) { xl_note(W, r, s, paste0(tr_("逆転項目（"), L + 1, tr_(" − 得点）："), paste(names[cols %in% rev], collapse = tr_("、")))); r <- r + 1 }
+  if (length(rev)) { xl_note(W, r, s, paste0(tr_("逆転項目（"), fmt_pts(min(kk$pts) + max(kk$pts)), tr_(" − 得点）："), paste(names[cols %in% rev], collapse = tr_("、")))); r <- r + 1 }
   S_(W, r, s + 0:4, c(tr_("項目"), tr_("平均"), tr_("標準偏差"), tr_("残りの合計との相関"), tr_("除いたときの α")), 6L)
   n <- paste0("COUNT(", TR, ")"); vT <- paste0(FN("VAR.S"), "(", TR, ")"); sumv <- paste0("(", paste0(FN("VAR.S"), "(", vapply(seq_len(k), IR, ""), ")", collapse = "+"), ")")
   for (j in seq_len(k)) {

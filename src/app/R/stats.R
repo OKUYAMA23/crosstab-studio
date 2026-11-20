@@ -54,11 +54,23 @@ slot_multi <- function(df, slot) {
   M
 }
 
-# 順序の得点：先頭の選択肢を最も高い得点にする（数値の列はそのままの値）
+# 順序の回答の配点：選択肢（lev の並び）ごとの点。指定がなければ先頭を最も高い点（k〜1 点）にする
+#   slot[["points"]] は slot$cats と同じ並びの点。項目の組では slot$pointsList[[j]] が j 番目の項目の点
+lev_points <- function(slot, lev, j = NULL) {
+  pts <- if (!is.null(j) && !is.null(slot$pointsList)) slot$pointsList[[j]] else if (!is.null(slot[["points"]])) slot[["points"]] else if (length(slot$pointsList)) slot$pointsList[[1]]
+  if (is.null(pts)) return(as.numeric(rev(seq_along(lev))))
+  p <- vapply(pts, function(x) if (is.null(x)) NA_real_ else as.numeric(x), 0)
+  out <- p[match(lev, slot_labels(slot))]
+  if (anyNA(out)) stop_user(q(slot$label), tr_("の配点に、点が入っていない選択肢があります。「データ」の列の設定で、すべての選択肢に点を入れてください。"))
+  out
+}
+# 点の高い側の選択肢（「上位」として文に書く）
+top_label <- function(lev, pts) lev[which.max(pts)]
+# 順序の得点（数値の列はそのままの値）
 slot_score <- function(df, slot) {
   if (identical(slot$type, "numeric")) return(numeric_values(df[[slot$col]], slot$fix, slot$unit))
   f <- slot_factor(df, slot)
-  nlevels(f) + 1L - as.integer(f)
+  lev_points(slot, levels(f))[as.integer(f)]
 }
 
 `%||%` <- function(a, b) if (is.null(a)) b else a
@@ -137,7 +149,7 @@ add_computed <- function(df, defs) {
     items <- d$items; rev <- unlist(d$reverse)
     M <- vapply(items, function(s) {
       x <- slot_score(df, s)
-      if (s$col %in% rev) x <- length(s$cats) + 1L - x
+      if (s$col %in% rev && !identical(s$type, "numeric")) { pp <- lev_points(s, unique(slot_labels(s))); x <- min(pp) + max(pp) - x }
       as.numeric(x)
     }, numeric(nrow(df)))
     if (!is.matrix(M)) M <- matrix(M, ncol = length(items))
@@ -225,10 +237,11 @@ resid_sentence <- function(xt, tab) {
       if (more) tr_("（残差の大きい順に 6 件を記載）。") else tr_("。"))
 }
 
-median_label <- function(score, lev) {
-  m <- stats::median(score); k <- length(lev)
-  if (m == floor(m)) return(q(lev[k + 1 - m]))
-  trf("%sと%sの間", q(lev[k + 1 - ceiling(m)]), q(lev[k + 1 - floor(m)]))
+median_label <- function(score, lev, pts = rev(seq_along(lev))) {
+  m <- stats::median(score)
+  if (m %in% pts) return(q(lev[match(m, pts)]))
+  lo <- max(pts[pts < m]); hi <- min(pts[pts > m])
+  trf("%sと%sの間", q(lev[match(hi, pts)]), q(lev[match(lo, pts)]))
 }
 
 n_info <- function(total, used) list(total = total, used = used, excluded = total - used)

@@ -669,10 +669,20 @@
     if (A.isCat(x)) h += sec(_t('回答の内訳（{0} 人が回答）', x.n), x.cats.map(function (c, i) {
       return '<div class="md-bar" data-tip="' + esc(c.v) + '"><span class="md-bl">' + esc(c.v) + '</span><span class="md-bb"><i style="width:' + (c.n / mx * 100).toFixed(1) + '%"></i></span><span class="md-bn">' + c.n + '</span>' +
         (x.type !== 'multi' ? '<button class="md-mv" data-act="varCatUp" data-arg="' + i + _t('" data-tip="この選択肢を 1 つ上へ動かします。"') + (i === 0 ? ' disabled' : '') + '>▲</button>' : '') + '</div>';
-    }).join(''), hint(x.type === 'ordinal' ? _t('上から順に「上位」として扱います。並びが合わないときは ▲ で直してください（新しく作る解析に反映されます）。') : x.type === 'multi' ? _t('複数回答は、選択肢ごとに選んだ人数を数えます。') : _t('並びは、これから作る解析の表や図の順番になります。')),
+    }).join(''), hint(x.type === 'ordinal' ? _t('段階の順に並べてください。並びが合わないときは ▲ で直します（新しく作る解析に反映されます）。点の付け方は下の「配点」で選べます。') : x.type === 'multi' ? _t('複数回答は、選択肢ごとに選んだ人数を数えます。') : _t('並びは、これから作る解析の表や図の順番になります。')),
       _t('<button class="md-btn" data-act="freqOfVar">この列を集計する</button>'));
     else if (x.type === 'numeric' && x.summary) h += sec(_t('数値の要約'), hint(_t('最小 {0}、中央値 {1}、平均 {2}、最大 {3}（{4} 人が回答）', x.summary.min, x.summary.median, (+x.summary.mean).toFixed(2), x.summary.max, x.n)));
     else h += sec(_t('回答'), hint(x.n + _t(' 人が回答しています。この種類の列は解析に使いません。')));
+    if (x.type === 'ordinal' && !x.comp) {
+      var mode = A.scoreMode(x), cp = A.catPoints(x);
+      h += sec(_t('配点'), _t('<label class="md-field"><span>点の付け方</span><select data-varscore="mode">') + options([['desc', _t('上の選択肢ほど高い点')], ['asc', _t('上の選択肢ほど低い点')], ['custom', _t('点を自分で入れる')]], mode) + '</select></label>' +
+        x.cats.map(function (c, i) {
+          if (c.special) return '';
+          return '<div class="md-bar md-ptrow"><span class="md-bl" data-tip="' + esc(c.v) + '">' + esc(c.v) + '</span>' +
+            (mode === 'custom' ? '<input type="text" inputmode="decimal" class="md-pt" data-varpt="' + i + '" value="' + esc(String(cp[c.v])) + _t('" data-tip="この選択肢の点を入れます。小数や負の数も使えます。">') : '<span class="md-pt">' + cp[c.v] + '</span>') + '</div>';
+        }).join(''),
+        hint(_t('平均の比較・相関・回帰・尺度得点など、得点を使う解析すべてに使います。順位を使う検定では、点の高い側を上位として扱います。')));
+    }
     return h;
   }
   function varOptions(sd, cur) {

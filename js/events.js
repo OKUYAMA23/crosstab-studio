@@ -770,6 +770,18 @@
       var x = A.v(+el.dataset.varlabel), nv2 = el.value.trim(); if (!x || !nv2 || nv2 === x.label) { A.render(); return; }
       A.commit(function () { x.label = nv2; S.P.tabs.forEach(A.autoName); }, { quiet: true }); A.syncResults(); A.render(); return;
     }
+    if (el.dataset.varscore || el.dataset.varpt !== undefined) {
+      var xs = A.v(S.ui.selVar); if (!xs) return;
+      if (el.dataset.varscore) {
+        var cur = A.catPoints(xs);                                    // 「自分で入れる」に変えたときは、今の点を初期値にする
+        A.commit(function () { var old = xs.score || {}; xs.score = { mode: el.value, pts: el.value === 'custom' && A.scoreMode(xs) !== 'custom' ? cur : (old.pts || {}) }; }, { quiet: true });
+      } else {
+        var c2 = xs.cats[+el.dataset.varpt], t = el.value.trim().replace(/[０-９．－]/g, function (ch) { return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0); }).replace(/−/g, '-');
+        if (t !== '' && !isFinite(+t)) { A.toast(_t('点には数を入れてください（例：5、2.5、-1）。'), true); A.render(); return; }
+        A.commit(function () { xs.score = xs.score || { mode: 'custom', pts: {} }; xs.score.pts = Object.assign({}, xs.score.pts); xs.score.pts[c2.v] = t === '' ? '' : +t; }, { quiet: true });
+      }
+      A.syncResults(); A.render(); return;
+    }
     if (el.dataset.var) { var xv = A.v(S.ui.selVar); if (!xv) return; changeVar(xv, el.dataset.var === 'type' ? el.value : xv.type, el.dataset.var === 'delim' ? el.value : xv.delim); return; }
     if (el.dataset.reptext) A.render('chrome');
   });

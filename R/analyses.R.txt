@@ -92,6 +92,8 @@ register("freq", tr_("単純集計"), tr_("集計"), tr_("1 つの質問につ�
 # 表は「行＝設問、列＝回答」。図の既定は、回答ごとの棒を設問ごとに色を変えて並べる形。
 items_setup <- function(df, slot) {
   cols <- unlist(slot$cols); k <- length(cols)
+  if (length(slot$pointsList) > 1 && length(unique(lapply(slot$pointsList, unlist))) > 1)
+    stop_user(tr_("選んだ項目の配点がそろっていません。同じ配点にしてください（逆の向きの項目は「逆転項目」で指定します）。"))
   if (k < 2) stop_user(tr_("比べる設問を 2 つ以上選んでください（現在 "), k, tr_(" 個）。"))
   if (anyDuplicated(cols)) stop_user(tr_("同じ設問が 2 回選ばれています。別の設問を選んでください。"))
   if (length(slot$cats) == 0) stop_user(tr_("選択肢がすべて外されています。「選択肢の設定」で 1 つ以上にチェックを入れてください。"))
@@ -125,7 +127,7 @@ an_freqmulti <- function(df, req) {
   res$row <- list(stat = "", effect = "")
   res$notes <- tr_("割合の分母は、設問ごとの回答者数です。")
   if (isTRUE(opt(req, "friedman", FALSE))) {
-    sc <- sapply(it$F, function(f) length(it$lev) + 1L - as.integer(f)); ok <- stats::complete.cases(sc); m <- sc[ok, , drop = FALSE]
+    sc <- sapply(seq_along(it$F), function(j) lev_points(req$slots$items, it$lev, j)[as.integer(it$F[[j]])]); ok <- stats::complete.cases(sc); m <- sc[ok, , drop = FALSE]
     if (nrow(m) < 2) stop_user(tr_("すべての設問に答えた人が 2 人未満のため、フリードマン検定ができません。"))
     ft <- stats::friedman.test(m); Q <- unname(ft$statistic); W <- Q / (nrow(m) * (k - 1))
     res$chk <- list(Q = Q, W = W, n = nrow(m))
@@ -134,7 +136,7 @@ an_freqmulti <- function(df, req) {
     res$headline <- c(res$headline, list(hl(paste0("χ²(", ft$parameter, ")"), fmt_num(Q)), hl("p", fmt_p(res$p, lead0, FALSE)), hl(tr_("Kendall の W"), fmt_num(W))))
     res$row <- list(stat = paste0("χ²(", ft$parameter, ") = ", fmt_num(Q)), effect = paste0("W = ", fmt_num(W)))
     res$grids <- list(list(kind = "grid", title = tr_("設問ごとの平均順位（フリードマン検定）"), corner = tr_("設問"), rows = A(it$names), cols = A(tr_("平均順位")), fmt = A("num2"), cells = mat(matrix(mr, ncol = 1)),
-                           note = trf("すべての設問に答えた %d 人で計算した。順位は%sの側を上位とし、1 人の中で設問に順位を付けた。", nrow(m), q(it$lev[1]))))
+                           note = trf("すべての設問に答えた %d 人で計算した。順位は%sの側を上位とし、1 人の中で設問に順位を付けた。", nrow(m), q(top_label(it$lev, lev_points(req$slots$items, it$lev, 1))))))
     o <- order(-mr); sig <- res$p < alpha
     txt <- paste0(txt, trf("すべての設問に答えた %d 人についてフリードマン検定を行った結果、設問の間の回答の傾向の差は%s（χ²(%s) = %s, %s, Kendall の W = %s）。",
                   nrow(m), if (sig) tr_("統計的に有意であった") else tr_("統計的に有意ではなかった"), ft$parameter, fmt_num(Q), fmt_p(res$p, lead0), fmt_num(W)),
@@ -220,7 +222,9 @@ rank_setup <- function(df, req) {
   ok <- !is.na(g) & !is.na(y)
   g <- droplevels(g[ok]); y <- y[ok]
   list(sg = sg, sy = sy, g = g, y = y, n = sum(ok), numeric = identical(sy$type, "numeric"),
-       ylev = if (identical(sy$type, "numeric")) NULL else unique(slot_labels(sy)))
+       ylev = if (identical(sy$type, "numeric")) NULL else unique(slot_labels(sy)),
+       ypts = if (identical(sy$type, "numeric")) NULL else lev_points(sy, unique(slot_labels(sy))),
+       yf = if (identical(sy$type, "numeric")) NULL else slot_factor(df, sy)[ok])
 }
 rank_tables <- function(rs, df) {
   g <- rs$g; y <- rs$y; r <- rank(y)
@@ -234,14 +238,14 @@ rank_tables <- function(rs, df) {
     bx <- lapply(levels(g), function(l) { v <- y[g == l]; b <- grDevices::boxplot.stats(v); list(stats = A(b$stats), out = A(b$out), n = length(v)) })
     out$fig <- list(type = "box", cats = A(levels(g)), box = bx, catTitle = rs$sg$label, valueTitle = rs$sy$label)
   } else {
-    yf <- factor(rs$ylev[length(rs$ylev) + 1 - y], levels = rs$ylev)
+    yf <- rs$yf
     tab <- table(g, yf); tab <- tab[, colSums(tab) > 0, drop = FALSE]
     out$xtab <- xtab_obj(tab, rs$sg$label, rs$sy$label, resid = FALSE)
-    med <- vapply(levels(g), function(l) median_label(y[g == l], rs$ylev), "")
+    med <- vapply(levels(g), function(l) median_label(y[g == l], rs$ylev, rs$ypts), "")
     out$grids <- list(list(kind = "grid", title = tr_("群ごとの順位の要約"), corner = rs$sg$label, rows = A(levels(g)),
                            cols = A(c("n", tr_("平均順位"), tr_("中央値にあたる回答"))), fmt = A(c("int", "num1", "text")),
                            cells = lapply(seq_along(ng), function(i) list(ng[i], mr[i], gsub("[「」]", "", med[i]))),
-                           note = trf("順位は%sの側を上位として付けた。", q(rs$ylev[1]))))
+                           note = trf("順位は%sの側を上位として付けた。", q(top_label(rs$ylev, rs$ypts)))))
     out$fig <- list(type = "xtab"); out$med <- med
   }
   out$ng <- ng; out$mr <- mr
@@ -249,7 +253,7 @@ rank_tables <- function(rs, df) {
 }
 direction_phrase <- function(rs, hi, lo) {
   if (rs$numeric) trf("%sのほうが%sより値が大きい傾向にあった", hi, lo)
-  else trf("%sのほうが%sより%sの側の回答が多かった", hi, lo, q(rs$ylev[1]))
+  else trf("%sのほうが%sより%sの側の回答が多かった", hi, lo, q(top_label(rs$ylev, rs$ypts)))
 }
 
 an_mwu <- function(df, req) {
@@ -329,7 +333,7 @@ an_spearman <- function(df, req) {
   numx <- identical(sx$type, "numeric"); numy <- identical(sy$type, "numeric")
   if (!numx && !numy) {
     lx <- unique(slot_labels(sx)); ly <- unique(slot_labels(sy))
-    tab <- table(factor(lx[length(lx) + 1 - x], levels = lx), factor(ly[length(ly) + 1 - y], levels = ly))
+    tab <- table(slot_factor(df, sx)[ok], slot_factor(df, sy)[ok])
     tab <- tab[rowSums(tab) > 0, colSums(tab) > 0, drop = FALSE]
     res$xtab <- xtab_obj(tab, sx$label, sy$label, resid = FALSE); res$fig <- list(type = "xtab", prefer = "heat")
   } else res$fig <- list(type = "scatter", x = A(x), y = A(y), xTitle = sx$label, yTitle = sy$label)
@@ -338,7 +342,7 @@ an_spearman <- function(df, req) {
   res$headline <- list(hl("ρ", fmt_num(rho)), hl("p", fmt_p(res$p, lead0, FALSE)), hl("n", as.character(n)))
   res$row <- list(stat = paste0("ρ = ", fmt_num(rho)), effect = "–")
   sig <- res$p < alpha
-  top <- function(s) if (identical(s$type, "numeric")) tr_("値が大きい人") else trf("%sの側の回答をした人", q(unique(slot_labels(s))[1]))
+  top <- function(s) if (identical(s$type, "numeric")) tr_("値が大きい人") else { lv <- unique(slot_labels(s)); trf("%sの側の回答をした人", q(top_label(lv, lev_points(s, lv)))) }
   res$notes <- c(tr_("相関の強さの表現（|ρ| が 0.2 未満：ごく弱い、0.4 未満：弱い、0.7 未満：中程度、0.7 以上：強い）は目安であり、分野によって基準が異なります。"),
                  tr_("相関は 2 つの回答の関連を示すもので、一方が他方の原因であることを示すものではありません。"))
   res$report <- paste0(trf("%sと%sの関連をスピアマンの順位相関係数で調べた。その結果、%s（%s）。", q(sx$label), q(sy$label),
@@ -402,13 +406,14 @@ paired_setup <- function(df, req, need2 = FALSE) {
   if (!identical(lx, ly)) stop_user(tr_("この検定では、2 つの質問の選択肢（名前と並び）が同じである必要があります。「選択肢の設定」でそろえてください（現在："), paste(lx, collapse = tr_("／")), tr_(" と "), paste(ly, collapse = tr_("／")), tr_("）。"))
   if (need2 && length(lx) != 2) stop_user(tr_("マクネマー検定は 2 択どうしの比較です。「選択肢の設定」で選択肢を 2 つにまとめてください（現在 "), length(lx), tr_(" 個）。"))
   fx <- slot_factor(df, sx); fy <- slot_factor(df, sy); ok <- !is.na(fx) & !is.na(fy)
-  list(sx = sx, sy = sy, fx = fx[ok], fy = fy[ok], lev = lx, n = sum(ok))
+  list(sx = sx, sy = sy, fx = fx[ok], fy = fy[ok], lev = lx, n = sum(ok), px = lev_points(sx, lx), py = lev_points(sy, lx))
 }
 an_wsr <- function(df, req) {
   alpha <- opt(req, "alpha", 0.05); lead0 <- opt(req, "lead0", TRUE)
   ps <- paired_setup(df, req); k <- length(ps$lev)
   if (ps$n < 1) stop_user(tr_("両方の質問に答えた人がいません。"))
-  x <- k + 1L - as.integer(ps$fx); y <- k + 1L - as.integer(ps$fy); d <- x - y
+  if (!identical(ps$px, ps$py)) stop_user(tr_("この検定では、2 つの質問の配点が同じである必要があります。「データ」の列の設定で配点をそろえてください。"))
+  x <- ps$px[as.integer(ps$fx)]; y <- ps$py[as.integer(ps$fy)]; d <- x - y; toplab <- top_label(ps$lev, ps$px)
   nz <- sum(d != 0); if (nz == 0) stop_user(tr_("2 つの回答がすべての人で同じため、検定できません。"))
   wt <- wilcox_paired(x, y)
   p <- unname(wt$p.value); Z <- stats::qnorm(p / 2, lower.tail = FALSE); r_eff <- Z / sqrt(nz)
@@ -418,7 +423,7 @@ an_wsr <- function(df, req) {
   up <- sum(d > 0); dn <- sum(d < 0); eq <- sum(d == 0)
   res$grids <- list(list(kind = "grid", title = tr_("回答の変化"), corner = "", rows = A(c(paste0(ps$sx$label, tr_(" のほうが上位")), paste0(ps$sy$label, tr_(" のほうが上位")), tr_("同じ"))),
                          cols = A(c(tr_("人数"), tr_("割合 (%)"))), fmt = A(c("int", "pct")), cells = mat(cbind(c(up, dn, eq), c(up, dn, eq) / ps$n)),
-                         note = trf("上位は%sの側。", q(ps$lev[1]))))
+                         note = trf("上位は%sの側。", q(toplab))))
   stats_txt <- paste0("V = ", fmt_num(wt$statistic, 1), ", |Z| = ", fmt_num(Z), ", ", fmt_p(p, lead0), ", r = ", fmt_num(r_eff))
   res$headline <- list(hl("V", fmt_num(wt$statistic, 1)), hl("|Z|", fmt_num(Z)), hl("p", fmt_p(p, lead0, FALSE)), hl("r", fmt_num(r_eff)), hl("n", as.character(ps$n)))
   res$row <- list(stat = paste0("V = ", fmt_num(wt$statistic, 1)), effect = paste0("r = ", fmt_num(r_eff)))
@@ -426,7 +431,7 @@ an_wsr <- function(df, req) {
   res$notes <- tr_("p 値は正規近似によります。|Z| は p 値から求めた値、効果量 r は |Z| / √（差が 0 でない人数）です。")
   res$report <- paste0(trf("同じ回答者の%sと%sの回答を比較した（n = %d）。", q(ps$sx$label), q(ps$sy$label), ps$n),
                        trf("ウィルコクソンの符号付順位検定の結果、2 つの回答には%s（%s）。", if (sig) tr_("統計的に有意な差が認められた") else tr_("統計的に有意な差は認められなかった"), stats_txt),
-                       trf("%sのほうが%sの側の回答だった人は %d 人、%sのほうがそうだった人は %d 人、同じ回答の人は %d 人であった。", q(ps$sx$label), q(ps$lev[1]), up, q(ps$sy$label), dn, eq))
+                       trf("%sのほうが%sの側の回答だった人は %d 人、%sのほうがそうだった人は %d 人、同じ回答の人は %d 人であった。", q(ps$sx$label), q(toplab), up, q(ps$sy$label), dn, eq))
   finish(res, alpha)
 }
 register("wsr", tr_("ウィルコクソンの符号付順位検定"), tr_("同じ人の 2 つの回答"), tr_("同じ選択肢で答える 2 つの質問（例：2 つのサービスの利用頻度）を、同じ人の中で比べます。"),
@@ -464,14 +469,16 @@ an_trend <- function(df, req) {
   mt <- make_table(slot_factor(df, so), slot_factor(df, sb)); tab <- mt$tab
   if (nrow(tab) < 3) stop_user(tr_("傾向検定には、"), q(so$label), tr_("に回答のある段階が 3 つ以上必要です（現在 "), nrow(tab), tr_(" 段階）。2 段階のときはカイ二乗検定を使ってください。"))
   if (ncol(tab) < 2) stop_user(q(sb$label), tr_("の回答が 1 種類しかないため、検定できません。"))
-  x <- tab[, 1]; nn <- rowSums(tab); pt <- stats::prop.trend.test(x, nn); pr <- x / nn
+  x <- tab[, 1]; nn <- rowSums(tab); pr <- x / nn
+  sc <- if (is.null(so[["points"]])) seq_len(nrow(tab)) else lev_points(so, rownames(tab))     # 段階の得点（配点を選んだときはその点）
+  pt <- stats::prop.trend.test(x, nn, score = sc)
   res <- list(test = tr_("コクラン・アーミテージの傾向検定"), p = unname(pt$p.value), n = n_info(nrow(df), mt$n),
               xtab = xtab_obj(tab, so$label, sb$label, resid = FALSE), fig = list(type = "xtab"))
   stat <- paste0("χ²(1) = ", fmt_num(pt$statistic))
   res$headline <- list(hl("χ²(1)", fmt_num(pt$statistic)), hl("p", fmt_p(res$p, lead0, FALSE)), hl("n", as.character(mt$n)))
   res$row <- list(stat = stat, effect = "")
   sig <- res$p < alpha
-  res$notes <- paste0(tr_("段階には並びの順に 1, 2, 3, … の等間隔の得点を与えています。"))
+  res$notes <- if (is.null(so[["points"]])) tr_("段階には並びの順に 1, 2, 3, … の等間隔の得点を与えています。") else trf("段階には、選んだ配点（%s）を得点として与えています。", points_text(rownames(tab), sc))
   res$report <- paste0(trf("%sの段階ごとに、%sで%sと答えた割合を求めた（n = %d）。", q(so$label), q(sb$label), q(colnames(tab)[1]), mt$n),
                        trf("割合は%sであった。", paste0(rownames(tab), " ", fmt_pct(pr), "%", collapse = tr_("、"))),
                        trf("コクラン・アーミテージの傾向検定の結果、段階にそった割合の直線的な増減は%s（%s, %s）。", if (sig) tr_("統計的に有意であった") else tr_("統計的に有意ではなかった"), stat, fmt_p(res$p, lead0)))

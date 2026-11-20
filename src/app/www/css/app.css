@@ -167,6 +167,7 @@ table.md-vars input:hover, table.md-vars select:hover { border-color: var(--rule
 table.md-raw td { white-space: nowrap; max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
 .md-bar { display: flex; align-items: center; gap: 6px; margin: 2px 0; }
 .md-bar .md-bl { flex: 0 0 46%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.md-ptrow .md-pt { flex: 0 0 72px; margin-left: auto; text-align: right; } .md-ptrow input.md-pt { width: 72px; min-width: 0; height: 26px; box-sizing: border-box; padding: 0 6px; }
 .md-bar .md-bb { flex: 1; height: 10px; background: var(--rule-l); } .md-bar .md-bb i { display: block; height: 100%; background: var(--t-6fa98a); }
 .md-bar .md-bn { font-family: Consolas, monospace; min-width: 34px; text-align: right; color: var(--ink-ui); }
 /* 報告書 */

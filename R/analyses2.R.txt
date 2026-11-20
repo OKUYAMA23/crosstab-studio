@@ -3,7 +3,11 @@
 #   尺度の信頼性（クロンバックの α）／探索的因子分析／コレスポンデンス分析／回答日時の推移
 
 num_types <- c("numeric", "ordinal")
-score_note <- function(s) if (identical(s$type, "ordinal")) trf("%sは、選択肢に%sの側から高い得点（%d〜1 点）を付けて計算した。", q(s$label), q(unique(slot_labels(s))[1]), length(unique(slot_labels(s)))) else NULL
+score_note <- function(s) if (identical(s$type, "ordinal")) { lev <- unique(slot_labels(s))
+  if (is.null(s[["points"]])) trf("%sは、選択肢に%sの側から高い得点（%d〜1 点）を付けて計算した。", q(s$label), q(lev[1]), length(lev))
+  else trf("%sは、選択肢に次の得点を付けて計算した（%s）。", q(s$label), points_text(lev, lev_points(s, lev))) } else NULL
+points_text <- function(lev, pts) paste(paste0(lev, " = ", fmt_pts(pts)), collapse = tr_("、"))
+fmt_pts <- function(p) ifelse(p == round(p), format(round(p), trim = TRUE), format(p, trim = TRUE))
 clean_note <- function(df, s) {
   if (!identical(s$type, "numeric")) return(NULL)
   st <- clean_number(df[[s$col]], s$unit)$status; v <- slot_score(df, s)
@@ -238,15 +242,16 @@ register("pearson", tr_("ピアソンの相関係数"), tr_("関連・相関"), 
 scale_matrix <- function(df, s, min_items) {
   it <- items_setup(df, s)
   if (it$k < min_items) stop_user(tr_("項目を "), min_items, tr_(" つ以上選んでください（現在 "), it$k, tr_(" 個）。"))
-  X <- sapply(it$F, function(f) length(it$lev) + 1L - as.integer(f)); colnames(X) <- it$names
+  PT <- lapply(seq_along(it$F), function(j) lev_points(s, it$lev, j))
+  X <- sapply(seq_along(it$F), function(j) PT[[j]][as.integer(it$F[[j]])]); colnames(X) <- it$names
   answered <- vapply(it$cols, function(j) sum(!is.na(df[[j]]) & df[[j]] != ""), 0)
   bad <- colSums(!is.na(X)) < 0.5 * pmax(1, answered)
   if (any(bad)) stop_user(tr_("1 つ目の項目と選択肢が違う項目があります（"), paste(colnames(X)[bad], collapse = tr_("、")), tr_("）。同じ選択肢で答える項目だけを選んでください。"))
-  rev <- unlist(s$reverse); if (length(rev)) for (j in which(it$cols %in% rev)) X[, j] <- length(it$lev) + 1L - X[, j]
+  rev <- unlist(s$reverse); if (length(rev)) for (j in which(it$cols %in% rev)) X[, j] <- min(PT[[j]]) + max(PT[[j]]) - X[, j]
   ok <- stats::complete.cases(X); X <- X[ok, , drop = FALSE]
   if (nrow(X) < it$k + 2) stop_user(tr_("すべての項目に答えた人が少なすぎます（"), nrow(X), tr_(" 人）。"))
   sdz <- apply(X, 2, stats::sd); if (any(sdz == 0)) stop_user(tr_("全員が同じ回答をした項目があります（"), paste(colnames(X)[sdz == 0], collapse = tr_("、")), tr_("）。その項目を外してください。"))
-  list(X = X, it = it, nrev = sum(it$cols %in% rev), revnames = colnames(X)[it$cols %in% rev])
+  list(X = X, it = it, nrev = sum(it$cols %in% rev), revnames = colnames(X)[it$cols %in% rev], pts = PT)
 }
 cron_alpha <- function(X) { k <- ncol(X); k / (k - 1) * (1 - sum(apply(X, 2, stats::var)) / stats::var(rowSums(X))) }
 an_alpha <- function(df, req) {
@@ -260,14 +265,14 @@ an_alpha <- function(df, req) {
   om <- NA_real_
   if (k >= 3) { fa1 <- tryCatch(suppressWarnings(stats::factanal(covmat = R, factors = 1, n.obs = n)), error = function(e) NULL)
     if (!is.null(fa1)) { lam <- as.numeric(fa1$loadings[, 1]); if (sum(lam) < 0) lam <- -lam; om <- sum(lam)^2 / (sum(lam)^2 + sum(fa1$uniquenesses)) } }
-  # 天井効果・床効果：平均 ± 標準偏差が、選択肢の得点の範囲（1〜段階の数）を超える項目
-  L <- length(sm$it$lev); mu <- colMeans(X); sdv <- apply(X, 2, stats::sd)
-  cf <- ifelse(mu + sdv > L, tr_("天井効果"), ifelse(mu - sdv < 1, tr_("床効果"), ""))
+  # 天井効果・床効果：平均 ± 標準偏差が、選択肢の得点の範囲（既定は 1〜段階の数）を超える項目
+  pmin_ <- min(unlist(sm$pts)); pmax_ <- max(unlist(sm$pts)); mu <- colMeans(X); sdv <- apply(X, 2, stats::sd)
+  cf <- ifelse(mu + sdv > pmax_, tr_("天井効果"), ifelse(mu - sdv < pmin_, tr_("床効果"), ""))
   res <- list(test = tr_("尺度の信頼性（α 係数・ω 係数）"), n = n_info(nrow(df), n))
   res$grids <- list(list(kind = "grid", title = tr_("項目ごとの統計量（項目分析）"), corner = tr_("項目"), rows = A(colnames(X)), cols = A(c(tr_("平均"), tr_("標準偏差"), tr_("天井・床効果"), tr_("修正済み項目−合計相関"), tr_("その項目を除いたときの α"))),
                          fmt = A(c("num2", "num2", "text", "num2", "num2")), cells = lapply(seq_len(k), function(j) list(mu[j], sdv[j], cf[j], itc[j], adel[j])),
                          mark = lapply(seq_len(k), function(j) A(c(FALSE, FALSE, nzchar(cf[j]), itc[j] < 0.3, !is.na(adel[j]) && adel[j] > a))),
-                         note = trf("得点は 1〜%1$d 点。天井効果は平均 + 標準偏差が %1$d を超える項目、床効果は平均 − 標準偏差が 1 を下回る項目。修正済み項目−合計相関は、その項目と残りの項目の合計点との相関。0.3 未満、または除くと α が上がる項目を太字にした。", L)),
+                         note = trf("得点は %1$s〜%2$s 点。天井効果は平均 + 標準偏差が %2$s を超える項目、床効果は平均 − 標準偏差が %1$s を下回る項目。修正済み項目−合計相関は、その項目と残りの項目の合計点との相関。0.3 未満、または除くと α が上がる項目を太字にした。", fmt_pts(pmin_), fmt_pts(pmax_))),
                     list(kind = "grid", title = tr_("尺度全体"), corner = "", rows = A(tr_("合計点")), cols = A(c(tr_("項目数"), "n", "α", tr_("標準化 α"), "ω", tr_("項目間相関の平均"), tr_("合計点の平均"), tr_("合計点の標準偏差"))),
                          fmt = A(c("int", "int", "num2", "num2", "num2", "num2", "num2", "num2")), cells = list(list(k, n, a, astd, if (is.na(om)) NULL else om, rb, mean(tot), stats::sd(tot)))))
   res$headline <- c(list(hl("α", fmt_num(a))), if (!is.na(om)) list(hl("ω", fmt_num(om))), list(hl(if (identical(LANG, "en")) "Items" else "項目", as.character(k)), hl("n", as.character(n))))
@@ -280,7 +285,9 @@ an_alpha <- function(df, req) {
                        if (length(low)) trf("修正済み項目−合計相関が 0.3 未満の項目は%sであった。", paste(low, collapse = tr_("、"))) else "",
                        if (length(up)) trf("%sを除くと α が上がる。", paste(up, collapse = tr_("、"))) else "",
                        if (sm$nrev) trf("%sは逆転項目として得点を反転した。", paste(sm$revnames, collapse = tr_("、"))) else "",
-                       trf("得点は、選択肢に%sの側から %d〜1 点を付けた。", q(sm$it$lev[1]), length(sm$it$lev)))
+                       if (is.null(req$slots$items$pointsList)) trf("得点は、選択肢に%sの側から %d〜1 点を付けた。", q(sm$it$lev[1]), length(sm$it$lev))
+                       else if (length(unique(lapply(sm$pts, unname))) == 1) trf("得点は、選択肢に次の点を付けた（%s）。", points_text(sm$it$lev, sm$pts[[1]]))
+                       else trf("得点は、項目ごとに次の点を付けた（%s）。", paste(paste0(colnames(X), tr_("："), vapply(sm$pts, function(p) points_text(sm$it$lev, p), "")), collapse = tr_("；"))))
   res$notes <- c(tr_("α の目安は 0.7 以上（0.8 以上なら高い）とされることが多いですが、項目数が多いほど高くなりやすい点に注意してください。"),
                  if (is.na(om)) tr_("ω 係数は、項目が 3 つ以上のときに計算します。") else tr_("ω 係数は、1 因子の因子分析（最尤法）の負荷量から求めた値です（項目ごとに負荷量の大きさが違ってもよい点で、α より前提が緩い）。"),
                  tr_("逆の向きの項目（逆転項目）は、作業ウィンドウの「逆転項目」で指定すると、得点を反転して計算します。"))
@@ -533,8 +540,9 @@ register("textmine", tr_("テキストマイニング（自由記述）"), tr_("
 # 項目の得点（逆転項目は反転）を、欠損を残したまま返す
 scale_raw <- function(df, s) {
   it <- items_setup(df, s)
-  X <- sapply(it$F, function(f) length(it$lev) + 1L - as.integer(f)); if (!is.matrix(X)) X <- matrix(X, ncol = length(it$F)); colnames(X) <- it$names
-  rev <- unlist(s$reverse); if (length(rev)) for (j in which(it$cols %in% rev)) X[, j] <- length(it$lev) + 1L - X[, j]
+  PT <- lapply(seq_along(it$F), function(j) lev_points(s, it$lev, j))
+  X <- sapply(seq_along(it$F), function(j) PT[[j]][as.integer(it$F[[j]])]); if (!is.matrix(X)) X <- matrix(X, ncol = length(it$F)); colnames(X) <- it$names
+  rev <- unlist(s$reverse); if (length(rev)) for (j in which(it$cols %in% rev)) X[, j] <- min(PT[[j]]) + max(PT[[j]]) - X[, j]
   list(X = X, it = it, revnames = colnames(X)[it$cols %in% rev])
 }
 # 各項目は 1 つの因子だけに負荷する。因子の分散は 1 に固定し、因子間の相関を推定する
@@ -641,7 +649,7 @@ reg_design <- function(df, xs) {
       for (l in lv[-1]) { nm <- paste0(v$label, tr_("："), l); cols[[nm]] <- ifelse(is.na(f), NA_real_, as.numeric(f == l)); info[[nm]] <- list(var = v$label, base = lv[1], dummy = TRUE, level = l, slot = v) }
     } else {
       x <- as.numeric(slot_score(df, v)); cols[[v$label]] <- x; info[[v$label]] <- list(var = v$label, dummy = FALSE, slot = v)
-      if (identical(v$type, "ordinal")) { lv <- levels(slot_factor(df, v)); info[[v$label]]$scores <- trf("%sは%s", q(v$label), paste(paste0(lv, " = ", rev(seq_along(lv))), collapse = tr_("、"))) }
+      if (identical(v$type, "ordinal")) { lv <- levels(slot_factor(df, v)); info[[v$label]]$scores <- trf("%sは%s", q(v$label), paste(paste0(lv, " = ", fmt_pts(lev_points(v, lv))), collapse = tr_("、"))) }
     }
   }
   if (!length(cols)) stop_user(tr_("使える説明変数がありません。"))
