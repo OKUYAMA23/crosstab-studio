@@ -366,6 +366,8 @@
       A.commit(function () { t = A.newTab('freq'); if (t) A.setSlot(t, 'a', x.col); }, { quiet: true });
       if (t) { S.ui.sel = t.id; S.ui.selFig = 0; S.ui.view = 'analysis'; S.ui.rtab = 'analysis'; A.schedule(t.id); } A.render(); if (t) scrollToAn(t.id);
     },
+    // 並べ替えの一覧で選んだ選択肢を動かす。arg：「一覧の名前|向き」（向き：-1, 1, top, bottom）
+    ordMove: function (arg) { var p = String(arg).split('|'); ordMoveSel(p[0], p[1]); },
     figCatMove: function (arg) {
       var p = String(arg).split(':'), tab = A.curTab(), sl = tab && tab.slots[p[0]]; if (!sl) return;
       var labs = A.figOrderLabels(sl), i = +p[1], j = i + (+p[2]); if (j < 0 || j >= labs.length) return;
@@ -725,6 +727,26 @@
     A.render();
   }
   function stepRtab(d) { var ks = A.RTABS.map(function (t) { return t[0]; }), i = ks.indexOf(S.ui.rtab); setRtab(ks[(i + d + ks.length) % ks.length]); }
+  // 並べ替えの一覧：選んだ選択肢（S.ui.ordSel）を動かす
+  function ordIds(key) {
+    if (key.indexOf('var:') === 0) { var x = A.v(+key.slice(4)); return x ? x.cats.map(function (c) { return c.v; }) : []; }
+    var tab = A.curTab(), sl = tab && tab.slots[key.slice(4)]; return sl ? A.figOrderLabels(sl) : [];
+  }
+  function ordMoveSel(key, dir) {
+    var sel = S.ui.ordSel && S.ui.ordSel.key === key ? S.ui.ordSel.id : null, ids = ordIds(key), i = ids.indexOf(sel); if (i < 0) return;
+    var j = dir === 'top' ? 0 : dir === 'bottom' ? ids.length - 1 : i + (+dir); if (j < 0 || j >= ids.length || j === i) return;
+    ids.splice(j, 0, ids.splice(i, 1)[0]);
+    if (key.indexOf('var:') === 0) { var x = A.v(+key.slice(4)); reorderVar(x, function () { x.cats.sort(function (a, b) { return ids.indexOf(a.v) - ids.indexOf(b.v); }); }); }
+    else { var tab = A.curTab(); setSlotOrder(tab.slots[key.slice(4)], ids); }
+    ordFocus(key);
+  }
+  // 描き直した後も、一覧にキーボードの操作を続けられるようにし、選んだ行を見える位置に保つ
+  function ordFocus(key) { setTimeout(function () { ordFocusNow(key); }, 0); requestAnimationFrame(function () { setTimeout(function () { ordFocusNow(key); }, 0); }); }   // 描き直しが済んでから
+  function ordFocusNow(key) {
+    var list = [].find.call(document.querySelectorAll('[data-ordlist]'), function (l) { return l.dataset.ordlist === key; }); if (!list) return;
+    var r = list.querySelector('.md-ordrow.sel'); if (r) r.scrollIntoView({ block: 'nearest' });
+    list.focus({ preventScroll: true });
+  }
   // 解析の選択肢を、表示名（まとめた選択肢は同じ名前）の並び labs の順にする。図に出さない選択肢は後ろに残す
   function setSlotOrder(sl, labs) {
     A.commit(function () {
@@ -779,6 +801,7 @@
     el = e.target.closest('[data-radio]'); if (el && !el.disabled) { var inPop = !!el.closest('.md-palpop'); setPath(el.dataset.radio, el.dataset.val); if (inPop) closePop(); return; }
     el = e.target.closest('[data-rtab]'); if (el) { setRtab(el.dataset.rtab); return; }
     el = e.target.closest('[data-view]'); if (el && !el.disabled) { setView(el.dataset.view); return; }
+    el = e.target.closest('[data-ordid]'); if (el) { S.ui.ordSel = { key: el.dataset.ordkey, id: el.dataset.ordid }; A.render(); ordFocus(el.dataset.ordkey); return; }
     el = e.target.closest('[data-varrow]'); if (el && !e.target.closest('input')) { S.ui.selVar = +el.dataset.varrow; S.ui.rtab = 'data'; A.render(); return; }
     el = e.target.closest('.md-merged'); if (el) { var inp = el.parentNode.querySelector('[data-cat$=":label"]'), p = inp.dataset.cat.split(':'), tab = A.curTab(), c = tab.slots[p[0]].cats[+p[1]]; A.commit(function () { c.label = c.v; }, { run: tab.id }); return; }
     el = e.target.closest('.md-figwrap [data-el^="legend:"]'); if (el && !legDragged) pickSeriesColor(+el.getAttribute('data-el').split(':')[1], e.clientX, e.clientY + 8);
@@ -851,6 +874,15 @@
     if (e.key === 'Escape') { var ed = $('.md-figedit, .md-an-rename'); if (ed) { ed.dataset.cancel = '1'; ed.blur(); } else if ($('.md-menu') || $('.md-colorpop') || $('.md-palpop')) closePop(); else if ($('#md_modal')) closeModal(); else if (inText) e.target.blur(); return; }
     if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type !== 'checkbox') { e.target.blur(); return; }
     if (e.key === 'F2' && !inText && S.ui.sel) { e.preventDefault(); renameAn(S.ui.sel); return; }
+    // 並べ替えの一覧：↑↓ で選ぶ行を変え、Alt＋↑↓ で選んだ行を動かす（Alt＋Home／End で先頭・末尾へ）
+    var ol = e.target.closest && e.target.closest('[data-ordlist]');
+    if (ol && /^(ArrowUp|ArrowDown|Home|End)$/.test(e.key)) {
+      e.preventDefault(); var key = ol.dataset.ordlist, ids = ordIds(key), cur = S.ui.ordSel && S.ui.ordSel.key === key ? ids.indexOf(S.ui.ordSel.id) : -1;
+      if (e.altKey) { ordMoveSel(key, e.key === 'ArrowUp' ? '-1' : e.key === 'ArrowDown' ? '1' : e.key === 'Home' ? 'top' : 'bottom'); return; }
+      var n = e.key === 'ArrowUp' ? Math.max(0, cur - 1) : e.key === 'ArrowDown' ? Math.min(ids.length - 1, cur + 1) : e.key === 'Home' ? 0 : ids.length - 1;
+      if (ids.length) { S.ui.ordSel = { key: key, id: ids[n] }; A.render(); ordFocus(key); }
+      return;
+    }
     if (!(e.ctrlKey || e.metaKey)) return;
     if (k === 's') { e.preventDefault(); act.save(); }
     else if (k === 'o') { e.preventDefault(); act.openCsv(); }

@@ -37,6 +37,17 @@
   function options(list, cur) { return list.map(function (o) { var val = Array.isArray(o) ? o[0] : o, lab = Array.isArray(o) ? o[1] : o; return '<option value="' + esc(val) + '"' + (String(val) === String(cur) ? ' selected' : '') + '>' + esc(lab) + '</option>'; }).join(''); }
   function rbSelect(label, path, list, tip, off, type) { return '<label class="md-rfield"' + attrs({ 'data-tip': tip }) + '>' + esc(label) + '<select' + attrs({ 'data-set': path, 'data-type': type, disabled: !!off }) + '>' + options(list, get(path)) + '</select></label>'; }
   function rbCombo(label, path, dl, tip, off, type) { var val = get(path); return '<label class="md-rfield"' + attrs({ 'data-tip': tip }) + '>' + esc(label) + '<input' + attrs({ 'data-set': path, 'data-type': type || 'num', list: dl, value: val === null || val === undefined ? '' : val, disabled: !!off }) + '></label>'; }
+  // 並べ替えの一覧：行をクリックして選び、上の固定のボタン（または Alt＋↑↓）で選んだ行を動かす。動かした行は選んだまま
+  //   key：一覧の名前（var:列番号 / fig:欄の名前）。rows：{ id, label, extra }
+  function orderList(key, rows) {
+    var sel = S.ui.ordSel && S.ui.ordSel.key === key ? S.ui.ordSel.id : null, i0 = rows.findIndex(function (r) { return r.id === sel; }), last = rows.length - 1;
+    function btn(dir, text, tip, off) { return '<button class="md-btn md-btn-sm" data-act="ordMove" data-arg="' + esc(key) + '|' + dir + '" data-tip="' + tip + '"' + (off ? ' disabled' : '') + '>' + text + '</button>'; }
+    return '<div class="md-ordtools">' + btn('top', _t('先頭へ'), _t('選んだ選択肢をいちばん上へ動かします。'), i0 <= 0) + btn('-1', _t('▲ 上へ'), _t('選んだ選択肢を 1 つ上へ動かします（Alt＋↑）。'), i0 <= 0) +
+      btn('1', _t('▼ 下へ'), _t('選んだ選択肢を 1 つ下へ動かします（Alt＋↓）。'), i0 < 0 || i0 === last) + btn('bottom', _t('末尾へ'), _t('選んだ選択肢をいちばん下へ動かします。'), i0 < 0 || i0 === last) + '</div>' +
+      '<div class="md-ordlist" tabindex="0" data-ordlist="' + esc(key) + '">' + rows.map(function (r, i) {
+        return '<div class="md-ordrow' + (i === i0 ? ' sel' : '') + '" data-ordkey="' + esc(key) + '" data-ordid="' + esc(r.id) + '" data-tip="' + esc(r.label) + '"><span class="md-ordno">' + (i + 1) + '</span><span class="md-bl">' + esc(r.label) + '</span>' + (r.extra || '') + '</div>';
+      }).join('') + '</div>';
+  }
   function sec(title) { return '<div class="md-sec"><div class="md-sec-title">' + esc(title) + '</div>' + [].slice.call(arguments, 1).join('') + '</div>'; }
   function hint(t) { return '<div class="md-hint">' + esc(t) + '</div>'; }
   function grid2() { return '<div class="md-grid2">' + [].slice.call(arguments).join('') + '</div>'; }
@@ -636,7 +647,9 @@
     var prevKey = body.dataset.key; if (prevKey) S.ui.paneScroll[prevKey] = body.scrollTop;
     $('#md_pane_sel').innerHTML = options(RTABS, S.ui.rtab);
     var f = { home: paneHome, data: paneData, analysis: paneAnalysis, figure: paneFigure, table: paneTable, export: paneExport, settings: paneSettings }[S.ui.rtab], key = S.ui.rtab + ':' + (S.ui.sel || '');
+    var ae = document.activeElement, ordKey = ae && ae.dataset && ae.dataset.ordlist;   // 並べ替えの一覧を操作中なら、描き直した後も続けて操作できるようにする
     body.innerHTML = f(); body.dataset.key = key; body.scrollTop = S.ui.paneScroll[key] || 0;
+    if (ordKey) { var ol = [].find.call(body.querySelectorAll('[data-ordlist]'), function (l) { return l.dataset.ordlist === ordKey; }); if (ol) ol.focus({ preventScroll: true }); }
     body.querySelectorAll('textarea[data-auto]').forEach(autoGrow);
   }
   function target(tab) { return _t('<div class="md-target" data-tip="作業ウィンドウの設定は、この解析に効きます。解析の見出しや図をクリックすると切り替わります。">対象：<b>') + (S.P.tabs.indexOf(tab) + 1) + '. ' + esc(tab.name) + '</b></div>'; }
@@ -666,11 +679,9 @@
         x.type === 'multi' ? _t('<label class="md-field"><span>回答の区切り</span><select data-var="delim">') + options([[';', _t('セミコロン（;）')], [', ', _t('カンマと空白（, ）')], [_t('、'), _t('読点（、）')]], x.delim) + '</select></label>' : '<span></span>'),
       hint(_t('表示名は図・表・報告書に出ます。短く書き直すと読みやすくなります。'))) +
       sec(_t('質問文'), '<div class="md-hint" style="color:var(--t-1e2f26);white-space:pre-wrap">' + esc(x.header) + '</div>');
-    if (A.isCat(x)) h += sec(_t('回答の内訳（{0} 人が回答）', x.n), x.cats.map(function (c, i) {
-      return '<div class="md-bar" data-tip="' + esc(c.v) + '"><span class="md-bl">' + esc(c.v) + '</span><span class="md-bb"><i style="width:' + (c.n / mx * 100).toFixed(1) + '%"></i></span><span class="md-bn">' + c.n + '</span>' +
-        (x.type !== 'multi' ? '<button class="md-mv" data-act="varCatMove" data-arg="' + i + _t(':-1" data-tip="この選択肢を 1 つ上へ動かします。"') + (i === 0 ? ' disabled' : '') + '>▲</button>' +
-          '<button class="md-mv" data-act="varCatMove" data-arg="' + i + _t(':1" data-tip="この選択肢を 1 つ下へ動かします。"') + (i === x.cats.length - 1 ? ' disabled' : '') + '>▼</button>' : '') + '</div>';
-    }).join('') + (x.type !== 'multi' ? _t('<div class="md-row" style="margin-top:6px"><button class="md-btn md-btn-sm" data-act="varOrder" data-arg="rev" data-tip="選択肢の並びを逆にします。">逆の順</button><button class="md-btn md-btn-sm" data-act="varOrder" data-arg="count" data-tip="人数の多い選択肢から並べます。">人数の多い順</button><button class="md-btn md-btn-sm" data-act="varOrder" data-arg="auto" data-tip="データを読み込んだときの並びに戻します。">自動の並び</button></div>') : ''), hint(x.type === 'ordinal' ? _t('段階の順に並べてください。並びは ▲▼ と下のボタンで変えられ、この列を使う解析の表と図にもすぐ反映されます。点の付け方は下の「配点」で選べます。') : x.type === 'multi' ? _t('複数回答は、選択肢ごとに選んだ人数を数えます。') : _t('並びは、表や図の順番になります。▲▼ と下のボタンで変えると、この列を使う解析の表と図にもすぐ反映されます。')),
+    if (A.isCat(x)) h += sec(_t('回答の内訳（{0} 人が回答）', x.n), x.type === 'multi' ? x.cats.map(function (c) {
+      return '<div class="md-bar" data-tip="' + esc(c.v) + '"><span class="md-bl">' + esc(c.v) + '</span><span class="md-bb"><i style="width:' + (c.n / mx * 100).toFixed(1) + '%"></i></span><span class="md-bn">' + c.n + '</span></div>';
+    }).join('') : orderList('var:' + x.col, x.cats.map(function (c) { return { id: c.v, label: c.v, extra: '<span class="md-bb"><i style="width:' + (c.n / mx * 100).toFixed(1) + '%"></i></span><span class="md-bn">' + c.n + '</span>' }; })) + (x.type !== 'multi' ? _t('<div class="md-row" style="margin-top:6px"><button class="md-btn md-btn-sm" data-act="varOrder" data-arg="rev" data-tip="選択肢の並びを逆にします。">逆の順</button><button class="md-btn md-btn-sm" data-act="varOrder" data-arg="count" data-tip="人数の多い選択肢から並べます。">人数の多い順</button><button class="md-btn md-btn-sm" data-act="varOrder" data-arg="auto" data-tip="データを読み込んだときの並びに戻します。">自動の並び</button></div>') : ''), hint(x.type === 'ordinal' ? _t('段階の順に並べてください。選択肢をクリックして選び、上のボタン（または Alt＋↑↓）で動かします。並びは、この列を使う解析の表と図にもすぐ反映されます。点の付け方は下の「配点」で選べます。') : x.type === 'multi' ? _t('複数回答は、選択肢ごとに選んだ人数を数えます。') : _t('並びは、表や図の順番になります。選択肢をクリックして選び、上のボタン（または Alt＋↑↓）で動かすと、この列を使う解析の表と図にもすぐ反映されます。')),
       _t('<button class="md-btn" data-act="freqOfVar">この列を集計する</button>'));
     else if (x.type === 'numeric' && x.summary) h += sec(_t('数値の要約'), hint(_t('最小 {0}、中央値 {1}、平均 {2}、最大 {3}（{4} 人が回答）', x.summary.min, x.summary.median, (+x.summary.mean).toFixed(2), x.summary.max, x.n)));
     else h += sec(_t('回答'), hint(x.n + _t(' 人が回答しています。この種類の列は解析に使いません。')));
@@ -752,12 +763,8 @@
     var ordSlots = Object.keys(tab.slots || {}).filter(function (id) { var sl = tab.slots[id]; return sl && sl.cats && A.figOrderLabels(sl).length > 1; });
     if (ordSlots.length) h += sec(_t('選択肢の並び'), ordSlots.map(function (id) {
       var sl = tab.slots[id], labs = A.figOrderLabels(sl), vr = sl.col ? A.v(sl.col) : null;
-      return '<div class="md-sub">' + esc(vr ? vr.label : _t('選択肢')) + '</div>' + labs.map(function (l, i) {
-        return '<div class="md-bar"><span class="md-bl" style="flex:1" data-tip="' + esc(l) + '">' + esc(l) + '</span>' +
-          '<button class="md-mv" data-act="figCatMove" data-arg="' + id + ':' + i + _t(':-1" data-tip="この選択肢を 1 つ上へ動かします。"') + (i === 0 ? ' disabled' : '') + '>▲</button>' +
-          '<button class="md-mv" data-act="figCatMove" data-arg="' + id + ':' + i + _t(':1" data-tip="この選択肢を 1 つ下へ動かします。"') + (i === labs.length - 1 ? ' disabled' : '') + '>▼</button></div>';
-      }).join('') + _t('<div class="md-row" style="margin:4px 0 6px"><button class="md-btn md-btn-sm" data-act="figCatOrder" data-arg="{0}:rev" data-tip="選択肢の並びを逆にします。">逆の順</button><button class="md-btn md-btn-sm" data-act="figCatOrder" data-arg="{0}:count" data-tip="人数の多い選択肢から並べます。">人数の多い順</button><button class="md-btn md-btn-sm" data-act="figCatOrder" data-arg="{0}:data" data-tip="「データ」タブで決めた並びに戻します。">データの並び</button></div>', id);
-    }).join(''), hint(_t('この解析の表と図の並びが変わります。すべての解析で並びを変えるときは、「データ」タブでその列を選んで変えてください。')));
+      return '<div class="md-sub">' + esc(vr ? vr.label : _t('選択肢')) + '</div>' + orderList('fig:' + id, labs.map(function (l) { return { id: l, label: l }; })) + _t('<div class="md-row" style="margin:4px 0 6px"><button class="md-btn md-btn-sm" data-act="figCatOrder" data-arg="{0}:rev" data-tip="選択肢の並びを逆にします。">逆の順</button><button class="md-btn md-btn-sm" data-act="figCatOrder" data-arg="{0}:count" data-tip="人数の多い選択肢から並べます。">人数の多い順</button><button class="md-btn md-btn-sm" data-act="figCatOrder" data-arg="{0}:data" data-tip="「データ」タブで決めた並びに戻します。">データの並び</button></div>', id);
+    }).join(''), hint(_t('選択肢をクリックして選び、上のボタン（または Alt＋↑↓）で動かします。変わるのは、この解析の表と図の並びです。すべての解析で変えるときは、「データ」タブでその列を選んで変えてください。')));
     // グラフの枠：描く範囲を四方の線で囲むか、左と下の軸だけにするか（見つけやすいように、図の種類のすぐ下に置く）
     if (!pie && !heat && kind !== 'cloud' && kind !== 'net') h += sec(_t('グラフの枠'), tiles('fig.frame', fromMini('frame', [['L', _t('左と下だけ')], ['box', _t('四方を囲む')]])), hint(_t('「四方を囲む」にすると、グラフを描く範囲を枠で囲みます。枠の太さは「線の太さ」の「軸と枠」で変えられます。')));
     if (!pie) h += sec(_t('軸の名前'), grid2(fText(heat ? _t('上の見出し') : _t('数値の軸の名前'), 'fig.vTitle', { type: 'strnull', ph: _t('自動') }), fText(_t('分類の軸の名前'), 'fig.cTitle', { type: 'strnull', ph: _t('自動') })),

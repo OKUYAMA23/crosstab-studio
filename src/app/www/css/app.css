@@ -359,3 +359,16 @@ body.md-moving, body.md-moving * { cursor: move !important; user-select: none; }
 .md-swatch-pick.set { outline: 2px solid var(--t-1e5c3a); outline-offset: 1px; }
 /* アプリの色を選ぶボタン：選んでいる色に枠を付ける */
 .md-theme-on { border: 2px solid var(--ink-ui) !important; font-weight: 700; }
+
+/* 並べ替えの一覧：行を選んで、上の固定のボタンで動かす */
+.md-ordtools { display: flex; gap: 4px; margin: 2px 0 4px; flex-wrap: wrap; }
+.md-ordlist { border: 1px solid var(--rule); background: #FFF; outline: none; }
+.md-ordlist:focus-visible { border-color: var(--accent); }
+.md-ordrow { display: flex; align-items: center; gap: 6px; padding: 3px 6px; cursor: pointer; border-bottom: 1px solid var(--rule-l); }
+.md-ordrow:last-child { border-bottom: 0; }
+.md-ordrow:hover { background: var(--hover); }
+.md-ordrow.sel { background: var(--sel); box-shadow: inset 3px 0 0 var(--accent); }
+.md-ordrow .md-ordno { flex: 0 0 18px; text-align: right; color: var(--ink-sub); font-family: Consolas, monospace; }
+.md-ordrow .md-bl { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.md-ordrow .md-bb { flex: 0 0 34%; height: 10px; background: var(--rule-l); } .md-ordrow .md-bb i { display: block; height: 100%; background: var(--t-6fa98a); }
+.md-ordrow .md-bn { font-family: Consolas, monospace; min-width: 34px; text-align: right; color: var(--ink-ui); }
