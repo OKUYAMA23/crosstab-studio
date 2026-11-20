@@ -600,7 +600,7 @@
   // 報告書の末尾に入れる「使用したソフトウェア」
   function citeReport() {
     var c = citeList();
-    return { title: _t('使用したソフトウェア'), text: _t('集計・検定・図の作成には CrossTab Studio（バージョン {0}）を用い、計算には R{1}を用いた。論文などで引用するときの例（APA 第 7 版）：', window.CTS_APP_VERSION || '', S.r ? _t('（バージョン {0}）', S.r) : ''),
+    return { title: _t('使用したソフトウェア'), text: _t('集計・検定・図の作成には CrossTab Studio（バージョン {0}）を用い、計算には R{1}を用いた。この結果を論文・レポート・発表などで使うときは、CrossTab Studio を引用していただけると幸いです。引用の例（APA 第 7 版）：', window.CTS_APP_VERSION || '', S.r ? _t('（バージョン {0}）', S.r) : ''),
              refs: [c[0].ref(false), c[4].ref(false)] };
   }
   function reportPlain() {

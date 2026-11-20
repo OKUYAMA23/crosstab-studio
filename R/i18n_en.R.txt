@@ -1961,6 +1961,7 @@ EN_DICT <- list2env(list(
 "集計と検定の部品を読み込んでいます" = "Loading the analysis components",
 "集計と検定はすべて、このパソコンの中の R{0} で計算しています。データが外部に送られることはありません。" = "All tabulation and tests are calculated with R{0} on this computer. Data are never sent anywhere. ",
 "集計と検定はすべて、この端末のブラウザの中で動く R{0} で計算しています。データが外部に送られることはありません。" = "All tabulation and tests are calculated with R{0} running in this device's browser. Data are never sent anywhere.",
+"集計・検定・図の作成には CrossTab Studio（バージョン {0}）を用い、計算には R{1}を用いた。この結果を論文・レポート・発表などで使うときは、CrossTab Studio を引用していただけると幸いです。引用の例（APA 第 7 版）：" = "CrossTab Studio (version {0}) was used for tabulation, statistical tests and figures, and R{1} for the calculations. If you use these results in a paper, report or presentation, we would appreciate a citation of CrossTab Studio. Example citation (APA 7th ed.):",
 "集計・検定・図の作成には CrossTab Studio（バージョン {0}）を用い、計算には R{1}を用いた。論文などで引用するときの例（APA 第 7 版）：" = "CrossTab Studio (version {0}) was used for tabulation, statistical tests and figures, and R{1} for the calculations. Example citation (APA 7th ed.):",
 "青" = "Blue",
 "青—赤" = "Blue–red",
