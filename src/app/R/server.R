@@ -1,7 +1,7 @@
 # server.R ― 画面（ブラウザ）と R をつなぐ小さなローカルサーバー。127.0.0.1 だけで待ち受ける。
 
 APP_ID <- "CrossTabStudio"
-APP_VERSION <- "0.9.7"
+APP_VERSION <- "0.9.8"
 STORE <- new.env()          # 読み込んだデータ（id → data.frame）
 STATE <- new.env()
 STATE$last_ping <- Sys.time(); STATE$had_client <- FALSE; STATE$bye_at <- NULL
@@ -111,6 +111,10 @@ route <- function(req) {
     x <- df[[body$col]]
     info <- category_info(x, body$type, if (is.null(body$delim)) ";" else body$delim)
     return(json_resp(list(ok = TRUE, cats = info$cats, ordinal = info$ordinal)))
+  }
+  if (path == "/api/timeinfo") {                    # 日時で回に分ける画面用：読み取った日時（1970-01-01 からの分）を古い順に返す
+    t <- time_minutes(df[[body$col]]); bad <- sum(is.na(t) & !is.na(df[[body$col]]) & nzchar(trimws(as.character(df[[body$col]]))))
+    return(json_resp(list(ok = TRUE, t = A(sort(t[!is.na(t)])), bad = bad)))
   }
   if (path == "/api/coltext") {                     # テキストマイニング用：絞り込み後の自由記述（と群）を画面へ返す。単語に分けるのは画面側
     keep <- apply_filter(df, body$filter); d <- df[keep, , drop = FALSE]

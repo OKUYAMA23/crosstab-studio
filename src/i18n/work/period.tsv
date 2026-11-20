@@ -1,0 +1,41 @@
+1	# "%s" is a column of rounds that the app made from the date-times in "%s" (it is column %d of the data). Breaks: %s
+2	before %s
+3	from %s on
+4	from %s, before %s
+5	"%s" was made by dividing the responses by the date-time in "%s" (%s). 
+6	Because respondents could not be identified and the same people may have answered in more than one round, the comparison between levels of "%s" is an approximation that treats the responses in each round as independent groups. 
+7	"%s" includes the same people answering in more than one round, so the test is an approximation that treats each round's responses as independent groups. If the same person's answers are positively correlated, the p value tends to be larger (significant differences are harder to detect). The tables and figures can be read as they are. 
+8	The type of a column of rounds made from date-times cannot be changed. 
+9	There is no date-time column. In "Data", set the type of the timestamp column to "Date-time". 
+10	Round
+11	Could not read the date-times. 
+12	Could not read date-times from this column. 
+13	Breaks were placed where responses stopped for 3 days or more ({0}). You can edit the break date-times and the names. 
+14	No long pause in responses was found, so a provisional break was placed on the middle day of the period. Please adjust the break date-time. 
+15	Round {0}
+16	<span class="md-hint" style="margin:0">From the first response ({0})</span>
+17	" data-tip="Removes this break and merges this round into the previous one.">×</button>
+18	Response date-times: {0} – {1} ({2} responses)
+19	. {0} responses whose date-time could not be read are not assigned to any round. 
+20	Divide into rounds by date-time (edit)
+21	Name of the new column
+22	<p class="md-hint" style="margin:0 0 6px">Each round runs from its start date-time up to (but not including) the start of the next round. Round names appear as they are in figures, tables and the report.</p>
+23	<th class="md-rh">Round name</th><th class="md-rh">Start</th><th class="md-rh">Responses</th><th class="md-rh"></th>
+24	<button class="md-btn" data-act="periodAdd">Add a break</button><button class="md-btn" data-act="periodAuto" data-tip="Sets the breaks again from the pauses in responses. The names and date-times you entered are reset.">Re-detect breaks</button>
+25	<label style="display:flex;gap:6px;align-items:flex-start"><input type="checkbox" id="md_pd_same"{0}><span>The same people answered in more than one round (individuals cannot be identified)</span></label>
+26	<p class="md-hint" style="margin:2px 0 0 22px">When checked, the results and report of tests using this column note that they are “an approximation treating each round's responses as independent groups”. Leave it unchecked when different people answered in each round.</p>
+27	<button class="md-btn" data-act="closeModal">Cancel</button><button class="md-btn md-btn-primary" data-act="periodSave">{0}</button>
+28	Enter a name for the new column. 
+29	Enter the round names. 
+30	Two rounds have the same name. Give them different names. 
+31	Enter the break date-times. 
+32	Order the break date-times from oldest at the top. 
+33	A round has no responses. Change the break date-time or remove that break. 
+34	Updated "{0}". 
+35	Created "{0}" ({1} rounds). You can choose it as the groups to compare in cross tabulation, t tests, ANOVA and so on. 
+36	New columns
+37	Rounds by date
+38	Creates a column that divides responses into "Round 1", "Round 2", … by their timestamp. Use it to compare rounds (cross tabulation, t test, ANOVA and so on).
+39	{1} rounds divided by the date-time in "{0}"
+40	 (same people answered)
+41	<td>Rounds by date-time<br><button class="md-btn md-btn-sm" data-act="periodEdit" data-arg="{0}">Edit</button> <button class="md-btn md-btn-sm" data-act="scoreDel" data-arg="{1}">Delete</button></td>

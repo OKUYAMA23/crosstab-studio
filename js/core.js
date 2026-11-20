@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var MAX_TABS = Infinity;                 // 解析の数に上限は設けない（多いときは、画面に見えている解析だけ図を描く）
-  var TYPE_NAMES; function mkTypes() { TYPE_NAMES = { nominal: _t('単一回答'), ordinal: _t('順序あり'), multi: _t('複数回答'), numeric: _t('数値'), text: _t('自由記述（使わない）'), time: _t('日時（使わない）'), empty: _t('回答なし') }; } mkTypes(); window.CTS_ONLANG.push(mkTypes);
+  var TYPE_NAMES; function mkTypes() { TYPE_NAMES = { nominal: _t('単一回答'), ordinal: _t('順序あり'), multi: _t('複数回答'), numeric: _t('数値'), text: _t('自由記述（使わない）'), time: _t('日時'), empty: _t('回答なし') }; } mkTypes(); window.CTS_ONLANG.push(mkTypes);
   var S = {
     registry: [], data: null, P: null, results: {}, undo: [], redo: [], dirty: false, projName: '', r: null, holm: null,
     ui: { rtab: 'home', view: 'analysis', sel: null, selFig: 0, pane: true, selVar: null, dataView: 'vars', paneScroll: {}, rawRows: 200 }
@@ -131,7 +131,10 @@
     return s;
   }
   function compDefs() {
-    return compVars().map(function (x) { return { col: x.col, name: x.label, method: x.comp.method, reverse: x.comp.reverse || [], items: x.comp.items.map(itemSlot).filter(Boolean) }; });
+    return compVars().map(function (x) {
+      if (x.comp.kind === 'period') { var sv = v(x.comp.src); return { kind: 'period', col: x.col, name: x.label, src: x.comp.src, srcLabel: sv ? sv.label : '', breaks: x.comp.breaks, names: x.comp.names, same: !!x.comp.same }; }
+      return { col: x.col, name: x.label, method: x.comp.method, reverse: x.comp.reverse || [], items: x.comp.items.map(itemSlot).filter(Boolean) };
+    });
   }
   async function apiData(path, body) {
     body.dataId = S.data.dataId;
@@ -327,6 +330,7 @@
       });
       // 尺度得点の列は、元の列の番号を付け直して右に足し直す
       oldVars.filter(function (o) { return o.comp; }).sort(function (a, b) { return a.col - b.col; }).forEach(function (o) {
+        if (o.comp.kind === 'period') { if (!map[o.comp.src]) return; var nc2 = nv.length + 1, pv = clone(o); pv.col = nc2; pv.comp.src = map[o.comp.src]; map[o.col] = nc2; nv.push(pv); return; }
         var items = o.comp.items.map(function (c) { return map[c]; }).filter(Boolean); if (items.length < 2) return;
         var nc = nv.length + 1, cv = clone(o); cv.col = nc; cv.comp.items = items; cv.comp.reverse = (o.comp.reverse || []).map(function (c) { return map[c]; }).filter(Boolean);
         map[o.col] = nc; nv.push(cv);

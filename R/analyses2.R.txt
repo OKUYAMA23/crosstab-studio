@@ -387,11 +387,9 @@ civil_from_days <- function(z) { z <- z + 719468; era <- floor(z / 146097); doe 
 fmt_day <- function(z, jp = FALSE) { c <- civil_from_days(z); if (jp) sprintf(tr_("%d年%d月%d日"), c[, 1], c[, 2], c[, 3]) else sprintf("%d/%02d/%02d", c[, 1], c[, 2], c[, 3]) }
 an_timeline <- function(df, req) {
   alpha <- opt(req, "alpha", 0.05); s <- req$slots$t; x <- as.character(df[[s$col]])
-  m <- regmatches(x, regexec("^([0-9]{4})[/-]([0-9]{1,2})[/-]([0-9]{1,2})", x))
-  okm <- lengths(m) >= 4
+  tm <- time_minutes(x); okm <- !is.na(tm)
   if (!any(okm)) stop_user(q(s$label), tr_("から日付を読み取れませんでした。"))
-  mm <- do.call(rbind, lapply(m[okm], function(v) as.numeric(v[2:4])))
-  z <- days_from_civil(mm[, 1], mm[, 2], mm[, 3])
+  z <- floor(tm[okm] / 1440); mm <- civil_from_days(z)
   per <- opt(req, "per", "day")
   if (per == "week") { zk <- z - ((z + 3) %% 7); all <- seq(min(zk), max(zk), by = 7); key <- match(zk, all); lab <- trf("%s 週", fmt_day(all)) }
   else if (per == "month") { mk <- mm[, 1] * 12 + mm[, 2] - 1; all <- seq(min(mk), max(mk)); key <- match(mk, all); lab <- sprintf("%d/%02d", all %/% 12, all %% 12 + 1) }

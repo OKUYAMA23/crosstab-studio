@@ -71,7 +71,7 @@
     d.addEventListener('mousedown', function (e) { if (e.target === d) closeModal(); });
     return d;
   }
-  function closeModal() { var m = $('#md_modal'); if (m) m.remove(); }
+  function closeModal() { var m = $('#md_modal'); if (m) m.remove(); PD = null; }
   function analysisDialog(onPick, title) {
     // スマホでは検索欄を出さない（一覧から選ぶ方が速く、入力欄に触れると画面が拡大されるため）
     var useSearch = !window.CTS_PHONE;
@@ -531,6 +531,12 @@
       A.customSet(null); A.setDefMode('init'); A.render('pane'); refreshSettings(); A.toast(_t('カスタム設定を消しました。初期設定を使います。'));
     },
     scoreNew: function () { scoreDialog(null); },
+    periodNew: function () { periodDialog(null); },
+    periodEdit: function (arg) { periodDialog(+arg); },
+    periodAdd: function () { if (PD) PD.add(); },
+    periodDelRow: function (arg) { if (PD) PD.del(+arg); },
+    periodAuto: function () { if (PD) PD.auto(); },
+    periodSave: function () { if (PD) PD.save(); },
     guide: function () { guideDialog(); },
     scoreEdit: function (arg) { scoreDialog(+arg); },
     scoreDel: function (arg) {
@@ -692,7 +698,7 @@
   function stepRtab(d) { var ks = A.RTABS.map(function (t) { return t[0]; }), i = ks.indexOf(S.ui.rtab); setRtab(ks[(i + d + ks.length) % ks.length]); }
   function setView(v) { S.ui.view = v; if (v === 'data') S.ui.rtab = 'data'; else if (v === 'report') S.ui.rtab = 'export'; else if (S.ui.rtab === 'data') S.ui.rtab = 'home'; A.render(); }
   async function changeVar(x, type, delim) {
-    if (x.comp) { A.toast(_t('尺度得点の列の種類は変えられません。'), true); A.render(); return; }
+    if (x.comp) { A.toast(x.comp.kind === 'period' ? _t('日時で分けた回の列の種類は変えられません。') : _t('尺度得点の列の種類は変えられません。'), true); A.render(); return; }
     var needCats = ['nominal', 'ordinal', 'multi'].indexOf(type) >= 0, cats = x.cats, same = (type === 'multi') === (x.type === 'multi') && delim === x.delim && A.isCat(x);
     try {
       if (needCats && !same) { var d = await A.apiData('/api/varinfo', { col: x.col, type: type === 'multi' ? 'multi' : 'nominal', delim: delim }); if (!d.ok) throw new Error(d.message); cats = d.cats; }
@@ -1010,6 +1016,125 @@
     modal('CrossTab Studio', body, _t('<button class="md-btn md-btn-primary" id="md_chg_ok">わかりました</button>'), 560);
     $('#md_chg_ok').onclick = function () { mark(); closeModal(); };
     var back = $('#md_modal'); if (back) back.addEventListener('mousedown', mark);
+  }
+  // ---------------- 日時で回に分ける：タイムスタンプの区切りの日時で「第 1 回」「第 2 回」…の列を作る
+  //   日時は、時刻帯を考えない「1970-01-01 0:00 からの分」で扱う（R の time_minutes と同じ）
+  var PD = null;
+  function pdLocal(m) { var d = new Date(Math.round(m) * 60000), p = function (n) { return ('0' + n).slice(-2); }; return d.getUTCFullYear() + '-' + p(d.getUTCMonth() + 1) + '-' + p(d.getUTCDate()) + 'T' + p(d.getUTCHours()) + ':' + p(d.getUTCMinutes()); }
+  function pdMin(str) { var m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(str || ''); return m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) / 60000 : NaN; }
+  function pdShow(m) { return pdLocal(m).replace('T', ' ').replace(/-/g, '/'); }
+  // 区切りの候補：回答が 3 日以上とぎれている所の、次の回答の日の 0:00（20 か所まで）
+  function pdSuggest(t) {
+    var out = [];
+    for (var i = 1; i < t.length && out.length < 20; i++) if (t[i] - t[i - 1] >= 3 * 1440) out.push(Math.floor(t[i] / 1440) * 1440);
+    return out;
+  }
+  async function periodDialog(col) {
+    var times = S.P.vars.filter(function (y) { return y.type === 'time'; });
+    if (!times.length) { A.toast(_t('日時の列がありません。「データ」でタイムスタンプの列の種類を「日時」にしてください。'), true); return; }
+    var x = col ? A.v(col) : null, c = x ? x.comp : null;
+    var st = { src: c ? c.src : times[0].col, name: x ? x.label : _t('回'), same: c ? !!c.same : false, rows: [], t: [], msg: '' };
+    if (c) st.rows = c.names.map(function (nm, k) { return { name: nm, start: k ? c.breaks[k - 1] : null }; });
+    async function load(resetRows) {
+      var d = await A.apiData('/api/timeinfo', { col: st.src });
+      if (!d.ok) { A.toast(d.message || _t('日時を読み取れませんでした。'), true); return false; }
+      st.t = d.t || [];
+      if (!st.t.length) { A.toast(_t('この列から日時を読み取れませんでした。'), true); return false; }
+      st.bad = d.bad || 0;
+      if (resetRows) auto(true);
+      return true;
+    }
+    function auto(quiet) {
+      var t = st.t, br = pdSuggest(t);
+      if (br.length) st.msg = _t('回答が 3 日以上とぎれている所で区切りました（{0} か所）。区切りの日時と名前は直せます。', br.length);
+      else {
+        var mid = Math.floor((t[0] + (t[t.length - 1] - t[0]) / 2) / 1440) * 1440;
+        if (mid <= t[0]) mid = t[0] + 1;
+        br = [mid];
+        st.msg = _t('回答が大きくとぎれている所が見つからなかったので、仮に期間の真ん中の日で区切りました。区切りの日時を直してください。');
+      }
+      st.rows = [{ name: _t('第 {0} 回', 1), start: null }].concat(br.map(function (b, k) { return { name: _t('第 {0} 回', k + 2), start: pdLocal(b) }; }));
+      if (!quiet) draw();
+    }
+    function counts() {
+      var t = st.t, br = st.rows.slice(1).map(function (r) { return pdMin(r.start); }), n = st.rows.map(function () { return 0; });
+      if (br.some(isNaN)) return null;
+      t.forEach(function (m) { var k = 0; while (k < br.length && m >= br[k]) k++; n[k]++; });
+      return n;
+    }
+    function rowsHtml() {
+      var n = counts() || [];
+      return st.rows.map(function (r, k) {
+        return '<tr><td><input type="text" data-pdname="' + k + '" value="' + esc(r.name) + '" style="width:100%"></td><td>' +
+          (k ? '<input type="datetime-local" data-pdstart="' + k + '" value="' + esc(r.start || '') + '" style="width:100%">' : _t('<span class="md-hint" style="margin:0;display:block;text-align:left;white-space:normal">最初の回答（{0}）から</span>', pdShow(st.t[0]))) +
+          '</td><td class="num" data-pdn="' + k + '">' + (n[k] === undefined ? '–' : n[k]) + '</td><td>' + (k && st.rows.length > 2 ? '<button class="md-btn md-btn-sm" data-act="periodDelRow" data-arg="' + k + _t('" data-tip="この区切りをなくし、前の回とまとめます。">×</button>') : '') + '</td></tr>';
+      }).join('');
+    }
+    function draw() {
+      var m = document.getElementById('md_modal'); if (!m) return;
+      m.querySelector('#md_pd_rows').innerHTML = rowsHtml();
+      m.querySelector('#md_pd_msg').textContent = st.msg;
+      m.querySelector('#md_pd_range').textContent = _t('回答の日時：{0} 〜 {1}（{2} 件）', pdShow(st.t[0]), pdShow(st.t[st.t.length - 1]), st.t.length) + (st.bad ? _t('。日時を読み取れなかった回答 {0} 件は、どの回にも入れません。', st.bad) : '');
+    }
+    function refreshCounts() { var n = counts(); st.rows.forEach(function (r, k) { var e = document.querySelector('[data-pdn="' + k + '"]'); if (e) e.textContent = n ? n[k] : '–'; }); }
+    if (!(await load(!c))) return;
+    var d = modal(x ? _t('日時で回に分ける（直す）') : _t('日時で回に分ける'),
+      '<div class="md-grid2"><label class="md-field">' + _t('日時の列') + '<select id="md_pd_src">' + times.map(function (y) { return '<option value="' + y.col + '"' + (y.col === st.src ? ' selected' : '') + '>' + esc(y.label) + '</option>'; }).join('') + '</select></label>' +
+      '<label class="md-field">' + _t('作る列の名前') + '<input type="text" id="md_pd_name" value="' + esc(st.name) + '"></label></div>' +
+      '<p class="md-hint" id="md_pd_range" style="margin:6px 0 2px"></p>' +
+      _t('<p class="md-hint" style="margin:0 0 6px">各回は、その回の開始の日時から、次の回の開始の日時の前までです。回の名前は図・表・報告書にそのまま出ます。</p>') +
+      '<div style="max-height:40vh;overflow:auto;border:1px solid var(--t-d5e3da)"><table class="md-t0" style="width:100%;table-layout:fixed"><colgroup><col style="width:34%"><col><col style="width:64px"><col style="width:40px"></colgroup><tr>' +
+      _t('<th class="md-rh">回の名前</th><th class="md-rh">開始</th><th class="md-rh">回答数</th><th class="md-rh"></th>') + '</tr><tbody id="md_pd_rows"></tbody></table></div>' +
+      '<div class="md-row" style="gap:8px;margin:8px 0 4px">' + _t('<button class="md-btn" data-act="periodAdd">区切りを足す</button><button class="md-btn" data-act="periodAuto" data-tip="回答がとぎれている所から、区切りを決め直します。いま入れた名前と日時は元に戻ります。">自動で区切り直す</button>') + '</div>' +
+      '<p class="md-hint" id="md_pd_msg" style="margin:2px 0 8px"></p>' +
+      _t('<label style="display:flex;gap:6px;align-items:flex-start"><input type="checkbox" id="md_pd_same"{0}><span>同じ人たちが複数の回に答えている（だれの回答かは特定できない）</span></label>', st.same ? ' checked' : '') +
+      _t('<p class="md-hint" style="margin:2px 0 0 22px">☑ を付けると、この列を使った検定の結果と報告書に「各回の回答を独立した群として扱った近似」であることを書き添えます。回ごとに別の人が答えているときは付けません。</p>'),
+      _t('<button class="md-btn" data-act="closeModal">やめる</button><button class="md-btn md-btn-primary" data-act="periodSave">{0}</button>', x ? _t('直す') : _t('作る')), 600);
+    draw();
+    d.addEventListener('input', function (e) {
+      var el = e.target;
+      if (el.dataset.pdname !== undefined) st.rows[+el.dataset.pdname].name = el.value;
+      else if (el.dataset.pdstart !== undefined) { st.rows[+el.dataset.pdstart].start = el.value; refreshCounts(); }
+    });
+    d.querySelector('#md_pd_src').addEventListener('change', async function (e) { st.src = +e.target.value; if (await load(true)) draw(); });
+    PD = {
+      add: function () {
+        var last = st.rows.length > 1 ? pdMin(st.rows[st.rows.length - 1].start) : st.t[0], end = st.t[st.t.length - 1];
+        if (isNaN(last)) last = st.t[0];
+        var b = Math.floor((last + (end - last) / 2) / 1440) * 1440; if (b <= last) b = last + 60;
+        st.rows.push({ name: _t('第 {0} 回', st.rows.length + 1), start: pdLocal(b) }); draw();
+      },
+      del: function (k) { if (k > 0 && st.rows.length > 2) { st.rows.splice(k, 1); draw(); } },
+      auto: function () { auto(false); },
+      save: function () {
+        var m = document.getElementById('md_modal'); if (!m) return;
+        var name = m.querySelector('#md_pd_name').value.trim(), same = m.querySelector('#md_pd_same').checked;
+        var names = st.rows.map(function (r) { return String(r.name || '').trim(); }), br = st.rows.slice(1).map(function (r) { return pdMin(r.start); });
+        if (!name) { A.toast(_t('作る列の名前を入れてください。'), true); return; }
+        if (S.P.vars.some(function (y) { return y.label === name && y.col !== col; })) { A.toast(_t('同じ名前の列があります。別の名前にしてください。'), true); return; }
+        if (names.some(function (z) { return !z; })) { A.toast(_t('回の名前を入れてください。'), true); return; }
+        if (names.some(function (z, i) { return names.indexOf(z) !== i; })) { A.toast(_t('回の名前が重なっています。別々の名前にしてください。'), true); return; }
+        if (br.some(isNaN)) { A.toast(_t('区切りの日時を入れてください。'), true); return; }
+        if (br.some(function (b, i) { return i && b <= br[i - 1]; })) { A.toast(_t('区切りの日時は、上から古い順に並べてください。'), true); return; }
+        var n = counts();
+        if (n.some(function (z) { return !z; })) { A.toast(_t('回答が 0 件の回があります。区切りの日時を直すか、その区切りをなくしてください。'), true); return; }
+        closeModal(); PD = null;
+        var cats = names.map(function (z, i) { return { v: z, n: n[i], special: false }; }), comp = { kind: 'period', src: st.src, breaks: br.map(pdLocal), names: names, same: same };
+        A.commit(function () {
+          var y = col ? A.v(col) : null, total = n.reduce(function (a, b) { return a + b; }, 0);
+          if (y) {
+            var changed = JSON.stringify(y.comp.names) !== JSON.stringify(names);
+            y.label = name; y.header = name; y.comp = comp; y.cats = cats; y.n = total; y.nUnique = names.length;
+            if (changed) S.P.tabs.forEach(function (t) { Object.keys(t.slots).forEach(function (k) { if (t.slots[k].col === col) A.setSlot(t, k, col); }); });
+          } else {
+            var nc = Math.max.apply(null, S.P.vars.map(function (z) { return z.col; })) + 1;
+            S.P.vars.push({ col: nc, header: name, label: name, full: name, item: '', stem: '', type: 'ordinal', delim: ';', n: total, nUnique: names.length, cats: cats, comp: comp });
+          }
+        });
+        A.syncResults();
+        A.toast(col ? _t('「{0}」を直しました。', name) : _t('「{0}」を作りました（{1} 回）。クロス集計・t 検定・分散分析などの「比べる群」で選べます。', name, names.length));
+      }
+    };
   }
   function scoreDialog(col, preset) {
     var x = col ? A.v(col) : null, comp = x ? x.comp : { items: preset || [], reverse: [], method: 'mean' };

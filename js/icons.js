@@ -14,6 +14,8 @@
     saveas: '<path d="M5 5h18l4 4v18H5z" fill="' + G + '"/><rect x="10" y="5" width="11" height="7" fill="' + W + '"/><path d="M14 25l2-6 9-9 4 4-9 9z" fill="' + W + '"/>',
     undo: '<path d="M11 6l-6 6 6 6"/><path d="M5 12h13a8 8 0 010 16h-6"/>',
     redo: '<path d="M21 6l6 6-6 6"/><path d="M27 12H14a8 8 0 000 16h6"/>',
+    // 日時で回に分ける：時計と、その下で 2 つに分かれた帯
+    period: '<circle cx="16" cy="11" r="7.5" fill="' + W + '"/><path d="M16 7v4l3 2"/><rect x="3" y="22" width="12" height="6" fill="' + G + '"/><rect x="17" y="22" width="12" height="6" fill="' + Y + '"/>',
     add: sheet + '<circle cx="24" cy="23" r="6.5" fill="' + W + '" stroke="' + ADD + '"/><path d="M24 19.5v7M20.5 23h7" stroke="' + ADD + '" stroke-width="2.2"/>',
     dup: '<rect x="4" y="4" width="17" height="17" fill="' + W + '"/><rect x="11" y="11" width="17" height="17" fill="' + G + '"/>',
     del: sheet + '<path d="M19 18l9 9M28 18l-9 9" stroke="' + DEL + '" stroke-width="2.4"/>',

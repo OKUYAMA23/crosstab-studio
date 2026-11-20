@@ -40,6 +40,10 @@ rx_filter <- function(f) {
 rx_computed <- function(defs, numcols) {
   out <- character(0)
   for (d in defs) {
+    if (identical(d$kind, "period")) {
+      out <- c(out, "", sprintf(tr_("# 「%s」は、アプリで「%s」の日時から作った回の列です（データの %d 列目に入っています）。区切り：%s"), rx_cmt(d$name), rx_cmt(d$srcLabel %||% ""), as.integer(d$col), rx_cmt(paste(unlist(d$breaks), collapse = ", "))))
+      next
+    }
     rev <- unlist(d$reverse)
     out <- c(out, "", sprintf(tr_("# 尺度得点「%s」：%d 項目の%s点（すべての項目に答えた人だけ）"), rx_cmt(d$name), length(d$items), tolower(if (identical(d$method, "sum")) tr_("合計") else tr_("平均"))),
              sprintf("sc <- cbind(%s)", paste(vapply(d$items, function(s) {

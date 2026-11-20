@@ -295,9 +295,9 @@
       rbLarge({ act: 'replaceCsv', name: _t('差し替え'), ic: 'refresh', tip: _t('回答が増えた新しい CSV（または Excel ファイル）に差し替えます。同じ質問の列には、解析の設定を引き継ぎます。'), off: !has }),
       rbStack(rbSmall({ act: 'openUrl', name: _t('URL から'), ic: 'link', tip: _t('Google フォームの回答のスプレッドシートを、URL から読み込みます（共有の設定が必要です）。') }),
         rbSmall({ act: 'refreshUrl', name: _t('最新に更新'), ic: 'refresh', tip: _t('URL から読み込んだスプレッドシートを読み込み直し、増えた回答を反映します。解析の設定は残ります。'), off: !(has && S.P.srcUrl) }))) +
-      rbGroup(_t('尺度'), rbLarge({ act: 'scoreNew', name: _t('尺度得点を作る'), ic: 'add', tip: _t('複数の項目（順序のある質問）の平均点・合計点を、新しい列として作ります。t 検定や相関などで使えます。'), off: !has })) +
+      rbGroup(_t('列を作る'), rbLarge({ act: 'scoreNew', name: _t('尺度得点を作る'), ic: 'add', tip: _t('複数の項目（順序のある質問）の平均点・合計点を、新しい列として作ります。t 検定や相関などで使えます。'), off: !has }), rbLarge({ act: 'periodNew', name: _t('日時で回に分ける'), ic: 'period', tip: _t('タイムスタンプの日時で回答を「第 1 回」「第 2 回」…に分けた列を作ります。回どうしの比較（クロス集計・t 検定・分散分析など）に使えます。'), off: !has || !S.P.vars.some(function (y) { return y.type === 'time'; }) })) +
       rbGroup(_t('表示'), rbRadio('ui.dataView', 'vars', _t('質問の一覧'), 'vars', _t('列（質問）ごとの種類と回答数を表示します。'), !has, true), rbRadio('ui.dataView', 'raw', _t('回答の一覧'), 'data', _t('回答そのものを表で表示します。'), !has, true)) +
-      rbGroup(_t('選んだ列'), rbStack(_t('<label class="md-rfield" data-tip="選んだ列の種類を変えます。自動の判定が合わないときに直します。">種類<select data-var="type"') + (sv ? '' : ' disabled') + '>' + options([['nominal', _t('単一回答')], ['ordinal', _t('順序あり')], ['multi', _t('複数回答')], ['numeric', _t('数値')], ['text', _t('使わない（自由記述など）')]], sv ? (sv.type === 'time' || sv.type === 'empty' ? 'text' : sv.type) : '') + '</select></label>',
+      rbGroup(_t('選んだ列'), rbStack(_t('<label class="md-rfield" data-tip="選んだ列の種類を変えます。自動の判定が合わないときに直します。">種類<select data-var="type"') + (sv ? '' : ' disabled') + '>' + options([['nominal', _t('単一回答')], ['ordinal', _t('順序あり')], ['multi', _t('複数回答')], ['numeric', _t('数値')], ['time', _t('日時')], ['text', _t('使わない（自由記述など）')]], sv ? (sv.type === 'empty' ? 'text' : sv.type) : '') + '</select></label>',
         rbSmall({ act: 'freqOfVar', name: _t('この列を集計'), ic: 'add', tip: _t('選んだ列の単純集計を作ります。'), off: !sv || !A.isCat(sv) })));
     h.analysis = rbGroup(_t('解析'), bNew, rbLarge({ act: 'changeType', name: _t('種類を変える'), ic: 'change', tip: _t('選んだ列はそのままで、解析の種類だけを変えます。'), off: noTab }), sEditAn) +
       rbGroup(_t('並びと開閉'), sOrder, sFold) +
@@ -445,6 +445,12 @@
   }
   // 尺度得点の行：作り方（項目・逆転・平均か合計か）と、直す・消すボタン
   function compRow(x) {
+    if (x.comp.kind === 'period') {
+      var src = A.v(x.comp.src), cs = x.cats || [];
+      return '<tr class="md-comprow" data-varrow="' + x.col + '"><td class="num">' + x.col + '</td><td><input type="text" data-varlabel="' + x.col + '" value="' + esc(x.label) + '"></td><td class="q">' + esc(_t('「{0}」の日時で分けた {1} 回', src ? src.label : '?', cs.length) + (x.comp.same ? _t('（同じ人たちが答えている）') : '')) + '</td>' +
+        _t('<td>日時で分けた回<br><button class="md-btn md-btn-sm" data-act="periodEdit" data-arg="{0}">直す</button> <button class="md-btn md-btn-sm" data-act="scoreDel" data-arg="{1}">消す</button></td>', x.col, x.col) +
+        '<td class="num">' + cs.reduce(function (a, k) { return a + (k.n || 0); }, 0) + '</td><td>' + esc(cs.map(function (k) { return k.v; }).join(_t('、'))) + '</td></tr>';
+    }
     var names = x.comp.items.map(function (c) { var y = A.v(c); return y ? (y.label + ((x.comp.reverse || []).indexOf(c) >= 0 ? _t('（逆転）') : '')) : '?'; }).join(_t('、'));
     return '<tr class="md-comprow" data-varrow="' + x.col + '"><td class="num">' + x.col + '</td><td><input type="text" data-varlabel="' + x.col + '" value="' + esc(x.label) + '"></td><td class="q">' + esc((x.comp.method === 'sum' ? _t('合計：') : _t('平均：')) + names) + '</td>' +
       _t('<td>尺度得点（{0}）<br><button class="md-btn md-btn-sm" data-act="scoreEdit" data-arg="{1}">直す</button> <button class="md-btn md-btn-sm" data-act="scoreDel" data-arg="{2}">消す</button></td><td class="num">–</td><td class="num">–</td></tr>', x.comp.method === 'sum' ? _t('合計') : _t('平均'), x.col, x.col);

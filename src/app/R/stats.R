@@ -61,12 +61,26 @@ slot_score <- function(df, slot) {
   nlevels(f) + 1L - as.integer(f)
 }
 
-# 解析で尺度得点を使ったとき、その作り方を「方法」に書く
+`%||%` <- function(a, b) if (is.null(a)) b else a
+# 解析で尺度得点（または日時で分けた回の列）を使ったとき、その作り方を「方法」に書く
 score_method <- function(res, body) {
   if (!isTRUE(res$ok) || !length(body$computed)) return(res)
   used <- unlist(lapply(body$slots, function(s) c(s$col, unlist(s$cols))))
   txt <- character(0)
   for (d in body$computed) if (as.integer(d$col) %in% used) {
+    if (identical(d$kind, "period")) {
+      nm <- unlist(d$names); br <- unlist(d$breaks)
+      rng <- vapply(seq_along(nm), function(k) {
+        if (k == 1) trf("%sより前", period_label(br[1])) else if (k == length(nm)) trf("%s以降", period_label(br[k - 1]))
+        else trf("%sから%sの前まで", period_label(br[k - 1]), period_label(br[k]))
+      }, "")
+      txt <- c(txt, trf("%sは、%sの日時で回答を分けて作った（%s）。", q(d$name), q(d$srcLabel %||% ""), paste(paste0(nm, tr_("："), rng), collapse = tr_("、"))))
+      if (isTRUE(d$same) && length(unique(used)) >= 2 && !is.null(res$p)) {   # 回どうしを比べる検定のときだけ書き添える
+        res$report <- paste0(res$report, if (identical(LANG, "en")) " " else "", trf("なお、回答者を特定できず、同じ人が複数の回に回答している可能性があるため、%sの間の比較は各回の回答を独立した群とみなした近似である。", q(d$name)))
+        res$notes <- c(res$notes, trf("%sは同じ人たちが複数の回に答えているため、検定は各回の回答を独立した群として扱った近似です。同じ人の回答どうしに正の相関があると、p 値は大きめに（有意差は出にくい側に）なります。集計の表や図はそのまま読めます。", q(d$name)))
+      }
+      next
+    }
     rev <- unlist(d$reverse); its <- vapply(d$items, function(s) paste0(tr_("「"), s$label, tr_("」"), if (s$col %in% rev) tr_("（逆転）") else ""), "")
     ks <- unique(vapply(Filter(function(s) identical(s$type, "ordinal"), d$items), function(s) length(s$cats), 1L))
     sc <- if (length(ks)) sprintf(tr_("順序のある項目は選択肢の並びの先頭を高い点とし（%s）、"), paste(sprintf(tr_("%d 段階の項目は %d〜1 点"), ks, ks), collapse = tr_("、"))) else ""
@@ -75,13 +89,51 @@ score_method <- function(res, body) {
       if (length(rev)) tr_("逆転項目は点数を反対にしてから計算した。") else ""))
   }
   if (length(txt)) res$method <- paste(c(txt, res$method), collapse = "\n")
+  res$report <- trimws(res$report)
+  if (length(res$notes)) res$notes <- A(res$notes)
   res
+}
+# 日時の文字を、1970-01-01 0:00 からの分に直す（時刻帯は見ない。読めないものは NA）
+#   年/月/日（Google フォームの日本語の形、Excel を直した形）と、月/日/年・日/月/年（英語の形）を読む。午前・午後、AM・PM にも対応
+time_minutes <- function(x) {
+  x <- trimws(as.character(x)); n <- length(x); y <- mo <- d <- rep(NA_real_, n)
+  m1 <- regmatches(x, regexec("^([0-9]{4})[/.-]([0-9]{1,2})[/.-]([0-9]{1,2})", x)); ok1 <- lengths(m1) >= 4
+  if (any(ok1)) { v <- matrix(as.numeric(unlist(lapply(m1[ok1], function(z) z[2:4]))), ncol = 3, byrow = TRUE); y[ok1] <- v[, 1]; mo[ok1] <- v[, 2]; d[ok1] <- v[, 3] }
+  m2 <- regmatches(x, regexec("^([0-9]{1,2})[/.-]([0-9]{1,2})[/.-]([0-9]{4})", x)); ok2 <- !ok1 & lengths(m2) >= 4
+  if (any(ok2)) {
+    v <- matrix(as.numeric(unlist(lapply(m2[ok2], function(z) z[2:4]))), ncol = 3, byrow = TRUE)
+    dm <- any(v[, 1] > 12)                     # 先頭が 12 を超えるものがあれば 日/月/年、なければ 月/日/年（英語の Google フォーム）
+    y[ok2] <- v[, 3]; mo[ok2] <- if (dm) v[, 2] else v[, 1]; d[ok2] <- if (dm) v[, 1] else v[, 2]
+  }
+  hh <- mi <- ss <- rep(0, n)
+  m3 <- regmatches(x, regexec("([0-9]{1,2}):([0-9]{2})(:([0-9]{2}))?", x)); ok3 <- lengths(m3) >= 3
+  if (any(ok3)) { v <- matrix(as.numeric(unlist(lapply(m3[ok3], function(z) c(z[2], z[3], if (nzchar(z[5])) z[5] else "0")))), ncol = 3, byrow = TRUE); hh[ok3] <- v[, 1]; mi[ok3] <- v[, 2]; ss[ok3] <- v[, 3] }
+  pm <- grepl("午後|\\bPM\\b|\\bp\\.m\\.", x, ignore.case = TRUE); am <- grepl("午前|\\bAM\\b|\\ba\\.m\\.", x, ignore.case = TRUE)
+  hh <- ifelse(pm & hh < 12, hh + 12, ifelse(am & hh == 12, 0, hh))
+  ok <- !is.na(y) & !is.na(mo) & mo >= 1 & mo <= 12 & d >= 1 & d <= 31
+  out <- rep(NA_real_, n); out[ok] <- days_from_civil(y[ok], mo[ok], d[ok]) * 1440 + hh[ok] * 60 + mi[ok] + ss[ok] / 60
+  out
+}
+# 区切りの日時（"YYYY-MM-DDTHH:MM"）を、報告書の文で読む形にする
+period_label <- function(b) {
+  t <- time_minutes(b); if (is.na(t)) return(b)
+  z <- floor(t / 1440); mn <- round(t - z * 1440); c <- civil_from_days(z)
+  hm <- if (mn == 0) "" else sprintf(" %d:%02d", mn %/% 60, mn %% 60)    # 0:00 のときは日付だけにする
+  if (identical(LANG, "en")) sprintf("%d/%02d/%02d%s", c[1, 1], c[1, 2], c[1, 3], hm) else sprintf("%d年%d月%d日%s", c[1, 1], c[1, 2], c[1, 3], hm)
 }
 # 尺度得点の列を、元のデータの右に足す（画面で作った定義を、依頼のたびに受け取って計算する）
 #   def：col（足す列の番号）、name、method（"mean" か "sum"）、items（各項目の slot）、reverse（逆転する項目の列番号）
 #   すべての項目に答えた人だけ得点を出し、ほかは欠損にする。逆転項目は（段階の数 + 1 − 得点）にする
 add_computed <- function(df, defs) {
   for (d in defs) {
+    if (identical(d$kind, "period")) {            # 日時で分けた回：区切りの日時の前後で、回の名前を付ける
+      t <- time_minutes(df[[as.integer(d$src)]]); br <- time_minutes(unlist(d$breaks)); nm <- unlist(d$names)
+      v <- ifelse(is.na(t), NA_character_, nm[findInterval(t, br) + 1L])
+      col <- as.integer(d$col)
+      while (ncol(df) < col - 1L) df[[paste0(".pad", ncol(df) + 1L)]] <- NA_character_
+      df[[col]] <- v; names(df)[col] <- if (is.null(d$name)) paste0("period", col) else d$name
+      next
+    }
     items <- d$items; rev <- unlist(d$reverse)
     M <- vapply(items, function(s) {
       x <- slot_score(df, s)
