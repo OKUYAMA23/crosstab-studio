@@ -48,3 +48,7 @@ html { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
 #md_lock { position: fixed; inset: 0; z-index: 9000; background: var(--t-f4f8f5); display: flex; align-items: center; justify-content: center; padding: 20px; }
 .md-lock-box { max-width: 460px; text-align: center; color: var(--ink, var(--t-1e2f28)); } .md-lock-box h1 { font-size: 22px; margin: 12px 0 10px; }
 .md-lock-box p { line-height: 1.7; margin: 8px 0; } .md-lock-box .md-btn { margin-top: 10px; padding: 8px 18px; } .md-lock-note { color: var(--ink-sub, #555); font-size: 12px; }
+
+/* iPadOS / iOS 26 のホーム画面のアプリでは、上端から約 40pt を OS がぼかして表示する。
+   上端に全幅で 1 色の固定（sticky）の帯があるとぼかしを省くので、タイトルバーをその帯にする */
+.md-titlebar { position: sticky; top: 0; z-index: 30; }
