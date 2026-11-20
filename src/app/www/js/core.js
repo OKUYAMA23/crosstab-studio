@@ -133,6 +133,8 @@
   }
   // 順序のある設問の配点。cats（{label, values}）と同じ並びの点を返す。既定（上の選択肢ほど高い点）のときは null
   //   asc：まとめた後の選択肢に上から 1, 2, … 点。custom：元の回答ごとに入れた点（まとめた選択肢は、先頭の回答の点）
+  // 解析の選択肢の表示名を、図に出る順に並べる（チェックした選択肢だけ。まとめた選択肢は 1 つ）
+  function figOrderLabels(sl) { var out = []; (sl.cats || []).forEach(function (c) { if (c.on && out.indexOf(c.label) < 0) out.push(c.label); }); return out; }
   function scoreMode(vr) { return vr && vr.type === 'ordinal' && vr.score && vr.score.mode && vr.score.mode !== 'desc' ? vr.score.mode : 'desc'; }
   function pointsFor(vr, cats, force) {
     var mode = scoreMode(vr); if (mode === 'desc' && !force) return null;
@@ -490,7 +492,7 @@
 
   window.App = window.App || {};
   Object.assign(window.App, { theme: theme, setTheme: setTheme, baseProject: baseProject, customGet: customGet, customSet: customSet, defMode: defMode, setDefMode: setDefMode, applyDefaults: applyDefaults, loadUrl: loadUrl, sheetCsvUrl: sheetCsvUrl, xlsxIn: xlsxIn, compVars: compVars, compDefs: compDefs, errLog: errLog, clearErrLog: clearErrLog, logErr: logErr, S: S, MAX_TABS: MAX_TABS, TYPE_NAMES: TYPE_NAMES, $: $, esc: esc, clone: clone, toast: toast, busy: busy, api: api, apiData: apiData, zip: zip, safeName: safeName,
-    v: v, def: def, tabById: tabById, slotCols: slotCols, sameChoices: sameChoices, setItems: setItems, defaultCatsMany: defaultCatsMany, curTab: curTab, curFig: curFig, isCat: isCat, catPoints: catPoints, scoreMode: scoreMode, defaultCats: defaultCats, setSlot: setSlot, autoName: autoName, newTab: newTab, newFig: newFig, tabReady: tabReady,
+    v: v, def: def, tabById: tabById, slotCols: slotCols, sameChoices: sameChoices, setItems: setItems, defaultCatsMany: defaultCatsMany, curTab: curTab, curFig: curFig, isCat: isCat, catPoints: catPoints, scoreMode: scoreMode, figOrderLabels: figOrderLabels, defaultCats: defaultCats, setSlot: setSlot, autoName: autoName, newTab: newTab, newFig: newFig, tabReady: tabReady,
     buildReq: buildReq, markDirty: markDirty, schedule: schedule, scheduleAll: scheduleAll, syncResults: syncResults, commit: commit, undo: undo, redo: redo, fixSel: fixSel, tableDefaults: tableDefaults,
     pickFile: pickFile, saveBlob: saveBlob, baseName: baseName, loadCsv: loadCsv, handleFile: handleFile, newProject: newProject,
     saveProjectAs: saveProjectAs, listProjects: listProjects, openProjectByName: openProjectByName, exportProjectFile: exportProjectFile });

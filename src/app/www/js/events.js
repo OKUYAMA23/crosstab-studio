@@ -366,7 +366,36 @@
       A.commit(function () { t = A.newTab('freq'); if (t) A.setSlot(t, 'a', x.col); }, { quiet: true });
       if (t) { S.ui.sel = t.id; S.ui.selFig = 0; S.ui.view = 'analysis'; S.ui.rtab = 'analysis'; A.schedule(t.id); } A.render(); if (t) scrollToAn(t.id);
     },
-    varCatUp: function (arg) { var x = A.v(S.ui.selVar), i = +arg; if (!x || i < 1) return; A.commit(function () { var c = x.cats.splice(i, 1)[0]; x.cats.splice(i - 1, 0, c); }); },
+    figCatMove: function (arg) {
+      var p = String(arg).split(':'), tab = A.curTab(), sl = tab && tab.slots[p[0]]; if (!sl) return;
+      var labs = A.figOrderLabels(sl), i = +p[1], j = i + (+p[2]); if (j < 0 || j >= labs.length) return;
+      var t = labs[i]; labs[i] = labs[j]; labs[j] = t; setSlotOrder(sl, labs);
+    },
+    figCatOrder: function (arg) {
+      var p = String(arg).split(':'), tab = A.curTab(), sl = tab && tab.slots[p[0]]; if (!sl) return;
+      var labs = A.figOrderLabels(sl), vr = sl.col ? A.v(sl.col) : null, nOf = {}, first = {};
+      (vr && vr.cats || []).forEach(function (c, k) { nOf[c.v] = c.n; first[c.v] = k; });
+      var sumN = function (l) { return sl.cats.filter(function (c) { return c.on && c.label === l; }).reduce(function (s, c) { return s + (nOf[c.v] || 0); }, 0); };
+      var pos = function (l) { return Math.min.apply(null, sl.cats.filter(function (c) { return c.label === l; }).map(function (c) { return first[c.v] === undefined ? 1e9 : first[c.v]; })); };
+      if (p[1] === 'rev') labs.reverse();
+      else if (p[1] === 'count') labs.sort(function (a, b) { return sumN(b) - sumN(a); });
+      else labs.sort(function (a, b) { return pos(a) - pos(b); });
+      setSlotOrder(sl, labs);
+    },
+    varCatMove: function (arg) {
+      var x = A.v(S.ui.selVar), p = String(arg).split(':'), i = +p[0], j = i + (+p[1]); if (!x || j < 0 || j >= x.cats.length) return;
+      reorderVar(x, function () { var c = x.cats.splice(i, 1)[0]; x.cats.splice(j, 0, c); });
+    },
+    varOrder: function (arg) {
+      var x = A.v(S.ui.selVar); if (!x) return;
+      reorderVar(x, function () {
+        var core = x.cats.filter(function (c) { return !c.special; }), sp = x.cats.filter(function (c) { return c.special; });   // 「無回答」などは最後のまま
+        if (arg === 'rev') core.reverse();
+        else if (arg === 'count') core.sort(function (a, b) { return b.n - a.n; });
+        else if (arg === 'auto') { var o = x.cats0 || []; core.sort(function (a, b) { return o.indexOf(a.v) - o.indexOf(b.v); }); }
+        x.cats = core.concat(sp);
+      });
+    },
     catMove: function (arg) { var p = arg.split(':'), tab = A.curTab(), sl = tab.slots[p[0]], i = +p[1], j = i + (+p[2]); if (j < 0 || j >= sl.cats.length) return; A.commit(function () { var c = sl.cats.splice(i, 1)[0]; sl.cats.splice(j, 0, c); }, { run: tab.id }); },
     catTwo: function (arg) {
       var tab = A.curTab(), sl = tab.slots[arg], on = sl.cats.filter(function (c) { return c.on; }), half = Math.ceil(on.length / 2);
@@ -696,6 +725,30 @@
     A.render();
   }
   function stepRtab(d) { var ks = A.RTABS.map(function (t) { return t[0]; }), i = ks.indexOf(S.ui.rtab); setRtab(ks[(i + d + ks.length) % ks.length]); }
+  // 解析の選択肢を、表示名（まとめた選択肢は同じ名前）の並び labs の順にする。図に出さない選択肢は後ろに残す
+  function setSlotOrder(sl, labs) {
+    A.commit(function () {
+      var at = function (c) { var k = c.on ? labs.indexOf(c.label) : -1; return k < 0 ? 1e9 : k; };
+      sl.cats = sl.cats.map(function (c, k) { return [c, k]; }).sort(function (a, b) { return at(a[0]) - at(b[0]) || a[1] - b[1]; }).map(function (x) { return x[0]; });
+    }, { quiet: true });
+    A.syncResults(); A.render();
+  }
+  // 列の選択肢の並びを変え、その列を使っている解析の選択肢も同じ並びにする（まとめ方・チェックの有無はそのまま）
+  function reorderVar(x, change) {
+    A.commit(function () {
+      if (!x.cats0) x.cats0 = x.cats.map(function (c) { return c.v; });          // 読み込んだときの並び（「自動の並びに戻す」用）
+      change();
+      var ord = x.cats.map(function (c) { return c.v; }), at = function (c) { var k = ord.indexOf(c.v); return k < 0 ? 1e9 : k; };
+      S.P.tabs.forEach(function (t) {
+        Object.keys(t.slots || {}).forEach(function (id) {
+          var sl = t.slots[id];
+          if (!sl || !sl.cats || !(sl.col === x.col || (sl.cols && sl.cols.indexOf(x.col) >= 0))) return;
+          sl.cats = sl.cats.map(function (c, k) { return [c, k]; }).sort(function (a, b) { return at(a[0]) - at(b[0]) || a[1] - b[1]; }).map(function (p) { return p[0]; });
+        });
+      });
+    }, { quiet: true });
+    A.syncResults(); A.render();
+  }
   function setView(v) { S.ui.view = v; if (v === 'data') S.ui.rtab = 'data'; else if (v === 'report') S.ui.rtab = 'export'; else if (S.ui.rtab === 'data') S.ui.rtab = 'home'; A.render(); }
   async function changeVar(x, type, delim) {
     if (x.comp) { A.toast(x.comp.kind === 'period' ? _t('日時で分けた回の列の種類は変えられません。') : _t('尺度得点の列の種類は変えられません。'), true); A.render(); return; }

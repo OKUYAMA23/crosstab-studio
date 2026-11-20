@@ -668,8 +668,9 @@
       sec(_t('質問文'), '<div class="md-hint" style="color:var(--t-1e2f26);white-space:pre-wrap">' + esc(x.header) + '</div>');
     if (A.isCat(x)) h += sec(_t('回答の内訳（{0} 人が回答）', x.n), x.cats.map(function (c, i) {
       return '<div class="md-bar" data-tip="' + esc(c.v) + '"><span class="md-bl">' + esc(c.v) + '</span><span class="md-bb"><i style="width:' + (c.n / mx * 100).toFixed(1) + '%"></i></span><span class="md-bn">' + c.n + '</span>' +
-        (x.type !== 'multi' ? '<button class="md-mv" data-act="varCatUp" data-arg="' + i + _t('" data-tip="この選択肢を 1 つ上へ動かします。"') + (i === 0 ? ' disabled' : '') + '>▲</button>' : '') + '</div>';
-    }).join(''), hint(x.type === 'ordinal' ? _t('段階の順に並べてください。並びが合わないときは ▲ で直します（新しく作る解析に反映されます）。点の付け方は下の「配点」で選べます。') : x.type === 'multi' ? _t('複数回答は、選択肢ごとに選んだ人数を数えます。') : _t('並びは、これから作る解析の表や図の順番になります。')),
+        (x.type !== 'multi' ? '<button class="md-mv" data-act="varCatMove" data-arg="' + i + _t(':-1" data-tip="この選択肢を 1 つ上へ動かします。"') + (i === 0 ? ' disabled' : '') + '>▲</button>' +
+          '<button class="md-mv" data-act="varCatMove" data-arg="' + i + _t(':1" data-tip="この選択肢を 1 つ下へ動かします。"') + (i === x.cats.length - 1 ? ' disabled' : '') + '>▼</button>' : '') + '</div>';
+    }).join('') + (x.type !== 'multi' ? _t('<div class="md-row" style="margin-top:6px"><button class="md-btn md-btn-sm" data-act="varOrder" data-arg="rev" data-tip="選択肢の並びを逆にします。">逆の順</button><button class="md-btn md-btn-sm" data-act="varOrder" data-arg="count" data-tip="人数の多い選択肢から並べます。">人数の多い順</button><button class="md-btn md-btn-sm" data-act="varOrder" data-arg="auto" data-tip="データを読み込んだときの並びに戻します。">自動の並び</button></div>') : ''), hint(x.type === 'ordinal' ? _t('段階の順に並べてください。並びは ▲▼ と下のボタンで変えられ、この列を使う解析の表と図にもすぐ反映されます。点の付け方は下の「配点」で選べます。') : x.type === 'multi' ? _t('複数回答は、選択肢ごとに選んだ人数を数えます。') : _t('並びは、表や図の順番になります。▲▼ と下のボタンで変えると、この列を使う解析の表と図にもすぐ反映されます。')),
       _t('<button class="md-btn" data-act="freqOfVar">この列を集計する</button>'));
     else if (x.type === 'numeric' && x.summary) h += sec(_t('数値の要約'), hint(_t('最小 {0}、中央値 {1}、平均 {2}、最大 {3}（{4} 人が回答）', x.summary.min, x.summary.median, (+x.summary.mean).toFixed(2), x.summary.max, x.n)));
     else h += sec(_t('回答'), hint(x.n + _t(' 人が回答しています。この種類の列は解析に使いません。')));
@@ -747,6 +748,16 @@
     var kind = Chart.kindOf(m, st), km = Chart.kinds(m), ser = Chart.seriesFor(m, st), cols = Chart.seriesColors(ser, st), heat = kind === 'heat', pie = kind === 'pie', k = Math.min(S.ui.selFig, tab.figs.length - 1);
     var h = target(tab) + (tab.figs.length > 1 ? '<div class="md-row" style="margin:4px 0">' + tab.figs.map(function (_, i) { return '<button class="md-btn md-btn-sm' + (i === k ? ' md-btn-primary' : '') + '" data-act="selFig" data-arg="' + i + _t('">図 ') + (i + 1) + '</button>'; }).join('') + '</div>' : '');
     h += sec(_t('図の種類'), tiles('fig.kind', km.map(function (x) { return [x, _t(Chart.KIND_NAMES[x]), window.icon('k_' + x, 30), KIND_TIPS[x]]; }), kind), hint(_t('図は、設定を変えるたびにその場で描き直します。')));
+    // 選択肢の並び：この解析の表と図の並びを、図を見ながら変える（まとめた選択肢は 1 つとして動かす）
+    var ordSlots = Object.keys(tab.slots || {}).filter(function (id) { var sl = tab.slots[id]; return sl && sl.cats && A.figOrderLabels(sl).length > 1; });
+    if (ordSlots.length) h += sec(_t('選択肢の並び'), ordSlots.map(function (id) {
+      var sl = tab.slots[id], labs = A.figOrderLabels(sl), vr = sl.col ? A.v(sl.col) : null;
+      return '<div class="md-sub">' + esc(vr ? vr.label : _t('選択肢')) + '</div>' + labs.map(function (l, i) {
+        return '<div class="md-bar"><span class="md-bl" style="flex:1" data-tip="' + esc(l) + '">' + esc(l) + '</span>' +
+          '<button class="md-mv" data-act="figCatMove" data-arg="' + id + ':' + i + _t(':-1" data-tip="この選択肢を 1 つ上へ動かします。"') + (i === 0 ? ' disabled' : '') + '>▲</button>' +
+          '<button class="md-mv" data-act="figCatMove" data-arg="' + id + ':' + i + _t(':1" data-tip="この選択肢を 1 つ下へ動かします。"') + (i === labs.length - 1 ? ' disabled' : '') + '>▼</button></div>';
+      }).join('') + _t('<div class="md-row" style="margin:4px 0 6px"><button class="md-btn md-btn-sm" data-act="figCatOrder" data-arg="{0}:rev" data-tip="選択肢の並びを逆にします。">逆の順</button><button class="md-btn md-btn-sm" data-act="figCatOrder" data-arg="{0}:count" data-tip="人数の多い選択肢から並べます。">人数の多い順</button><button class="md-btn md-btn-sm" data-act="figCatOrder" data-arg="{0}:data" data-tip="「データ」タブで決めた並びに戻します。">データの並び</button></div>', id);
+    }).join(''), hint(_t('この解析の表と図の並びが変わります。すべての解析で並びを変えるときは、「データ」タブでその列を選んで変えてください。')));
     // グラフの枠：描く範囲を四方の線で囲むか、左と下の軸だけにするか（見つけやすいように、図の種類のすぐ下に置く）
     if (!pie && !heat && kind !== 'cloud' && kind !== 'net') h += sec(_t('グラフの枠'), tiles('fig.frame', fromMini('frame', [['L', _t('左と下だけ')], ['box', _t('四方を囲む')]])), hint(_t('「四方を囲む」にすると、グラフを描く範囲を枠で囲みます。枠の太さは「線の太さ」の「軸と枠」で変えられます。')));
     if (!pie) h += sec(_t('軸の名前'), grid2(fText(heat ? _t('上の見出し') : _t('数値の軸の名前'), 'fig.vTitle', { type: 'strnull', ph: _t('自動') }), fText(_t('分類の軸の名前'), 'fig.cTitle', { type: 'strnull', ph: _t('自動') })),
