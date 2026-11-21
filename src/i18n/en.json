@@ -413,6 +413,7 @@
 ">上書き保存</button><button class=\"md-btn\" data-act=\"openProject\">プロジェクトを開く</button></div>": ">Save</button><button class=\"md-btn\" data-act=\"openProject\">Open project</button></div>",
 ">初期のまま（グレー）</option>": ">Default (Gray)</option>",
 ">＋ 新しい解析</button></div></div>": "\">＋ New analysis</button></div></div>",
+"AI やスクリプトからアプリを動かすための入口（window.CTS）を足しました。CSV と解析の指定を渡すと、画面で作るのと同じ解析を作り、プロジェクト（.prj）と報告書（PDF・Word）を返します。使い方はリポジトリの AGENTS.md にまとめました。": "Added an entry point (window.CTS) for driving the app from AI agents and scripts. Given a CSV and a list of analyses, it creates the same analyses as the screen does and returns the project (.prj) and the report (PDF or Word). See AGENTS.md in the repository. ",
 "APA（第 7 版）": "APA (7th ed.)",
 "AVE は標準化負荷量の 2 乗の平均（平均分散抽出）。0.5 以上が目安とされる。": "AVE is the mean of the squared standardized loadings (average variance extracted). 0.5 or more is the usual guideline. ",
 "B は偏回帰係数、β は標準化偏回帰係数です。": "B is the partial regression coefficient and β the standardized partial regression coefficient. ",

@@ -518,5 +518,5 @@
     v: v, def: def, tabById: tabById, slotCols: slotCols, sameChoices: sameChoices, setItems: setItems, defaultCatsMany: defaultCatsMany, curTab: curTab, curFig: curFig, isCat: isCat, rowMarks: rowMarks, markedRows: markedRows, invalidRows: invalidRows, refreshCounts: refreshCounts, catPoints: catPoints, scoreMode: scoreMode, figOrderLabels: figOrderLabels, defaultCats: defaultCats, setSlot: setSlot, autoName: autoName, newTab: newTab, newFig: newFig, tabReady: tabReady,
     buildReq: buildReq, markDirty: markDirty, schedule: schedule, scheduleAll: scheduleAll, syncResults: syncResults, commit: commit, undo: undo, redo: redo, fixSel: fixSel, tableDefaults: tableDefaults,
     pickFile: pickFile, saveBlob: saveBlob, baseName: baseName, loadCsv: loadCsv, handleFile: handleFile, newProject: newProject,
-    saveProjectAs: saveProjectAs, listProjects: listProjects, openProjectByName: openProjectByName, exportProjectFile: exportProjectFile });
+    saveProjectAs: saveProjectAs, listProjects: listProjects, openProjectByName: openProjectByName, exportProjectFile: exportProjectFile, projectJson: projectJson });
 })();

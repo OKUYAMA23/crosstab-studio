@@ -786,6 +786,7 @@
     A.syncResults(); A.render();
   }
   function setView(v) { S.ui.view = v; if (v === 'data') S.ui.rtab = 'data'; else if (v === 'report') S.ui.rtab = 'export'; else if (S.ui.rtab === 'data') S.ui.rtab = 'home'; A.render(); }
+  A.changeVar = function (x, type, delim) { return changeVar(x, type, delim); };   // AI・スクリプト用の入口（agent.js）からも使う
   async function changeVar(x, type, delim) {
     if (x.comp) { A.toast(x.comp.kind === 'period' ? _t('日時で分けた回の列の種類は変えられません。') : _t('尺度得点の列の種類は変えられません。'), true); A.render(); return; }
     var needCats = ['nominal', 'ordinal', 'multi'].indexOf(type) >= 0, cats = x.cats, same = (type === 'multi') === (x.type === 'multi') && delim === x.delim && A.isCat(x);

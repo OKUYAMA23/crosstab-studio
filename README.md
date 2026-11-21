@@ -5,6 +5,7 @@
 - アプリ：https://okuyama23.github.io/crosstab-studio/
 - ライセンス：MIT（`LICENSE`）。同梱の webR（GPL-3.0）、pdf-lib・fontkit・HarfBuzz（MIT）、字体（SIL OFL 1.1）は、それぞれのライセンスに従います。
 - 引用：`CITATION.cff` を参照してください（GitHub の「Cite this repository」からも書式を得られます）。
+- AI・スクリプトから動かす：`AGENTS.md` を参照してください。ブラウザの中の `window.CTS` に CSV と解析の指定を渡すと、プロジェクト（.prj）と報告書（PDF）を作れます。
 
 ## フォルダの構成
 
@@ -24,4 +25,4 @@ CTS_OUT=../site WEBR_DIST=package/dist python src/web/build_web.py
 
 ## English
 
-CrossTab Studio is a browser-based app for tabulating and testing questionnaire data. It runs R in the browser via webR, so data stay on the user's device. Licensed under the MIT License; bundled components keep their own licenses.
+CrossTab Studio is a browser-based app for tabulating and testing questionnaire data. It runs R in the browser via webR, so data stay on the user's device. Licensed under the MIT License; bundled components keep their own licenses. AI agents and scripts can drive the app through `window.CTS`; see `AGENTS.md`.
