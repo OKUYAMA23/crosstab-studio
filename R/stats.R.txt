@@ -7,14 +7,23 @@ fmt_num <- function(x, d = 2) {
   out
 }
 fmt_pct <- function(x, d = 1) fmt_num(100 * x, d)
+# p 値の桁数。有意水準の ±0.005 の範囲では、丸めで判定を誤解させないよう小数第 4 位まで出す（判定には丸める前の値を使う）
+p_digits <- function(p, alpha = getOption("cts.alpha", 0.05)) if (!is.na(p) && abs(p - alpha) < 0.005) 4L else 3L
+# 係数・信頼区間の数値。小数第 2 位に丸めると 0 になる値（|x| < 0.005）は、符号が分かるよう有効数字 2 桁で出す
+fmt_num2s <- function(x) {
+  x <- as.numeric(x)
+  vapply(x, function(v) if (is.na(v)) "–" else if (v != 0 && abs(v) < 0.005) formatC(signif(v, 2), format = "fg", digits = 2, flag = "#") else fmt_num(v), "")
+}
 # p 値。lead0 = FALSE のときは「.012」のように 0 を省く
 fmt_p <- function(p, lead0 = TRUE, with_p = TRUE) {
   if (is.null(p) || is.na(p)) return(if (with_p) "p = –" else "–")
-  if (p < 0.001) { s <- "0.001"; op <- "<" } else { s <- formatC(p, format = "f", digits = 3); op <- "=" }
+  if (p < 0.001) { s <- "0.001"; op <- "<" } else { s <- formatC(p, format = "f", digits = p_digits(p)); op <- "=" }
   if (!lead0) s <- sub("^0", "", s)
   if (with_p) paste("p", op, s) else if (op == "<") paste("<", s) else s
 }
 q <- function(s) paste0(tr_("「"), s, tr_("」"))
+# 群の名前を文に入れるときの形（「自転車を使わない」群）。どんな名前でも文法が崩れないようにする
+gq <- function(s) if (identical(LANG, "en")) paste0("the ", q(s), " group") else paste0(q(s), "群")
 A <- function(x) I(x)   # JSON で必ず配列にする
 mat <- function(m) { m <- unname(as.matrix(m)); storage.mode(m) <- "double"; m }
 

@@ -74,6 +74,13 @@ asyncio.run(main())
 
 `CTS.run` returns Blobs (`prj`, `pdf`), which cannot cross into Python, so ask for `base64: true` and delete the Blobs before returning, as above. In a browser-extension agent you can instead pass `download: true` to save the files through the browser's downloads.
 
+To save a figure for a paper, ask for it by analysis id (the list `r["analyses"]`) and figure number:
+
+```python
+fig = await page.evaluate("async (id) => CTS.figure(id, 0, {{ format: 'png', width: 84, dpi: 600 }})", r["analyses"][0])
+open("figure1.png", "wb").write(base64.b64decode(fig["base64"]))
+```
+
 ## `CTS.run(spec)`
 
 | Field | Meaning |
@@ -84,11 +91,11 @@ asyncio.run(main())
 | `columns` | Column settings applied before the analyses: `[{{ column, type, delim, label, order, scoring }}]` (see `CTS.setColumn`). |
 | `invalidRows` | Rows to exclude from every analysis, the report, the Excel workbook and the R code. Row numbers start at 1 (the first response). Items are numbers or `{{ row, note }}`. |
 | `flagRows` | Rows to flag (a marker only; they stay in the analyses). |
-| `analyses` | List of analyses (see `CTS.addAnalysis`). The app holds at most 20 analyses. |
-| `output` | `{{ prj, pdf, docx, base64, download }}`; default `{{ prj: true, pdf: true }}`. |
+| `analyses` | List of analyses (see `CTS.addAnalysis`). There is no limit on the number of analyses. |
+| `output` | `{{ prj, pdf, docx, base64, download, figures }}`; default `{{ prj: true, pdf: true }}`. `figures: true` (or the options of `CTS.figure`, e.g. `{{ format: "png", width: 84, dpi: 600 }}`) also returns every figure of the analyses as base64. |
 | `timeoutMs` | Time limit for the calculations (default 300000). |
 
-It returns `{{ ok, version, api, rows, invalid, analyses, results, prj, pdf, docx, prjBase64, pdfBase64, docxBase64 }}`. `ok` is false when an analysis could not be calculated; its `message` says why (for example, too few responses).
+It returns `{{ ok, version, api, rows, invalid, analyses, results, prj, pdf, docx, prjBase64, pdfBase64, docxBase64, figures }}` (`figures` only when asked: a list of `CTS.figure` results with `id` and `k`). `ok` is false when an analysis could not be calculated; its `message` says why (for example, too few responses).
 
 ## Step-by-step functions
 
@@ -103,8 +110,9 @@ It returns `{{ ok, version, api, rows, invalid, analyses, results, prj, pdf, doc
 | `await CTS.markFlag(rows)` / `CTS.unmarkFlag(rows)` | Adds or removes flags. |
 | `CTS.addAnalysis(spec)` | Adds one analysis and returns its id. |
 | `CTS.removeAnalysis(id)` | Removes an analysis. |
-| `await CTS.wait()` | Waits until every analysis is calculated and returns `CTS.results()`. |
-| `CTS.results()` | Per analysis: `id`, `type`, `name`, `ok`, `message`, `test`, `p`, `significant`, `n`, `headline` (key values), `report` (the sentence for the report). |
+| `await CTS.wait()` | Waits until every analysis is calculated (and the Holm adjustment of the report is done) and returns `CTS.results()`. |
+| `CTS.results()` | Per analysis: `id`, `type`, `name`, `ok`, `message`, `test`, `p`, `pAdjusted` (Holm-adjusted p as in the report's summary of tests; `null` when the analysis has no test or is not in the report), `holmGroup` (adjustment family; `""` = whole report), `inReport`, `significant`, `n`, `headline` (key values), `report` (the sentence for the report), `notes`, `tables` (the tables shown in the report: `{{ caption, rows, note }}` with the displayed text) and `data` (the numbers behind them: `xtab` cross-tabulation counts and `grids` with unrounded `cells`). Call `CTS.wait()` first so that `pAdjusted` is up to date. |
+| `await CTS.figure(id, k, {{ format, scale, dpi, width }})` | Figure `k` (0 = first) of an analysis as `{{ format, mime, width, height, kind, base64 }}`. `format`: `"png"` (default) or `"svg"` (vector, text kept). PNG size: `scale` (times the screen size), `dpi` (resolution relative to the screen's 96 dpi), or `width` (print width in mm) with `dpi`, e.g. `{{ width: 84, dpi: 600 }}` for one journal column at 600 dpi. `width`/`height` are the figure's size in screen pixels. |
 | `CTS.prj()` | The project file as text (JSON). It contains the response data. |
 | `await CTS.pdf()` / `await CTS.docx()` | The report as a PDF or Word Blob. |
 | `CTS.reportText()` | The report as plain text. |
@@ -121,11 +129,12 @@ A column can be given as its number (`3`), its question text, or its display lab
 | `type` | Analysis id from the catalogue (e.g., `"chisq"`). |
 | `slots` | `{{ slotId: column }}`; for slots marked *many*, a list of columns. Each column must have one of the slot's allowed types; change the type with `setColumn` first if needed. |
 | `options` | `{{ optionId: value }}` (see the catalogue). |
-| `choices` | Per slot: `{{ keep: [values], drop: [values], rename: {{ value: newName }}, order: [values] }}`. Options not kept are excluded from that analysis; options renamed to the same name are merged into one group. |
+| `choices` | Per slot: `{{ keep: [values], drop: [values], rename: {{ value: newName }}, order: [names] }}`. Options not kept are excluded from that analysis; options renamed to the same name are merged into one group. `order` accepts original values and the names after `rename` (a merged group moves as one). For the independent variables of `reg` and `logit` (slot `x`, one column per variable), use `{{ drop: [values] }}` / `{{ keep: [values] }}` (applied to every column that has the value) or `{{ byColumn: {{ column: {{ drop, keep }} }} }}`; respondents who chose an excluded option are left out of the estimation, and the report states how many. `rename` and `order` are not accepted for that slot, and a value that no column has throws an error. |
 | `reverse` | For scale slots: columns to reverse-score. |
 | `name` | Name shown in the app and the report. |
 | `figure` | Figure settings, e.g. `{{ kind: "group", orient: "v", value: "count", min: 0, max: 20000 }}`. `kind`: `stack100`, `group`, `stack`, `heat`, `bar`, `line`, `pie`, `mean`, `coef`, `box`, `scatter`, `hist`, `map`, `cloud`, `wbar`, `net` (only those that suit the analysis are used). `orient`: `"h"`/`"v"`. `value`: `"pct"`/`"count"`. Axis range: `min`, `max`, `step` (value axis) and `xMin`, `xMax`, `xStep` (scatter x axis). Size: `w`, `h`. Colours: `palette` (`gray`, `blue`, `green`, `cud`, `viridis`, …). |
 | `inReport` | `false` to leave the analysis out of the report. |
+| `holmGroup` | Name of the Holm adjustment family. Tests with the same name are adjusted together; tests without a name form the default family (the whole report). Use it to keep confirmatory tests from changing the adjusted p of the hypothesis tests. |
 
 ## Column types
 
@@ -162,6 +171,11 @@ w(f'''
 - **Same results as the screen.** `CTS` uses the app's own functions; the analyses, report sentences, figures and files are the same as when a person makes them. The calculations were checked against R and Python reference implementations (see the paper in preparation).
 - **Stability.** `CTS.apiVersion` is `1`. Function names and spec fields listed here are kept; new fields may be added. Internal functions under `window.App` may change without notice; do not use them.
 - **Errors.** Wrong column names, types, slots, options or option values throw an `Error` whose message lists the valid choices. A failed `addAnalysis` leaves the project unchanged.
+- **Dialogs.** Once any `CTS` function is called, the welcome dialog and the list of changes are closed and not shown again in that page, so they do not block the page.
+- **Column names in the report.** A display name set with `setColumn(column, {{ label }})` is used in the report sentences; the original question text is added once, where the column first appears.
+- **p values.** p values within ±0.005 of the significance level are shown with four decimals (e.g., 0.0497); the significance decision always uses the unrounded p.
+- **Ranking questions.** In `freqmulti`, when the options are ranks (1st, 2nd, …), responses that give the same rank to several items are counted in `notes`; the option `excltie` excludes them.
+- **Limits.** There is no limit on the number of analyses. Large projects take longer to calculate; use `timeoutMs` of `CTS.run` if needed.
 - **Privacy.** The `.prj` file and the PDF contain the responses or summaries of them. Handle them as the survey's consent allows.
 - **Opening the results.** A person can open the `.prj` in the app (File → Open) to see and edit everything that was made.
 - **Citation.** Okuyama, T. CrossTab Studio (Version {version}) [Computer software]. https://okuyama23.github.io/crosstab-studio/

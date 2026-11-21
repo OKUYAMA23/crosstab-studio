@@ -124,16 +124,30 @@
   // R がデータを持っていないとき（R を起動し直したあとなど）は、手元のデータを送り直す
   // 尺度得点（画面で作った列）の定義。R には依頼のたびに渡し、元のデータの右に足して計算してもらう
   function compVars() { return S.P.vars.filter(function (x) { return x.comp; }).sort(function (a, b) { return a.col - b.col; }); }
-  function itemSlot(c) {
+  // 回帰分析の説明変数など、設問の回答をそのまま使う欄。drop：この解析で除く選択肢（元の値）。除いた選択肢を選んだ人は欠測として推定から外す
+  function itemSlot(c, drop) {
     var vr = v(c); if (!vr) return null;
     var s = { col: vr.col, type: vr.type, delim: vr.delim, label: vr.label, cats: (vr.cats || []).filter(function (k) { return !k.special; }).map(function (k) { return { label: k.v, values: [k.v] }; }) };
     if (vr.type === 'numeric') { if (vr.fix) s.fix = vr.fix; if (vr.unit) s.unit = vr.unit; }
-    var p = pointsFor(vr, s.cats); if (p) s.points = p;
+    var fq = fullOf(vr); if (fq.qtext) s.qtext = fq.qtext;
+    drop = (drop || []).filter(function (d) { return s.cats.some(function (k) { return k.label === d; }); });
+    if (!drop.length || !isCat(vr)) { var p = pointsFor(vr, s.cats); if (p) s.points = p; return s; }
+    // 選択肢を除いても、残りの選択肢の点は除く前と同じにする
+    var pAll = vr.type === 'ordinal' ? pointsFor(vr, s.cats, true) : null, keep = s.cats.map(function (k) { return drop.indexOf(k.label) < 0; });
+    s.cats = s.cats.filter(function (k, i) { return keep[i]; });
+    if (pAll) s.points = pAll.filter(function (x, i) { return keep[i]; });
+    s.dropped = drop;
     return s;
   }
   // 順序のある設問の配点。cats（{label, values}）と同じ並びの点を返す。既定（上の選択肢ほど高い点）のときは null
   //   asc：まとめた後の選択肢に上から 1, 2, … 点。custom：元の回答ごとに入れた点（まとめた選択肢は、先頭の回答の点）
   // 解析の選択肢の表示名を、図に出る順に並べる（チェックした選択肢だけ。まとめた選択肢は 1 つ）
+  // 選択肢を並べ替えの単位に分ける：チェックの入った同じ名前の選択肢は 1 つの群（最初の選択肢の位置）、ほかは 1 つずつ。添字の配列の配列を返す
+  function catBlocks(cats) {
+    var out = [], at = {};
+    cats.forEach(function (c, i) { if (c.on && at[c.label] !== undefined) out[at[c.label]].push(i); else { if (c.on) at[c.label] = out.length; out.push([i]); } });
+    return out;
+  }
   function figOrderLabels(sl) { var out = []; (sl.cats || []).forEach(function (c) { if (c.on && out.indexOf(c.label) < 0) out.push(c.label); }); return out; }
   function scoreMode(vr) { return vr && vr.type === 'ordinal' && vr.score && vr.score.mode && vr.score.mode !== 'desc' ? vr.score.mode : 'desc'; }
   function pointsFor(vr, cats, force) {
@@ -257,6 +271,13 @@
     return tab;
   }
   function tabReady(tab) { var d = def(tab.type); return !!d && d.slots.every(function (s) { var sl = tab.slots[s.id]; return s.optional || (sl && (s.many ? (sl.cols || []).length >= 2 : sl.col !== null && sl.col !== undefined)); }); }
+  // 報告書の文に使う名前。利用者が名前を付けた列はその名前を使い、質問文（qtext）を文の最初に 1 度だけ添える。
+  //   名前を付けていない列は、表示名が省略されていても省略しない名前（full）で書く
+  function fullOf(vr) {
+    if (!vr.labelSet) return { full: vr.full || vr.label };
+    var qt = vr.full || vr.header || '';
+    return qt && qt !== vr.label ? { full: vr.label, qtext: qt } : { full: vr.label };
+  }
   function buildReq(tab) {
     // 複数回答のクロス集計の図は、凡例に「グループに使った質問」の名前を初めから出す（一度だけ。外したいときは図の設定で外せる）
     if (tab.type === 'multi') (tab.figs || []).forEach(function (f) { if (!f.legTitleInit) { f.legTitle = true; f.legTitleInit = true; } });
@@ -266,19 +287,19 @@
       if (s.many) {
         if (s.optional && !(sl.cols || []).length) return;                      // 任意の欄（項目の組）を使わないとき
         var vs = sl.cols.map(v);
-        slots[s.id] = { many: true, cols: sl.cols, type: vs[0].type, delim: vs[0].delim, labels: vs.map(function (x) { return x.label; }), fulls: vs.map(function (x) { return x.full || x.label; }),
-          items: vs.map(function (x) { return x.item || ''; }), stems: vs.map(function (x) { return x.stem || ''; }), cats: onCats, reverse: (sl.reverse || []).filter(function (c) { return sl.cols.indexOf(c) >= 0; }), vars: sl.cols.map(itemSlot).filter(Boolean) };
+        slots[s.id] = { many: true, cols: sl.cols, type: vs[0].type, delim: vs[0].delim, labels: vs.map(function (x) { return x.label; }), fulls: vs.map(function (x) { return x.labelSet ? x.label : x.full || x.label; }),
+          items: vs.map(function (x) { return x.item || ''; }), stems: vs.map(function (x) { return x.stem || ''; }), cats: onCats, reverse: (sl.reverse || []).filter(function (c) { return sl.cols.indexOf(c) >= 0; }), vars: sl.cols.map(function (c) { return itemSlot(c, (sl.drop || {})[c]); }).filter(Boolean) };
         if (vs.some(function (x) { return scoreMode(x) !== 'desc'; })) slots[s.id].pointsList = vs.map(function (x) { return pointsFor(x, onCats, true); });
         return;
       }
       if (s.optional && (sl.col === null || sl.col === undefined)) return;       // 任意の欄を使わないとき
       var vr = v(sl.col);
-      slots[s.id] = { col: vr.col, type: vr.type, delim: vr.delim, label: vr.label, full: vr.full || vr.label, cats: sl.cats.filter(function (c) { return c.on; }).map(function (c) { return { label: c.label, values: [c.v] }; }) };
+      slots[s.id] = Object.assign({ col: vr.col, type: vr.type, delim: vr.delim, label: vr.label }, fullOf(vr), { cats: sl.cats.filter(function (c) { return c.on; }).map(function (c) { return { label: c.label, values: [c.v] }; }) });
       if (vr.type === 'numeric') { if (vr.fix) slots[s.id].fix = vr.fix; if (vr.unit) slots[s.id].unit = vr.unit; }
       var pts = pointsFor(vr, slots[s.id].cats); if (pts) slots[s.id].points = pts;
     });
     var flt = null;
-    if (tab.filter && tab.filter.col !== null && tab.filter.values && tab.filter.values.length) { var fv = v(tab.filter.col); if (fv) flt = { col: fv.col, type: fv.type, delim: fv.delim, label: fv.label, full: fv.full || fv.label, values: tab.filter.values }; }
+    if (tab.filter && tab.filter.col !== null && tab.filter.values && tab.filter.values.length) { var fv = v(tab.filter.col); if (fv) flt = Object.assign({ col: fv.col, type: fv.type, delim: fv.delim, label: fv.label }, fullOf(fv), { values: tab.filter.values }); }
     var usesComp = Object.keys(slots).some(function (k) { var s = slots[k]; return (s.cols || [s.col]).some(function (c) { var x = v(c); return x && x.comp; }); }) || (flt && v(flt.col) && v(flt.col).comp);
     var exr = invalidRows();
     return { computed: usesComp ? compDefs() : undefined, exclude: exr.length ? exr : undefined, type: tab.type, slots: slots, filter: flt, opts: Object.assign({}, tab.opts, { alpha: S.P.settings.alpha, lead0: S.P.settings.lead0 }) };
@@ -515,7 +536,7 @@
 
   window.App = window.App || {};
   Object.assign(window.App, { theme: theme, setTheme: setTheme, baseProject: baseProject, customGet: customGet, customSet: customSet, defMode: defMode, setDefMode: setDefMode, applyDefaults: applyDefaults, loadUrl: loadUrl, sheetCsvUrl: sheetCsvUrl, xlsxIn: xlsxIn, compVars: compVars, compDefs: compDefs, errLog: errLog, clearErrLog: clearErrLog, logErr: logErr, S: S, MAX_TABS: MAX_TABS, TYPE_NAMES: TYPE_NAMES, $: $, esc: esc, clone: clone, toast: toast, busy: busy, api: api, apiData: apiData, zip: zip, safeName: safeName,
-    v: v, def: def, tabById: tabById, slotCols: slotCols, sameChoices: sameChoices, setItems: setItems, defaultCatsMany: defaultCatsMany, curTab: curTab, curFig: curFig, isCat: isCat, rowMarks: rowMarks, markedRows: markedRows, invalidRows: invalidRows, refreshCounts: refreshCounts, catPoints: catPoints, scoreMode: scoreMode, figOrderLabels: figOrderLabels, defaultCats: defaultCats, setSlot: setSlot, autoName: autoName, newTab: newTab, newFig: newFig, tabReady: tabReady,
+    v: v, def: def, tabById: tabById, slotCols: slotCols, sameChoices: sameChoices, setItems: setItems, defaultCatsMany: defaultCatsMany, curTab: curTab, curFig: curFig, isCat: isCat, rowMarks: rowMarks, markedRows: markedRows, invalidRows: invalidRows, refreshCounts: refreshCounts, catPoints: catPoints, scoreMode: scoreMode, figOrderLabels: figOrderLabels, catBlocks: catBlocks, defaultCats: defaultCats, setSlot: setSlot, autoName: autoName, newTab: newTab, newFig: newFig, tabReady: tabReady,
     buildReq: buildReq, markDirty: markDirty, schedule: schedule, scheduleAll: scheduleAll, syncResults: syncResults, commit: commit, undo: undo, redo: redo, fixSel: fixSel, tableDefaults: tableDefaults,
     pickFile: pickFile, saveBlob: saveBlob, baseName: baseName, loadCsv: loadCsv, handleFile: handleFile, newProject: newProject,
     saveProjectAs: saveProjectAs, listProjects: listProjects, openProjectByName: openProjectByName, exportProjectFile: exportProjectFile, projectJson: projectJson });

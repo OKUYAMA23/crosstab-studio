@@ -67,7 +67,7 @@ xl_table <- function(W, r0, c0, corner, rown, coln, fcell, total = TRUE, style =
   }
   t
 }
-xl_stat <- function(W, r, c, label, f, style = 3L) { S_(W, r, c, label, 6L); F_(W, r, c + 1, f, style); ad(r, c + 1) }
+xl_stat <- function(W, r, c, label, f, style = 3L) { if (grepl("^p($|（| \\()", label)) style <- 8L; S_(W, r, c, label, 6L); F_(W, r, c + 1, f, style); ad(r, c + 1) }   # p は有意水準の近くで小数 4 桁（書式 8）
 xl_note <- function(W, r, c, text) S_(W, r, c, text, 7L)
 xl_hyper_p <- function(a, r1, c1, n) {
   k <- sprintf('(ROW(INDIRECT((MAX(0,%s+%s-%s)+1)&":"&(MIN(%s,%s)+1)))-1)', r1, c1, n, r1, c1)
@@ -738,6 +738,8 @@ xl_sheet_xml <- function(W) {
          '<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>', cols,
          "<sheetData>", paste0('<row r="', rn[o], '">', rows[o], "</row>", collapse = ""), "</sheetData></worksheet>")
 }
+# p の書式：有意水準の ±0.005 の範囲だけ小数 4 桁（例：有意水準 5% なら 0.045 以上 0.055 未満）
+xl_pfmt <- function(a = getOption("cts.alpha", 0.05)) sprintf('<numFmt numFmtId="167" formatCode="[&lt;%s]0.000;[&lt;%s]0.0000;0.000"/>', format(a - 0.005), format(a + 0.005))
 xl_files <- function(W) {
   head <- '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
   ns <- 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"'
@@ -746,13 +748,13 @@ xl_files <- function(W) {
     "_rels/.rels" = paste0(head, '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'),
     "xl/workbook.xml" = paste0(head, "<workbook ", ns, tr_(' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="データと解析" sheetId="1" r:id="rId1"/></sheets><calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>')),
     "xl/_rels/workbook.xml.rels" = paste0(head, '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'),
-    # 書式：0 標準、1 太字、2 解析の題（太字・緑の地）、3 小数 3 桁、4 小数 1 桁、5 小数 2 桁、6 見出し（太字・灰色の地）、7 注（灰色の文字）
-    "xl/styles.xml" = paste0(head, "<styleSheet ", ns, '><numFmts count="3"><numFmt numFmtId="164" formatCode="0.000"/><numFmt numFmtId="165" formatCode="0.0"/><numFmt numFmtId="166" formatCode="0.00"/></numFmts>',
+    # 書式：0 標準、1 太字、2 解析の題（太字・緑の地）、3 小数 3 桁、4 小数 1 桁、5 小数 2 桁、6 見出し（太字・灰色の地）、7 注（灰色の文字）、8 p 値
+    "xl/styles.xml" = paste0(head, "<styleSheet ", ns, '><numFmts count="4"><numFmt numFmtId="164" formatCode="0.000"/><numFmt numFmtId="165" formatCode="0.0"/><numFmt numFmtId="166" formatCode="0.00"/>', xl_pfmt(), '</numFmts>',
       '<fonts count="3"><font><sz val="11"/><name val="Yu Gothic"/></font><font><b/><sz val="11"/><name val="Yu Gothic"/></font><font><sz val="11"/><color rgb="FF595959"/><name val="Yu Gothic"/></font></fonts>',
       '<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFDDEFE3"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFF2F2F2"/></patternFill></fill></fills>',
       '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>',
-      '<cellXfs count="8"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/>',
+      '<cellXfs count="9"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/>',
       '<xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="165" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="166" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>',
-      '<xf numFmtId="0" fontId="1" fillId="3" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs></styleSheet>'),
+      '<xf numFmtId="0" fontId="1" fillId="3" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="167" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/></cellXfs></styleSheet>'),
     "xl/worksheets/sheet1.xml" = xl_sheet_xml(W))
 }

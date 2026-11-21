@@ -93,13 +93,16 @@
     if (!/^pat:/.test(c)) return c;
     return { solid: '#000', white: '#fff', gray: '#9E9E9E', diag: 'repeating-linear-gradient(45deg,#000 0 1px,#fff 1px 4px)', back: 'repeating-linear-gradient(-45deg,#000 0 1px,#fff 1px 4px)', cross: 'repeating-linear-gradient(0deg,#000 0 1px,transparent 1px 4px),repeating-linear-gradient(90deg,#000 0 1px,#fff 1px 4px)', horiz: 'repeating-linear-gradient(0deg,#000 0 1px,#fff 1px 4px)', dots: 'radial-gradient(#000 1px,#fff 1.5px) 0 0/4px 4px' }[c.slice(4)] || '#fff';
   }
-  function fmtP(p) { if (p === null || p === undefined) return '–'; if (p < 0.001) return '< ' + (S.P.settings.lead0 ? '0.001' : '.001'); var s = p.toFixed(3); return S.P.settings.lead0 ? s : s.replace(/^0/, ''); }
+  // p 値。有意水準の ±0.005 の範囲では、丸めで判定を誤解させないよう小数第 4 位まで出す（有意の判定には丸める前の値を使う）
+  function fmtP(p) { if (p === null || p === undefined) return '–'; if (p < 0.001) return '< ' + (S.P.settings.lead0 ? '0.001' : '.001'); var s = p.toFixed(Math.abs(p - S.P.settings.alpha) < 0.005 ? 4 : 3); return S.P.settings.lead0 ? s : s.replace(/^0/, ''); }
   function pText(p) { return 'p ' + (p < 0.001 ? '' : '= ') + fmtP(p); }
+  // 係数・信頼区間：小数第 2 位に丸めると 0 になる値は、符号が分かるよう有効数字 2 桁で出す
+  function fixed2s(v) { v = +v; return v !== 0 && Math.abs(v) < 0.005 ? v.toFixed(Math.min(12, 1 - Math.floor(Math.log10(Math.abs(v))))) : fixed(v, 2); }
   function fixed(v, d) { var s = (+v).toFixed(d); return /^-0\.?0*$/.test(s) ? s.slice(1) : s; }   // 「-0.00」は「0.00」にする
   function fmtCell(val, f) {
     if (val === null || val === undefined || (typeof val === 'number' && isNaN(val))) return '–';
     if (f === 'int') return String(Math.round(val)); if (f === 'pct') return (val * 100).toFixed(1); if (f === 'num1') return fixed(val, 1);
-    if (f === 'num2') return fixed(val, 2); if (f === 'num3') return fixed(val, 3); if (f === 'p') return fmtP(val); return String(val);
+    if (f === 'num2') return fixed(val, 2); if (f === 'num2s') return fixed2s(val); if (f === 'num3') return fixed(val, 3); if (f === 'p') return fmtP(val); return String(val);
   }
 
   // ---------------- 表（画面・コピー・報告書で同じものを使う）
@@ -576,30 +579,41 @@
     return S.P.tabs.filter(function (t) { return t.checked; }).map(function (t, i) { var r = S.results[t.id]; return { tab: t, res: r, no: i + 1, ok: !!(r && r.ok), text: r && r.ok ? (t.reportText !== null ? t.reportText : r.report) : '' }; });
   }
   function holmItems() { return repItems().filter(function (x) { return x.ok && x.res.p !== null && x.res.p !== undefined; }); }
+  // ホルム法で補正する範囲（族）。解析ごとに名前を付けられ、同じ名前の検定どうしで補正する。名前のない検定は「報告書全体」の族にまとめる（既定）
+  function holmGroup(tab) { return String(tab.holmGroup || '').trim(); }
+  function holmSig(items) { return JSON.stringify(items.map(function (x) { return [x.tab.id, x.res.p, holmGroup(x.tab)]; })); }
   async function ensureHolmAsync() {
-    var items = holmItems(), sig = JSON.stringify(items.map(function (x) { return [x.tab.id, x.res.p]; }));
-    if (!items.length) { S.holm = { sig: sig, map: {}, k: 0 }; return; }
+    var items = holmItems(), sig = holmSig(items);
+    if (!items.length) { S.holm = { sig: sig, map: {}, k: 0, kOf: {}, groups: [] }; return; }
     if (S.holm && S.holm.sig === sig) return;
-    var d = await A.apiData('/api/padjust', { p: items.map(function (x) { return x.res.p; }) });
-    if (!d.ok) return;
-    var map = {}; items.forEach(function (x, i) { map[x.tab.id] = d.p[i]; });
-    S.holm = { sig: sig, map: map, k: items.length };
+    var names = [], map = {}, kOf = {};
+    items.forEach(function (x) { var g = holmGroup(x.tab); if (names.indexOf(g) < 0) names.push(g); });
+    for (var gi = 0; gi < names.length; gi++) {
+      var its = items.filter(function (x) { return holmGroup(x.tab) === names[gi]; });
+      var d = await A.apiData('/api/padjust', { p: its.map(function (x) { return x.res.p; }) });
+      if (!d.ok) return;
+      its.forEach(function (x, i) { map[x.tab.id] = d.p[i]; kOf[x.tab.id] = its.length; });
+    }
+    S.holm = { sig: sig, map: map, k: items.length, kOf: kOf, groups: names.map(function (g) { return { name: g, k: items.filter(function (x) { return holmGroup(x.tab) === g; }).length }; }) };
   }
   function ensureHolm() {
-    var sig = JSON.stringify(holmItems().map(function (x) { return [x.tab.id, x.res.p]; }));
+    var sig = holmSig(holmItems());
     if ((S.holm && S.holm.sig === sig) || ensureHolm.busy === sig) return;
     ensureHolm.busy = sig;
     ensureHolmAsync().then(function () { ensureHolm.busy = null; if (S.ui.view === 'report') renderCenter(); }).catch(function () { ensureHolm.busy = null; });
   }
+  function star(p) { return p !== null && p !== undefined && p < S.P.settings.alpha ? '*' : ''; }
   function summaryTable() {
     var holm = S.P.report.holm, items = repItems().filter(function (x) { return x.ok; });
-    var rows = [[_t('番号'), _t('解析'), _t('検定'), _t('統計量'), 'p'].concat(holm ? [_t('補正後の p')] : [], [_t('効果量'), 'n'])];
+    var grouped = holm && S.holm && (S.holm.groups || []).some(function (g) { return g.name; });
+    var rows = [[_t('番号'), _t('解析'), _t('検定'), _t('統計量'), 'p'].concat(holm ? [_t('補正後の p')] : [], grouped ? [_t('補正の族')] : [], [_t('効果量'), 'n'])];
     items.forEach(function (x) {
       var r = x.res, hp = S.holm && S.holm.map[x.tab.id] !== undefined ? S.holm.map[x.tab.id] : null, hasP = r.p !== null && r.p !== undefined;
-      rows.push([String(x.no), x.tab.name, r.test, (r.row && r.row.stat) || '–', hasP ? fmtP(r.p) : '–'].concat(holm ? [hasP ? fmtP(hp) : '–'] : [], [(r.row && r.row.effect) || '–', String(r.n ? r.n.used : '')]));
+      rows.push([String(x.no), x.tab.name, r.test, (r.row && r.row.stat) || '–', hasP ? fmtP(r.p) + star(r.p) : '–'].concat(holm ? [hasP && hp !== null ? fmtP(hp) + star(hp) : '–'] : [], grouped ? [hasP ? holmGroup(x.tab) || _t('報告書全体') : '–'] : [], [(r.row && r.row.effect) || '–', String(r.n ? r.n.used : '')]));
     });
     var k = S.holm ? S.holm.k : 0;
-    return { caption: _t('検定の一覧'), rows: rows, textCols: [true, true], note: _t('有意水準は {0}%。', S.P.settings.alpha * 100) + (holm ? _t('補正後の p は、この報告書の {0} 件の検定をまとめてホルム法で補正した値。検定を繰り返すと、関連がなくても偶然に有意となる検定が出やすくなるため、結論には補正後の p も参照する。', k) : '') };
+    return { caption: _t('検定の一覧'), rows: rows, textCols: [true, true], note: _t('有意水準は {0}%。', S.P.settings.alpha * 100) + _t('* は有意水準を下回った検定（丸める前の p で判定）。') + (holm ? (grouped ? _t('補正後の p は、「補正の族」が同じ検定ごとにホルム法で補正した値（{0}）。', S.holm.groups.map(function (g) { return _t('{0} {1} 件', g.name || _t('報告書全体'), g.k); }).join(_t('、'))) + _t('検定を繰り返すと、関連がなくても偶然に有意となる検定が出やすくなるため、結論には補正後の p も参照する。')
+      : _t('補正後の p は、この報告書の {0} 件の検定をまとめてホルム法で補正した値。検定を繰り返すと、関連がなくても偶然に有意となる検定が出やすくなるため、結論には補正後の p も参照する。', k)) : '') };
   }
   function repMeta() {
     var d = new Date(), pad = function (n) { return (n < 10 ? '0' : '') + n; };
@@ -734,18 +748,30 @@
   function catsEditor(tab, sid, sl, x) {
     if (!sl.cats.length || (x && !A.isCat(x))) return '';
     var counts = {}; A.slotCols(sl).map(A.v).filter(Boolean).forEach(function (vv) { (vv.cats || []).forEach(function (c) { counts[c.v] = (counts[c.v] || 0) + c.n; }); });
-    var h = '<div class="md-cats">';
+    var h = '<div class="md-cats">', blocks = A.catBlocks(sl.cats), bof = function (i) { return blocks.findIndex(function (b) { return b.indexOf(i) >= 0; }); };
     sl.cats.forEach(function (c, i) {
       var merged = c.on && sl.cats.some(function (k, j) { return j !== i && k.on && k.label === c.label; });
       h += '<div class="md-cat' + (c.on ? '' : ' off') + '"><input type="checkbox" data-cat="' + sid + ':' + i + ':on"' + (c.on ? ' checked' : '') + _t(' data-tip="チェックを外すと、この選択肢を選んだ人を解析から除きます。">') +
         '<input type="text" data-cat="' + sid + ':' + i + ':label" value="' + esc(c.label) + _t('" data-tip="元の回答：') + esc(c.v) + _t('。名前を書き換えられます。ほかの選択肢と同じ名前にすると、1 つにまとめます。">') +
         (merged ? _t('<button class="md-merged" data-tip="同じ名前の選択肢とまとめています。押すと、この選択肢だけ元の名前に戻して分けます。">まとめ</button>') : '') + '<span class="md-n">' + (counts[c.v] || 0) + '</span>' +
-        '<button class="md-mv" data-act="catMove" data-arg="' + sid + ':' + i + _t(':-1" data-tip="1 つ上へ"') + (i === 0 ? ' disabled' : '') + '>▲</button><button class="md-mv" data-act="catMove" data-arg="' + sid + ':' + i + _t(':1" data-tip="1 つ下へ"') + (i === sl.cats.length - 1 ? ' disabled' : '') + '>▼</button>' +
+        '<button class="md-mv" data-act="catMove" data-arg="' + sid + ':' + i + (merged ? _t(':-1" data-tip="まとめた群ごと 1 つ上へ"') : _t(':-1" data-tip="1 つ上へ"')) + (bof(i) === 0 ? ' disabled' : '') + '>▲</button><button class="md-mv" data-act="catMove" data-arg="' + sid + ':' + i + (merged ? _t(':1" data-tip="まとめた群ごと 1 つ下へ"') : _t(':1" data-tip="1 つ下へ"')) + (bof(i) === blocks.length - 1 ? ' disabled' : '') + '>▼</button>' +
         (c.label !== c.v ? _t('<div class="md-orig">元の回答：') + esc(c.v) + '</div>' : '') + '</div>';
     });
     var onN = sl.cats.filter(function (c) { return c.on; }).length;
     return h + '</div><div class="md-row" style="margin-bottom:8px">' + (onN >= 3 ? '<button class="md-btn md-btn-sm" data-act="catTwo" data-arg="' + sid + _t('" data-tip="チェックの入った選択肢を、上半分と下半分の 2 つにまとめます。">上下 2 つにまとめる</button>') : '') +
       '<button class="md-btn md-btn-sm" data-act="catReset" data-arg="' + sid + _t('" data-tip="名前・並び・チェックを最初の状態に戻します。">最初の状態に戻す</button></div>');
+  }
+  // 回帰分析の説明変数：選択肢のある列ごとに、使う選択肢のチェックを出す（外した選択肢を選んだ人は推定から除く）
+  function xDropEditor(tab, sid, sl) {
+    var dr = sl.drop || {};
+    return sl.cols.map(A.v).filter(function (x) { return x && A.isCat(x) && x.type !== 'multi'; }).map(function (x) {
+      var off = dr[x.col] || [];
+      return '<div class="md-hint" style="margin:6px 0 2px;color:var(--t-1e2f26)">' + esc(x.label) + '</div><div class="md-cats md-xcats">' + x.cats.map(function (c, i) {
+        if (c.special) return '';
+        var on = off.indexOf(c.v) < 0;
+        return '<label class="md-cat' + (on ? '' : ' off') + '" style="cursor:pointer"><input type="checkbox" data-xdrop="' + sid + ':' + x.col + ':' + i + '"' + (on ? ' checked' : '') + _t(' data-tip="チェックを外すと、この選択肢を選んだ人を解析から除きます。">') + '<span style="flex:1;padding:4px">' + esc(c.v) + '</span><span class="md-n">' + c.n + '</span></label>';
+      }).join('') + '</div>';
+    }).join('');
   }
   function paneAnalysis() {
     var tab = A.curTab(); if (!tab) return needTab(_t('解析'));
@@ -754,13 +780,13 @@
     var slotsH = d.slots.map(function (sd) {
       var sl = tab.slots[sd.id];
       // 回帰分析の説明変数は、設問ごとの回答をそのまま使う（まとめた選択肢の一覧は意味を持たないので出さない）
-      if (sd.many && sd.types.indexOf('numeric') >= 0) return '<div class="md-sub"><b>' + esc(sd.label) + '</b>' + (sl.cols.length ? _t('：{0} 個の設問', sl.cols.length) : '') + '</div>' + hint(_t('説明変数は、それぞれの設問の回答をそのまま使います（「無回答」などは除きます）。単一回答の設問は、選択肢の並びの先頭を基準にします。'));
+      if (sd.many && sd.types.indexOf('numeric') >= 0) return '<div class="md-sub"><b>' + esc(sd.label) + '</b>' + (sl.cols.length ? _t('：{0} 個の設問', sl.cols.length) : '') + '</div>' + xDropEditor(tab, sd.id, sl) + hint(_t('説明変数は、それぞれの設問の回答をそのまま使います（「無回答」などは除きます）。単一回答の設問は、選択肢の並びの先頭を基準にします。チェックを外した選択肢を選んだ人は、この解析から除きます。'));
       if (sd.many) return '<div class="md-sub"><b>' + esc(sd.label) + '</b>' + (sl.cols.length ? _t('：{0} 個の設問（人数は合計）', sl.cols.length) : '') + '</div>' + (sl.cols.length ? catsEditor(tab, sd.id, sl, null) : hint(_t('設問はまだ選ばれていません。中央の解析の欄で選んでください。')));
       var x = sl.col !== null ? A.v(sl.col) : null;
       return '<div class="md-sub"><b>' + esc(sd.label) + '</b>' + (x ? _t('：') + esc(x.label) : '') + '</div>' + (x ? catsEditor(tab, sd.id, sl, x) : hint(_t('設問はまだ選ばれていません。中央の解析の欄で選んでください。')));
     }).join('');
     // 選択肢を直せる欄があるときだけ、直し方の説明を付ける（数値や回帰分析の説明変数だけのときは付けない）
-    h += sec(_t('選択肢の設定'), slotsH, slotsH.indexOf('md-cats') < 0 ? '' : hint(_t('選択肢の名前は書き換えられます。同じ名前にした選択肢は 1 つにまとめ、チェックを外した選択肢は解析から除きます。') + (multiNote ? _t('複数回答で選んだ人が 1% 未満の回答（自由記述）は、最初から「その他」にまとめています。') : '')));
+    h += sec(_t('選択肢の設定'), slotsH, slotsH.indexOf('<div class="md-cats">') < 0 ? '' : hint(_t('選択肢の名前は書き換えられます。同じ名前にした選択肢は 1 つにまとめ、チェックを外した選択肢は解析から除きます。') + (multiNote ? _t('複数回答で選んだ人が 1% 未満の回答（自由記述）は、最初から「その他」にまとめています。') : '')));
     var fv = tab.filter && tab.filter.col !== null ? A.v(tab.filter.col) : null;
     h += sec(_t('絞り込み（一部の回答者だけで解析）'), _t('<label class="md-field"><span>条件にする質問</span><select data-filter="col"><option value="">（絞り込まない）</option>') +
       S.P.vars.filter(A.isCat).map(function (x) { return '<option value="' + x.col + '"' + (fv && fv.col === x.col ? ' selected' : '') + '>' + esc(x.label) + '</option>'; }).join('') + '</select></label>' +
@@ -868,6 +894,11 @@
       _t('<div class="md-hint" style="color:var(--t-1e2f26)">・図：「解析の名前_図1.png」のように、解析ごとに 1 から番号を付けます。画面に出ている形と大きさのままです。<br>・Excel ファイル：CSV をシートにし、その右側に Excel の関数で解析を再現します（値の貼り付けはしません）。<br>・R のコード：解析を R の標準の関数で計算し直すスクリプトと、そのデータです。<br>・報告書：すべての解析の文と表を、PDF・Word・テキストのいずれかにまとめます。</div>'),
       '<button class="md-btn md-btn-primary" data-act="exportAll"' + (S.P.tabs.length ? '' : ' disabled') + _t('>まとめて書き出す</button>'));
     h += sec(_t('報告書に入れる内容'), fCheck(_t('各解析の表を入れる'), 'rep.tables'), fCheck(_t('ホルム法で補正した p を一覧に入れる'), 'rep.holm'), hint(_t('補正後の p は、検定を何度も行うと偶然に有意となる結果が増える問題に対応するための値です。')));
+    if (tab && res && res.ok && res.p !== null && res.p !== undefined && S.P.report.holm) {
+      var gl = []; S.P.tabs.forEach(function (t) { var g = holmGroup(t); if (g && gl.indexOf(g) < 0) gl.push(g); });
+      h += sec(_t('ホルム法で補正する範囲（族）'), target(tab), _t('<label class="md-field"><span>補正の族の名前</span><input type="text" list="md_holmgroups" placeholder="報告書全体" data-holmgroup="') + tab.id + '" value="' + esc(holmGroup(tab)) + '"></label><datalist id="md_holmgroups">' + gl.map(function (g) { return '<option value="' + esc(g) + '">'; }).join('') + '</datalist>',
+        hint(_t('同じ名前を付けた検定どうしで補正します。空欄の検定は「報告書全体」の族にまとめます。例：仮説の検定に「仮説」、確認のための検定に「確認」と付けると、確認の検定を足しても仮説の補正後の p は変わりません。')));
+    }
     if (tab && res && res.ok) h += sec(_t('選んだ解析の文'), target(tab), '<textarea class="md-in" data-auto data-reptext="' + tab.id + '" rows="5">' + esc(tab.reportText !== null ? tab.reportText : res.report) + '</textarea>',
       hint(_t('文は書き換えられます。定型文は結果の数値から決まった型で作っています。考察（なぜそうなったか）は含まれないため、自分で書き足してください。')), tab.reportText !== null ? '<button class="md-btn" data-act="resetTextAt" data-arg="' + tab.id + _t('">定型文に戻す</button>') : '');
     return h;
@@ -915,6 +946,8 @@
     return langSec() + themeSec() + defaultsSec() + _t('<div class="md-hint" style="margin:10px 0 0;font-weight:700;color:var(--ink-ui)">開いているプロジェクトの設定</div>') + sec(_t('判定と表記'), grid2(fSelect(_t('有意水準'), 'set.alpha', [[0.05, _t('5%（0.05）')], [0.01, _t('1%（0.01）')], [0.1, _t('10%（0.10）')]], 'num'), fSelect(_t('p 値の表記'), 'set.lead0', [['true', 'p = 0.012'], ['false', 'p = .012']], 'boolstr')),
       hint(_t('有意水準を変えると、すべての解析の判定と定型文が変わります。'))) +
       sec(_t('図'), grid2(fSelect(_t('自動で入る文字'), 'set.figLang', [['ja', _t('日本語')], ['en', _t('英語')]]), fSelect(_t('画像の細かさ'), 'set.pngScale', [[1, _t('標準')], [2, _t('2 倍（資料向け）')], [4, _t('4 倍（印刷向け）')]], 'num')),
+        grid2(fSelect(_t('印刷の幅と解像度'), 'set.pngPrint', [['', _t('指定しない（上の倍率）')], ['84-300', _t('1 段幅 84 mm・300 dpi')], ['84-600', _t('1 段幅 84 mm・600 dpi')], ['174-300', _t('2 段幅 174 mm・300 dpi')], ['174-600', _t('2 段幅 174 mm・600 dpi')]]), '<span></span>'),
+        hint(_t('印刷の幅と解像度を選ぶと、図をその幅に印刷したときにその解像度になるよう、画像の大きさを決めます（論文の 1 段は約 84 mm、2 段は約 174 mm）。文字を残したまま拡大できる形が必要なときは、図の右クリックの「SVG で保存」を使ってください。')),
         hint(_t('画像の細かさを上げても、Word や PowerPoint に貼ったときの大きさは画面と同じです（解像度の情報を画像に書き込みます）。回答の選択肢の名前はデータのまま表示します。'))) +
       sec(_t('画面'), grid2(fSelect(_t('画面の拡大'), 'set.zoom', [[90, '90%'], [100, '100%'], [115, '115%'], [130, '130%']], 'num'), '<span></span>')) +
       sec(_t('計算について'), hint(_t('集計と検定はすべて、この端末のブラウザの中で動く R{0} で計算しています。データが外部に送られることはありません。', S.r ? _t('（バージョン {0}）', S.r) : '')), _t('<button class="md-btn" data-act="about">使っている手法を見る</button>')) +
@@ -937,5 +970,5 @@
     renderPane();
   }
   Object.assign(A, { settingsHtml: paneSettings, render: render, stopKeep: stopKeep, renderTitle: renderTitle, renderStatus: renderStatus, renderCenter: renderCenter, renderPane: renderPane, applyZoom: applyZoom, tablesOf: tablesOf, tableTsv: tableTsv, tableHtml: tableHtml, tablesSvg: tablesSvg, figsOf: figsOf,
-    reportPlain: reportPlain, ensureHolmAsync: ensureHolmAsync, get: get, autoGrow: autoGrow, RTABS: RTABS, paletteGallery: paletteGallery, repItems: repItems, T_DESIGNS: T_DESIGNS, tableSvgDoc: tableSvgDoc, summaryTable: summaryTable, repMeta: repMeta, citeList: citeList, citeReport: citeReport });
+    reportPlain: reportPlain, ensureHolmAsync: ensureHolmAsync, holmGroup: holmGroup, holmItems: holmItems, repItems: repItems, get: get, autoGrow: autoGrow, RTABS: RTABS, paletteGallery: paletteGallery, repItems: repItems, T_DESIGNS: T_DESIGNS, tableSvgDoc: tableSvgDoc, summaryTable: summaryTable, repMeta: repMeta, citeList: citeList, citeReport: citeReport });
 })();

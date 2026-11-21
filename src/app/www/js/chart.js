@@ -131,12 +131,12 @@
   function model(res) {
     if (!res || !res.ok) return null;
     var f = res.fig || {};
-    if (f.type === 'xtab' && res.xtab) return { type: 'xtab', cats: res.xtab.rows, series: res.xtab.cols, count: res.xtab.count, resid: res.xtab.resid || null, catTitle: res.xtab.rowLabel, seriesTitle: res.xtab.colLabel, prefer: f.prefer };
+    if (f.type === 'xtab' && res.xtab) return { type: 'xtab', cats: res.xtab.rows, series: res.xtab.cols, count: res.xtab.count, resid: res.xtab.resid || null, catTitle: res.xtab.rowLabel, seriesTitle: res.xtab.colLabel, prefer: f.prefer, sc: f.sc ? model({ ok: true, fig: f.sc }) : null };
     if (f.type === 'items' && res.xtab) return { type: 'items', items: res.xtab.rows, choices: res.xtab.cols, count: res.xtab.count, prefer: f.prefer };
     if (f.type === 'freq') return { type: 'freq', cats: f.cats, series: f.series, count: f.count, base: f.base, catTitle: f.catTitle, multi: !!f.multi, time: !!f.time, prefer: f.prefer };
     if (f.type === 'multi') return { type: 'multi', cats: f.cats, series: f.series, count: f.count, pct: f.pct, catTitle: f.catTitle, seriesTitle: f.seriesTitle };
     if (f.type === 'box') return { type: 'box', cats: f.cats, box: f.box, catTitle: f.catTitle, valueTitle: f.valueTitle, series: [], prefer: f.prefer, coef: f.coef || null, ref: f.ref };
-    if (f.type === 'scatter') return { type: 'scatter', x: f.x, y: f.y, xTitle: f.xTitle, yTitle: f.yTitle, series: [], cats: [], fit: f.fit || null };
+    if (f.type === 'scatter') return { type: 'scatter', x: f.x, y: f.y, xTitle: f.xTitle, yTitle: f.yTitle, series: [], cats: [], fit: f.fit || null, xLev: f.xLev || null, yLev: f.yLev || null };
     if (f.type === 'hist') return { type: 'hist', edges: f.edges, counts: f.counts, series: f.series, xTitle: f.xTitle, seriesTitle: f.seriesTitle, intBins: !!f.intBins, box: f.box, boxCats: f.boxCats, catTitle: f.catTitle, cats: [] };
     if (f.type === 'words') return { type: 'words', words: f.words, n: f.n, base: f.base, net: f.net, prefer: f.prefer || 'wbar', series: [], cats: [] };
     if (f.type === 'map') return { type: 'map', pts: f.pts, series: f.pts.map(function (p) { return p.name; }), xTitle: f.xTitle, yTitle: f.yTitle, cats: [] };
@@ -147,10 +147,11 @@
     if (m.type === 'freq') return m.time ? ['line', 'bar'] : m.multi ? ['bar'] : ['bar', 'pie'];   // 複数回答は合計が 100% を超えるので円グラフにしない。日時の推移は折れ線
     if (m.type === 'box' && m.coef) return ['coef'];                     // 回帰係数の図（点と 95% 信頼区間）
     if (m.type === 'box') return m.box && m.box.length && m.box[0].mean !== undefined && m.prefer === 'mean' ? ['mean', 'box'] : ['box'];   // 平均の比較（t 検定・分散分析）は平均と信頼区間
+    if (m.type === 'xtab' && m.sc) return ['stack100', 'group', 'stack', 'heat', 'scatter'];   // 順序のある回答 × 値の種類が少ない数値（スピアマン）：散布図も選べる
     return { xtab: ['stack100', 'group', 'stack', 'heat', 'pie'], items: ['stack100', 'group', 'heat', 'pie'], multi: ['group'], scatter: ['scatter'], hist: ['hist', 'box'], map: ['map'], words: ['wbar', 'cloud', 'net'] }[m.type] || [];
   }
   // その図で色を分けている系列の名前（凡例の並び）。図の種類によって変わる
-  function seriesFor(m, st) { var k = kindOf(m, st); if (m.type === 'items') return k === 'group' ? m.items : m.choices; if (k === 'pie' && m.type === 'freq') return m.cats; return m.series || []; }
+  function seriesFor(m, st) { var k = kindOf(m, st); if (m.type === 'items') return k === 'group' ? m.items : m.choices; if (k === 'pie' && m.type === 'freq') return m.cats; if (k === 'scatter') return []; return m.series || []; }
   // 色を選べる系列の名前（色の個別指定のキー）。系列が 1 つの図は、図の中で使う名前（box・mean・pt・回答数）にする
   function colorKeys(m, st) {
     var k = kindOf(m, st); if (k === 'heat' || k === 'cloud' || k === 'net') return [];
@@ -164,6 +165,7 @@
     var W = Math.max(160, +st.w || 560), H = Math.max(120, +st.h || 340), F = fam(st), o = [], defs = [], kind = kindOf(m, st), id = 'c' + (++uid);
     var L = lang === 'en' ? { pct: 'Percentage (%)', mpct: 'Percentage choosing each option (within each group, %)', count: 'Count', n: 'n = ', row: 'Row %', col: 'Column %', resid: 'Adjusted residual' } : { pct: '割合 (%)', mpct: '選んだ人の割合（グループごと, %）', count: '人数（人）', n: 'n = ', row: '行の割合 (%)', col: '列の割合 (%)', resid: '調整済み標準化残差' };
     var dec = Math.max(0, Math.min(2, isNum(st.labelDec) ? +st.labelDec : 1));
+    if (kind === 'scatter' && m.sc) m = m.sc;                          // 帯グラフを既定にした散布図のデータ
     var omitted = 0, outside = 0, valRange = null;                    // valRange：数値の軸の範囲（箱ひげ図の外れ値を範囲で切るのに使う）                                     // outside：軸の範囲の外にあって描かなかった点の数                                                  // 場所が足りずに書かなかった値のラベルの数（作業ウィンドウで知らせる）
     // 積み上げた棒・円グラフは図の中に空きがないので、凡例を「図の中」にしたときは右に出す（棒や文字と重ねない）
     if ((kind === 'stack100' || kind === 'stack' || kind === 'pie') && (st.legend === 'inTR' || st.legend === 'inTL')) st.legend = 'right';
@@ -509,7 +511,8 @@
       o.push('<circle cx="' + r1(horiz ? pm : mid) + '" cy="' + r1(horiz ? mid : pm) + '" r="' + r1(r) + '" fill="' + fill + '" stroke="#000000" stroke-width="' + w + '" data-tip="' + esc(tip) + '"/>');
       if (st.labels) { var t = fmtV(b.mean); if (horiz) T(pm, mid - r - 4, t, { size: st.fsLabel, anchor: 'middle' }); else T(mid + r + 4, pm + st.fsLabel * 0.35, t, { size: st.fsLabel }); }
     }
-    function fmtV(v) { var big = (m.box || []).some(function (b) { return isNum(b.mean) && Math.abs(b.mean) >= 100; }); var s = v.toFixed(big ? 1 : 2); return /^-0\.?0*$/.test(s) ? s.slice(1) : s; }   // 図の中で小数の桁をそろえる
+    function fmtV(v) { var big = (m.box || []).some(function (b) { return isNum(b.mean) && Math.abs(b.mean) >= 100; }); if (m.coef && !big && v !== 0 && Math.abs(v) < 0.005) return v.toFixed(Math.min(12, 1 - Math.floor(Math.log10(Math.abs(v)))));   // 係数の図：0 に丸めると符号が読めない値は有効数字 2 桁
+      var s = v.toFixed(big ? 1 : 2); return /^-0\.?0*$/.test(s) ? s.slice(1) : s; }   // 図の中で小数の桁をそろえる
     // ---- 色分けの表（セルの値に応じて色を付け、カラーバーで対応を示す）
     function drawHeat() {
       var nr = m.cats.length, nc = m.series.length, rowTot = m.count.map(function (r) { return sum(r); }), colTot = m.series.map(function (_, j) { return sum(m.count.map(function (r) { return r[j]; })); });
@@ -578,20 +581,45 @@
       o.push('</g>');
     }
     function drawScatter() {
-      var sx = scaleFor({ min: st.xMin, max: st.xMax, step: st.xStep }, 0, 0, nice(Math.min.apply(null, m.x), Math.max.apply(null, m.x), 5)), sy = scaleFor(st, 0, 0, nice(Math.min.apply(null, m.y), Math.max.apply(null, m.y), 5));
+      // 順序のある回答の軸（lev）：目盛りを選択肢の点に置き、名前を出す。もう一方の値の種類が少ない（12 個以下の整数）ときは、データの範囲だけを軸にする
+      var ordAx = !!(m.xLev || m.yLev);
+      function autoAx(vals, lev) {
+        if (lev) { var pts = lev.points.filter(isNum).map(Number), u = pts.filter(function (v, i) { return pts.indexOf(v) === i; }).sort(function (a, b) { return a - b; }); return { min: u[0] - 0.5, max: u[u.length - 1] + 0.5, step: 1, ticks: u }; }
+        var uv = vals.filter(function (v, i) { return vals.indexOf(v) === i; });
+        if (ordAx && uv.length <= 12 && uv.every(function (v) { return v === Math.round(v); })) { var lo = Math.min.apply(null, uv), hi = Math.max.apply(null, uv), tk = []; for (var t = lo; t <= hi; t++) tk.push(t); return { min: lo - 0.5, max: hi + 0.5, step: 1, ticks: tk }; }
+        return null;
+      }
+      function axis(user, vals, lev) {
+        var a = autoAx(vals, lev), set = isNum(user.min) || isNum(user.max) || isNum(user.step);
+        return a && !set ? a : scaleFor(user, 0, 0, nice(Math.min.apply(null, vals), Math.max.apply(null, vals), 5));
+      }
+      function labOf(lev) { return function (t) { if (!lev) return fmtTick(t); var nm = lev.labels.filter(function (l, i) { return +lev.points[i] === t; }); return nm.length ? nm.join(' / ') : fmtTick(t); }; }
+      var sx = axis({ min: st.xMin, max: st.xMax, step: st.xStep }, m.x, m.xLev), sy = axis(st, m.y, m.yLev), fx = labOf(m.xLev), fy = labOf(m.yLev);
       vTitle = st.vTitle === null || st.vTitle === undefined ? (m.yTitle || '') : st.vTitle; cTitle = st.cTitle === null || st.cTitle === undefined ? (m.xTitle || '') : st.cTitle;
-      var tickW = maxOf(sy.ticks.map(function (t) { return tw(fmtTick(t), st.fsTick, st); }));
+      var tickW = Math.min(W * 0.35, maxOf(sy.ticks.map(function (t) { return tw(fy(t), st.fsTick, st); })));
       var sL = aLines(vTitle, H - top - bottom - 60), bL = aLines(cTitle, W - left - right - 40);
-      var x0 = left + aRes(sL) + tickW + tickPad + 4, x1 = W - right - 6, y0 = top + 6, y1 = H - bottom - (st.fsTick + tickPad + 4) - aRes(bL);
+      var x0 = left + aRes(sL) + tickW + tickPad + 4, x1 = W - right - 6, y0 = top + 6 + (ordAx ? st.fsTick + 6 : 0), y1 = H - bottom - (st.fsTick + tickPad + 4) - aRes(bL);
       if (x1 - x0 < 30) x1 = x0 + 30; if (y1 - y0 < 30) y1 = y0 + 30; plot = { x0: x0, y0: y0, x1: x1, y1: y1 };
       function px(v) { return x0 + (v - sx.min) / (sx.max - sx.min) * (x1 - x0); } function py(v) { return y1 - (v - sy.min) / (sy.max - sy.min) * (y1 - y0); }
       var showY = thin(sy.ticks, (y1 - y0) / Math.max(1, sy.ticks.length - 1), function () { return st.fsTick; }), xt = sx.ticks;
-      var showX = thin(xt, (x1 - x0) / Math.max(1, xt.length - 1), function (t) { return tw(fmtTick(t), st.fsTick, st); });
-      sy.ticks.forEach(function (t, i) { if (gridOn && t > sy.min) line(x0, py(t), x1, py(t), st.lwGrid, st.gridColor, gridDash); tick(x0, py(t), false); if (showY(i)) T(x0 - tickPad, py(t) + st.fsTick * 0.35, fmtTick(t), { anchor: 'end' }); });
-      xt.forEach(function (t, i) { tick(px(t), y1, true); if (showX(i)) T(px(t), y1 + tickPad + st.fsTick * 0.85, fmtTick(t), { anchor: 'middle' }); });
+      var showX = thin(xt, (x1 - x0) / Math.max(1, xt.length - 1), function (t) { return tw(fx(t), st.fsTick, st); });
+      sy.ticks.forEach(function (t, i) { if (gridOn && t > sy.min) line(x0, py(t), x1, py(t), st.lwGrid, st.gridColor, gridDash); tick(x0, py(t), false); if (showY(i)) T(x0 - tickPad, py(t) + st.fsTick * 0.35, fy(t), { anchor: 'end' }); });
+      xt.forEach(function (t, i) { tick(px(t), y1, true); if (showX(i)) T(px(t), y1 + tickPad + st.fsTick * 0.85, fx(t), { anchor: 'middle' }); });
       var col = fillOf(seriesColors(['pt'], st)[0]);
-      m.x.forEach(function (xv, i) {                                              // 軸の範囲の外の点は描かずに数える（作業ウィンドウで知らせる）
-        var yv = m.y[i]; if (xv < sx.min - 1e-9 || xv > sx.max + 1e-9 || yv < sy.min - 1e-9 || yv > sy.max + 1e-9) { outside++; return; }
+      function inside(xv, yv) { return !(xv < sx.min - 1e-9 || xv > sx.max + 1e-9 || yv < sy.min - 1e-9 || yv > sy.max + 1e-9); }
+      if (ordAx) {
+        // 同じ位置に重なる人を数え、円の面積を人数に比例させる
+        var cnt = {}, keys = [];
+        m.x.forEach(function (xv, i) { var yv = m.y[i]; if (!inside(xv, yv)) { outside++; return; } var k = xv + '|' + yv; if (!cnt[k]) { cnt[k] = 0; keys.push(k); } cnt[k]++; });
+        var mc = Math.max(1, maxOf(keys.map(function (k) { return cnt[k]; }))), gapX = (x1 - x0) / Math.max(1, (sx.max - sx.min) / (sx.step || 1)), gapY = (y1 - y0) / Math.max(1, (sy.max - sy.min) / (sy.step || 1));
+        var rMax = Math.max(4, Math.min(16, 0.45 * Math.min(gapX, gapY)));
+        keys.forEach(function (k) {
+          var p = k.split('|').map(Number), c = cnt[k], r = Math.max(1.8, rMax * Math.sqrt(c / mc));
+          o.push('<circle cx="' + r1(px(p[0])) + '" cy="' + r1(py(p[1])) + '" r="' + r1(r) + '" fill="' + col + '" fill-opacity="0.55" stroke="#000000" stroke-width="' + Math.min(0.5, st.lwBar) + '" data-tip="' + esc(fx(p[0]) + ' / ' + fy(p[1]) + _t('：{0} 人', c)) + '"/>');
+        });
+        T(x1, top + st.fsTick, lang === 'en' ? 'Circle area is proportional to the number of respondents (max ' + mc + ')' : '円の面積は人数に比例（最大 ' + mc + ' 人）', { size: st.fsTick, anchor: 'end' });   // 図の言語に合わせる
+      } else m.x.forEach(function (xv, i) {                                              // 軸の範囲の外の点は描かずに数える（作業ウィンドウで知らせる）
+        var yv = m.y[i]; if (!inside(xv, yv)) { outside++; return; }
         o.push('<circle cx="' + r1(px(xv)) + '" cy="' + r1(py(yv)) + '" r="3" fill="' + col + '" fill-opacity="0.55" stroke="#000000" stroke-width="' + Math.min(0.5, st.lwBar) + '"/>');
       });
       if (m.fit && m.fit.length === 2) {                                         // 回帰直線（表示する範囲で切る）
@@ -749,13 +777,14 @@
     dv.setUint32(0, 9); ch.set([112, 72, 89, 115], 4); dv.setUint32(8, ppm); dv.setUint32(12, ppm); ch[16] = 1; dv.setUint32(17, crc32(ch.subarray(4, 17)));
     var out = new Uint8Array(u8.length + 21); out.set(u8.subarray(0, 33), 0); out.set(ch, 33); out.set(u8.subarray(33), 54); return out;
   }
-  function toPng(svg, scale) {
+  // dpi：PNG に書く解像度（印刷したときの大きさが決まる）。省略すると画面の 96 dpi × 倍率
+  function toPng(svg, scale, dpi) {
     return new Promise(function (resolve, reject) {
       var img = new Image(), url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }));
       img.onload = function () {
         var c = document.createElement('canvas'); c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
         var g = c.getContext('2d'); g.scale(scale, scale); g.drawImage(img, 0, 0); URL.revokeObjectURL(url);
-        c.toBlob(function (b) { if (!b) return reject(new Error(_t('画像にできませんでした。'))); b.arrayBuffer().then(function (ab) { resolve(new Blob([withDpi(new Uint8Array(ab), 96 * scale)], { type: 'image/png' })); }); }, 'image/png');
+        c.toBlob(function (b) { if (!b) return reject(new Error(_t('画像にできませんでした。'))); b.arrayBuffer().then(function (ab) { resolve(new Blob([withDpi(new Uint8Array(ab), dpi || 96 * scale)], { type: 'image/png' })); }); }, 'image/png');
       };
       img.onerror = function () { URL.revokeObjectURL(url); reject(new Error(_t('画像にできませんでした。'))); };
       img.src = url;

@@ -162,7 +162,14 @@
   function figAt(tab, k) { var f = A.figsOf(tab, resOf(tab)); return f[k] || null; }
   function selFigObj() { var tab = A.curTab(); return tab ? figAt(tab, Math.min(S.ui.selFig, tab.figs.length - 1)) : null; }
   function csvOf(tables) { return '﻿' + tables.map(function (t) { return [[t.caption]].concat(t.rows, t.note ? [[t.note]] : []).map(function (r) { return r.map(function (c) { c = String(c); return /[",\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(','); }).join('\r\n'); }).join('\r\n\r\n'); }
-  function pngBlob(fg) { return Chart.toPng(fg.r.svg, S.P.settings.pngScale || 2); }
+  // 画像の細かさ：倍率（1・2・4 倍）か、印刷の幅と解像度（例：84 mm・300 dpi）。幅と解像度を決めたときは、その幅に印刷したときの dpi になるよう倍率を決める
+  function pngOf(svg, w) {
+    var pp = S.P.settings.pngPrint;
+    if (pp && w > 0) { var a = String(pp).split('-'), dpi = +a[1], px = +a[0] / 25.4 * dpi; return Chart.toPng(svg, px / w, dpi); }
+    return Chart.toPng(svg, S.P.settings.pngScale || 2);
+  }
+  function svgW(svg) { var mm = /<svg[^>]*\swidth="([\d.]+)"/.exec(svg); return mm ? +mm[1] : 0; }
+  function pngBlob(fg) { return pngOf(fg.r.svg, fg.r.w || svgW(fg.r.svg)); }
   async function savePng(tab, k) {
     var fg = figAt(tab, k); if (!fg) return;
     try { if (await A.saveBlob(await pngBlob(fg), A.safeName(tab.name) + _t('_図') + (k + 1) + '.png', _t('PNG 画像'), '.png')) A.toast(_t('図を画像で保存しました（画面と同じ {0} × {1} の形{2}）。', fg.r.w, fg.r.h, fg.st.transparent ? _t('、背景は透明') : '')); }
@@ -176,7 +183,7 @@
   async function copyTables(tab) { var ts = A.tablesOf(tab, resOf(tab)); if (!ts.length) return; if (await copyText(ts.map(A.tableTsv).join('\n\n'), ts.map(function (t) { return A.tableHtml(t, tab.tstyle); }).join('<br>'))) A.toast(_t('表をコピーしました。Excel や Word に貼り付けられます。')); else A.toast(_t('コピーできませんでした。「CSV で保存」を使ってください。'), true); }
   async function saveTablesCsv(tab) { var ts = A.tablesOf(tab, resOf(tab)); if (!ts.length) return; if (await A.saveBlob(new Blob([csvOf(ts)], { type: 'text/csv' }), A.safeName(tab.name) + _t('_表.csv'), 'CSV', '.csv')) A.toast(_t('表を CSV で保存しました。')); }
   // 表を画像にする（画面と同じデザインの決まりで SVG に描いてから PNG にする）
-  function tablesPng(tab) { var svg = A.tablesSvg(tab, resOf(tab)); if (!svg) return Promise.reject(new Error(_t('表がありません。'))); return Chart.toPng(svg, S.P.settings.pngScale || 2); }
+  function tablesPng(tab) { var svg = A.tablesSvg(tab, resOf(tab)); if (!svg) return Promise.reject(new Error(_t('表がありません。'))); return pngOf(svg, svgW(svg)); }
   async function excelBlob(tabs) {
     var items = tabs.map(function (t) { return { name: t.name, req: A.buildReq(t) }; });
     var d = await A.apiData('/api/excel', { items: items });
@@ -192,7 +199,7 @@
     var enc = new TextEncoder();
     return [{ name: _t('解析.R'), data: enc.encode(d.script) }, { name: _t('解析用データ.csv'), data: enc.encode(d.data) }];
   }
-  A.rFiles = rFiles;
+  A.rFiles = rFiles; A.pngOf = pngOf; A.svgW = svgW;
   function okTabs() { return S.P.tabs.filter(function (t) { return t.checked && resOf(t) && resOf(t).ok; }); }
   function excelNote(x) { return (x.notes.length ? _t('Excel の関数で再現していないもの：{0}。', x.notes.join(_t('、'))) : '') + (x.skipped.length ? _t('書けなかった解析：{0}。', x.skipped.join(_t('、'))) : ''); }
   // ☑ を付けた解析の図・Excel・報告書をまとめて書き出す。dir：選んだフォルダー（選べない環境では ZIP にまとめる）
@@ -405,7 +412,12 @@
         x.cats = core.concat(sp);
       });
     },
-    catMove: function (arg) { var p = arg.split(':'), tab = A.curTab(), sl = tab.slots[p[0]], i = +p[1], j = i + (+p[2]); if (j < 0 || j >= sl.cats.length) return; A.commit(function () { var c = sl.cats.splice(i, 1)[0]; sl.cats.splice(j, 0, c); }, { run: tab.id }); },
+    // 選択肢を 1 つ上・下へ。同じ名前にまとめた選択肢は 1 つの群として、まとめて動かす
+    catMove: function (arg) {
+      var p = arg.split(':'), tab = A.curTab(), sl = tab.slots[p[0]], i = +p[1], dir = +p[2], blocks = A.catBlocks(sl.cats), bi = blocks.findIndex(function (b) { return b.indexOf(i) >= 0; }), bj = bi + dir;
+      if (bi < 0 || bj < 0 || bj >= blocks.length) return;
+      A.commit(function () { var t = blocks[bi]; blocks[bi] = blocks[bj]; blocks[bj] = t; var old = sl.cats.slice(); sl.cats = [].concat.apply([], blocks).map(function (k) { return old[k]; }); }, { run: tab.id });
+    },
     catTwo: function (arg) {
       var tab = A.curTab(), sl = tab.slots[arg], on = sl.cats.filter(function (c) { return c.on; }), half = Math.ceil(on.length / 2);
       A.commit(function () { var a = on.slice(0, half), b = on.slice(half), la = a.map(function (c) { return c.v; }).join(_t('・')), lb = b.map(function (c) { return c.v; }).join(_t('・')); a.forEach(function (c) { c.label = la; }); b.forEach(function (c) { c.label = lb; }); }, { run: tab.id });
@@ -844,6 +856,16 @@
       A.commit(function () { A.setSlot(st2, el.dataset.slot, el.value === '' ? null : +el.value); }, { run: st2.id });
       return;
     }
+    // 回帰分析の説明変数：列ごとに、除く選択肢（チェックを外した選択肢）を持つ
+    if (el.dataset.xdrop && tab) {
+      var xp = el.dataset.xdrop.split(':'), xs = tab.slots[xp[0]], xc = xp[1], xv = A.v(+xc), xval = xv && xv.cats[+xp[2]] ? xv.cats[+xp[2]].v : null; if (xval === null) return;
+      A.commit(function () {
+        var dr = xs.drop = xs.drop || {}, li = (dr[xc] || []).filter(function (d) { return d !== xval; });
+        if (!el.checked) li.push(xval);
+        if (li.length) dr[xc] = li; else delete dr[xc];
+        if (!Object.keys(dr).length) delete xs.drop;
+      }, { run: tab.id }); return;
+    }
     if (el.dataset.cat && tab) {
       var p = el.dataset.cat.split(':'), sl = tab.slots[p[0]], c = sl.cats[+p[1]];
       A.commit(function () {
@@ -857,9 +879,10 @@
         else { var fv = A.v(tab.filter.col), val = fv.cats[+el.dataset.idx].v, i = tab.filter.values.indexOf(val); if (el.checked && i < 0) tab.filter.values.push(val); if (!el.checked && i >= 0) tab.filter.values.splice(i, 1); }
       }, { run: tab.id }); return;
     }
+    if (el.dataset.holmgroup) { var ht = A.tabById(el.dataset.holmgroup), hv = el.value.trim(); if (!ht || hv === String(ht.holmGroup || '')) return; A.commit(function () { if (hv) ht.holmGroup = hv; else delete ht.holmGroup; }, { quiet: true }); S.holm = null; A.render(); return; }
     if (el.dataset.varlabel) {
       var x = A.v(+el.dataset.varlabel), nv2 = el.value.trim(); if (!x || !nv2 || nv2 === x.label) { A.render(); return; }
-      A.commit(function () { x.label = nv2; S.P.tabs.forEach(A.autoName); }, { quiet: true }); A.syncResults(); A.render(); return;
+      A.commit(function () { x.label = nv2; x.labelSet = true; S.P.tabs.forEach(A.autoName); }, { quiet: true }); A.syncResults(); A.render(); return;
     }
     if (el.dataset.rowmark) { var rp = el.dataset.rowmark.split(':'); setRowMark(+rp[0], rp[1], el.checked); return; }
     if (el.dataset.rownote) { var rn = +el.dataset.rownote, tv = el.value; A.commit(function () { var m = A.rowMarks(); if (m[rn]) m[rn].note = tv; }, { quiet: true }); return; }
@@ -1113,7 +1136,7 @@
   // ---------------- 新しい版で初めて起動したとき：変わった点を見せる（初めて使う人には出さない）
   function showChanges() {
     var list = window.CTS_CHANGES || [], cur = window.CTS_APP_VERSION, KEY = 'cts-seen-version', seen = null;
-    if (!cur) return;
+    if (!cur || A.agentMode) return;                                 // AI・スクリプト（window.CTS）から使っているときは出さない
     try { seen = localStorage.getItem(KEY); } catch (e) { return; }
     function mark() { try { localStorage.setItem(KEY, cur); } catch (e) {} }
     if (seen === cur) return;
@@ -1455,7 +1478,7 @@
     return os + ' / ' + br + (standalone ? _t('（ホーム画面のアプリ）') : '') + _t(' / 画面 ') + screen.width + '×' + screen.height + ' / ' + (window.CTS_WEB ? _t('Web 版') : _t('パソコン版')) + ' / R ' + (S.r || '?');
   }
   function vcmp(a, b) { a = String(a).split('.').map(Number); b = String(b).split('.').map(Number); for (var i = 0; i < 3; i++) { var d = (a[i] || 0) - (b[i] || 0); if (d) return d; } return 0; }
-  A.showChanges = showChanges;
+  A.showChanges = showChanges; A.closeModal = closeModal;
   A.setPath = setPath; A.act = act; A.selectTab = selectTab;
   init();
 })();

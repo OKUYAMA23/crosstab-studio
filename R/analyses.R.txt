@@ -105,9 +105,30 @@ items_setup <- function(df, slot) {
   names <- if (same_stem) items else labels
   list(cols = cols, k = k, lev = lev, F = F, names = make.unique(names, sep = " "), same_stem = same_stem, stem = if (same_stem) stems[1] else "", fulls = fulls)
 }
+# 選択肢が「1 位」「2 位」…（または 1, 2, …、第 1 位、1st など）で、1〜k（k は項目の数）の順位になっているとき、選択肢ごとの順位の数を返す。そうでなければ NULL
+rank_levels <- function(lev, k) {
+  z <- chartr("０１２３４５６７８９", "0123456789", as.character(lev))
+  m <- regmatches(z, regexec("^\\s*(?:第\\s*|[Rr]ank\\s*)?([0-9]+)\\s*(?:位|番目|番|st|nd|rd|th)?\\s*$", z, perl = TRUE))
+  if (!length(lev) || any(vapply(m, length, 0L) != 2)) return(NULL)
+  r <- as.numeric(vapply(m, `[`, "", 2))
+  if (anyDuplicated(r) || !setequal(r, seq_len(k))) return(NULL)
+  r
+}
 an_freqmulti <- function(df, req) {
   s <- req$slots$items; alpha <- opt(req, "alpha", 0.05); lead0 <- opt(req, "lead0", TRUE)
   it <- items_setup(df, s); k <- it$k
+  # 順位を付ける設問（選択肢が 1〜k 位）の点検：同じ順位を複数の項目に付けた回答（同順位）を数え、指定があれば除く
+  rk <- rank_levels(it$lev, k); tienote <- NULL; tiedrop <- 0L
+  if (!is.null(rk)) {
+    R <- vapply(it$F, function(f) rk[as.integer(f)], numeric(nrow(df))); if (!is.matrix(R)) R <- matrix(R, nrow = 1)
+    tie <- apply(R, 1, function(r) { r <- r[!is.na(r)]; length(r) > 1 && any(duplicated(r)) })
+    if (any(tie)) {
+      if (isTRUE(opt(req, "excltie", FALSE))) {
+        tiedrop <- sum(tie); df <- df[!tie, , drop = FALSE]; it <- items_setup(df, s); k <- it$k
+        tienote <- trf("同じ順位を複数の項目に付けた回答 %d 件を除いて集計した。", tiedrop)
+      } else tienote <- trf("同じ順位を複数の項目に付けた回答が %d 件あります（順位の並べ替えになっていない回答）。除くときは、オプションの「同順位を含む回答を除く」を選んでください。", sum(tie))
+    }
+  } else if (isTRUE(opt(req, "excltie", FALSE))) tienote <- tr_("選択肢が「1 位」「2 位」…の順位ではないため、「同順位を含む回答を除く」は使っていません。")
   cnt <- t(vapply(it$F, function(f) as.integer(table(f)), integer(length(it$lev))))
   if (length(it$lev) == 1) cnt <- matrix(cnt, ncol = 1)
   dimnames(cnt) <- list(it$names, it$lev)
@@ -125,7 +146,8 @@ an_freqmulti <- function(df, req) {
   txt <- paste0(txt, trf("%sと答えた割合は、%sであった。", q(first), paste0(it$names, " ", fmt_pct(rp[, 1]), "%", collapse = tr_("、"))))
   res$headline <- list(hl(tr_("設問"), as.character(k)), hl(tr_("回答者"), if (length(unique(nn)) == 1) as.character(nn[1]) else paste0(min(nn), tr_("〜"), max(nn))))
   res$row <- list(stat = "", effect = "")
-  res$notes <- tr_("割合の分母は、設問ごとの回答者数です。")
+  res$notes <- c(tr_("割合の分母は、設問ごとの回答者数です。"), tienote)
+  if (tiedrop > 0) txt <- paste0(tienote, txt)
   if (isTRUE(opt(req, "friedman", FALSE))) {
     sc <- sapply(seq_along(it$F), function(j) lev_points(req$slots$items, it$lev, j)[as.integer(it$F[[j]])]); ok <- stats::complete.cases(sc); m <- sc[ok, , drop = FALSE]
     if (nrow(m) < 2) stop_user(tr_("すべての設問に答えた人が 2 人未満のため、フリードマン検定ができません。"))
@@ -148,7 +170,8 @@ an_freqmulti <- function(df, req) {
 }
 register("freqmulti", tr_("複数の設問の単純集計"), tr_("集計"), tr_("同じ選択肢で答える複数の設問（例：サービスごとの利用頻度）を並べて集計し、設問ごとに色を変えたグラフにします。"),
          list(S("items", tr_("比べる設問（同じ選択肢）"), cat_types, tr_("例：Q4 の各サービス"), FALSE, TRUE)),
-         list(O_check("friedman", tr_("設問の間で回答の傾向を比べる（フリードマン検定）"), FALSE, tr_("順序のある回答で、同じ人が答えた複数の設問の間に差があるかを調べます。すべての設問に答えた人だけで計算します。"))),
+         list(O_check("friedman", tr_("設問の間で回答の傾向を比べる（フリードマン検定）"), FALSE, tr_("順序のある回答で、同じ人が答えた複数の設問の間に差があるかを調べます。すべての設問に答えた人だけで計算します。")),
+              O_check("excltie", tr_("同順位を含む回答を除く"), FALSE, tr_("項目に 1 位、2 位…と順位を付ける設問で、同じ順位を複数の項目に付けた回答を除きます。選択肢が順位のときだけ使います。"))),
          an_freqmulti)
 
 # ---------------------------------------------------------------- クロス集計（カイ二乗・フィッシャー）
@@ -252,8 +275,8 @@ rank_tables <- function(rs, df) {
   out
 }
 direction_phrase <- function(rs, hi, lo) {
-  if (rs$numeric) trf("%sのほうが%sより値が大きい傾向にあった", hi, lo)
-  else trf("%sのほうが%sより%sの側の回答が多かった", hi, lo, q(top_label(rs$ylev, rs$ypts)))
+  if (rs$numeric) trf("%sのほうが%sより値が大きい傾向にあった", gq(hi), gq(lo))
+  else trf("%sのほうが%sより%sの側の回答が多かった", gq(hi), gq(lo), q(top_label(rs$ylev, rs$ypts)))
 }
 
 an_mwu <- function(df, req) {
@@ -276,8 +299,8 @@ an_mwu <- function(df, req) {
   res$notes <- tr_("p 値は正規近似（同順位の補正と連続性の補正あり）によります。効果量 r は |Z| / √N です。")
   res$report <- paste0(trf("%sの 2 群（%s n = %d、%s n = %d）で%sの回答を比較した。", q(rs$sg$label), l[1], n1, l[2], n2, q(rs$sy$label)),
                        trf("マン・ホイットニーの U 検定の結果、2 群の回答の分布には%s（%s）。", if (sig) tr_("統計的に有意な差が認められた") else tr_("統計的に有意な差は認められなかった"), stats_txt),
-                       if (sig) trf("平均順位は%s（%s）が%s（%s）より高く、%s。", l[hi], fmt_num(tb$mr[hi], 1), l[lo], fmt_num(tb$mr[lo], 1), direction_phrase(rs, l[hi], l[lo])) else "",
-                       if (!rs$numeric) trf("中央値にあたる回答は、%sが%s、%sが%sであった。", l[1], tb$med[1], l[2], tb$med[2]) else "")
+                       if (sig) trf("平均順位は%s（%s）が%s（%s）より高く、%s。", gq(l[hi]), fmt_num(tb$mr[hi], 1), gq(l[lo]), fmt_num(tb$mr[lo], 1), direction_phrase(rs, l[hi], l[lo])) else "",
+                       if (!rs$numeric) trf("中央値にあたる回答は、%sが%s、%sが%sであった。", gq(l[1]), tb$med[1], gq(l[2]), tb$med[2]) else "")
   finish(res, alpha)
 }
 register("mwu", tr_("マン・ホイットニーの U 検定"), tr_("順序のある回答の比較"), tr_("2 つのグループで、段階のある回答（あてはまる〜あてはまらない など）の傾向が違うかを調べます。"),
@@ -314,7 +337,7 @@ an_kw <- function(df, req) {
   res$notes <- tr_("効果量 ε² は H / (N − 1) です。")
   res$report <- paste0(trf("%sの %d 群で%sの回答を比較した（n = %d）。", q(rs$sg$label), k, q(rs$sy$label), N),
                        trf("クラスカル・ウォリス検定の結果、群の間に%s（%s）。", if (sig) tr_("統計的に有意な差が認められた") else tr_("統計的に有意な差は認められなかった"), stats_txt),
-                       if (sig) trf("平均順位は%sの順に高かった。", paste0(levels(g)[o], tr_("（"), vapply(tb$mr[o], fmt_num, "", d = 1), tr_("）"), collapse = tr_("、"))) else "", post)
+                       if (sig) trf("平均順位は%sの順に高かった。", paste0(vapply(levels(g)[o], q, ""), tr_("（"), vapply(tb$mr[o], fmt_num, "", d = 1), tr_("）"), collapse = tr_("、"))) else "", post)
   finish(res, alpha)
 }
 register("kw", tr_("クラスカル・ウォリス検定"), tr_("順序のある回答の比較"), tr_("3 つ以上のグループで、段階のある回答の傾向が違うかを調べます。どの組み合わせに差があるかも出します。"),
@@ -336,7 +359,23 @@ an_spearman <- function(df, req) {
     tab <- table(slot_factor(df, sx)[ok], slot_factor(df, sy)[ok])
     tab <- tab[rowSums(tab) > 0, colSums(tab) > 0, drop = FALSE]
     res$xtab <- xtab_obj(tab, sx$label, sy$label, resid = FALSE); res$fig <- list(type = "xtab", prefer = "heat")
-  } else res$fig <- list(type = "scatter", x = A(x), y = A(y), xTitle = sx$label, yTitle = sy$label)
+  } else {
+    # 一方が順序のある回答のとき：散布図の軸に選択肢の名前を出す（lev：名前と点）。
+    #   選択肢が 7 個以下で、もう一方の値の種類が 12 個以下なら、既定の図を「もう一方の値ごとの 100% 帯グラフ」にする（点が重なって人数が読めないため）
+    levOf <- function(s) if (identical(s$type, "numeric")) NULL else { lv <- unique(slot_labels(s)); list(labels = A(lv), points = A(lev_points(s, lv))) }
+    sc <- list(type = "scatter", x = A(x), y = A(y), xTitle = sx$label, yTitle = sy$label, xLev = levOf(sx), yLev = levOf(sy))
+    res$fig <- sc
+    if (xor(numx, numy)) {
+      so <- if (numx) sy else sx; nv <- if (numx) x else y; uo <- sort(unique(nv)); lo <- unique(slot_labels(so))
+      if (length(lo) <= 7 && length(uo) <= 12) {
+        fo <- slot_factor(df, so)[ok]
+        tab <- table(factor(format(nv, trim = TRUE, drop0trailing = TRUE, scientific = FALSE), levels = format(uo, trim = TRUE, drop0trailing = TRUE, scientific = FALSE)), fo)
+        tab <- tab[rowSums(tab) > 0, colSums(tab) > 0, drop = FALSE]
+        res$xtab <- xtab_obj(tab, (if (numx) sx else sy)$label, so$label, resid = FALSE)
+        res$fig <- list(type = "xtab", prefer = "stack100", sc = sc)
+      }
+    }
+  }
   a <- abs(rho); strength <- if (a < 0.2) tr_("ごく弱い") else if (a < 0.4) tr_("弱い") else if (a < 0.7) tr_("中程度の") else tr_("強い")
   stats_txt <- paste0("ρ = ", fmt_num(rho), ", ", fmt_p(res$p, lead0), ", n = ", n)
   res$headline <- list(hl("ρ", fmt_num(rho)), hl("p", fmt_p(res$p, lead0, FALSE)), hl("n", as.character(n)))
@@ -532,9 +571,9 @@ an_strat <- function(df, req) {
   res$headline <- list(hl(paste0("CMH χ²(", mh$parameter, ")"), fmt_num(mh$statistic)), hl("p", fmt_p(res$p, lead0, FALSE)), hl(tr_("層"), as.character(sum(keepz))), hl("n", as.character(n)))
   res$row <- list(stat = stat, effect = "–")
   # 図と表：行を「層・行の選択肢」にしたクロス集計表
-  big <- do.call(rbind, lapply(seq_along(lay), function(k) { m <- matrix(t3[, , k], nrow = nlevels(a)); rownames(m) <- paste0(lay[k], "・", levels(a)); m }))
+  big <- do.call(rbind, lapply(seq_along(lay), function(k) { m <- matrix(t3[, , k], nrow = nlevels(a)); rownames(m) <- paste0(lay[k], tr_("・"), levels(a)); m }))
   colnames(big) <- levels(b); big <- big[rowSums(big) > 0, , drop = FALSE]
-  res$xtab <- xtab_obj(as.table(big), paste0(sz$label, "・", sa$label), sb$label, resid = FALSE)
+  res$xtab <- xtab_obj(as.table(big), paste0(sz$label, if (identical(LANG, "en")) " × " else "・", sa$label), sb$label, resid = FALSE)
   res$grids <- list(list(kind = "grid", title = tr_("層ごとのカイ二乗検定"), corner = sz$label, rows = A(c(lay, tr_("全体（層を分けない）"))),
                          cols = A(c("n", "χ²", tr_("自由度"), "p", "Cramér's V", tr_("期待度数 5 未満 (%)"))), fmt = A(c("int", "num2", "int", "p", "num2", "num1")),
                          cells = lapply(rows, function(r) lapply(r, function(x) if (is.na(x)) NULL else x)),
@@ -598,12 +637,16 @@ run_analysis <- function(df, req) {
   keep <- apply_filter(df, req$filter)
   d <- df[keep, , drop = FALSE]
   if (nrow(d) == 0) stop_user(tr_("絞り込みの条件に合う回答がありません。絞り込みを見直してください。"))
+  options(cts.alpha = opt(req, "alpha", 0.05))
   res <- a$fun(d, req)
   res$type <- req$type
   # 報告書の文では、設問を省略しない名前（full）で書く。表示名を短く書き換えていても、文は元の質問に沿う
   sl <- req$slots; if (!is.null(req$filter) && length(req$filter$values)) sl <- c(sl, list(req$filter))
   sl <- Filter(function(s) !isTRUE(s[["many"]]) && is.character(s[["full"]]) && length(s[["full"]]) == 1 && nzchar(s[["full"]]) && is.character(s[["label"]]) && s[["full"]] != s[["label"]], sl)
   if (length(sl)) for (s in sl[order(-nchar(vapply(sl, function(s) s[["label"]], "")))]) res$report <- gsub(q(s[["label"]]), q(s[["full"]]), res$report, fixed = TRUE)
+  # 利用者が名前を付けた列（qtext がある列）は、文でもその名前を使い、最初に出たところに 1 度だけ質問文を添える
+  ql <- Filter(function(s) is.character(s[["qtext"]]) && length(s[["qtext"]]) == 1 && nzchar(s[["qtext"]]) && is.character(s[["label"]]), c(req$slots, if (!is.null(req$filter)) list(req$filter), unlist(lapply(req$slots, function(s) if (isTRUE(s[["many"]])) s[["vars"]]), recursive = FALSE)))
+  for (s in ql) { k <- q(s[["label"]]); if (grepl(k, res$report, fixed = TRUE)) res$report <- sub(k, paste0(k, trf("（質問文：%s）", s[["qtext"]])), res$report, fixed = TRUE) }
   if (!is.null(req$filter) && length(req$filter$values)) {
     fl <- if (is.character(req$filter[["full"]]) && nzchar(req$filter[["full"]])) req$filter[["full"]] else req$filter$label
     res$filterText <- trf("%sが%sの回答者（%d人）に限って集計した。", q(fl), paste0(q(unlist(req$filter$values)), collapse = if (identical(LANG, "en")) " or " else "・"), nrow(d))
