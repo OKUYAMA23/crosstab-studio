@@ -164,7 +164,7 @@
     var W = Math.max(160, +st.w || 560), H = Math.max(120, +st.h || 340), F = fam(st), o = [], defs = [], kind = kindOf(m, st), id = 'c' + (++uid);
     var L = lang === 'en' ? { pct: 'Percentage (%)', count: 'Count', n: 'n = ', row: 'Row %', col: 'Column %', resid: 'Adjusted residual' } : { pct: '割合 (%)', count: '人数（人）', n: 'n = ', row: '行の割合 (%)', col: '列の割合 (%)', resid: '調整済み標準化残差' };
     var dec = Math.max(0, Math.min(2, isNum(st.labelDec) ? +st.labelDec : 1));
-    var omitted = 0, outside = 0;                                     // outside：軸の範囲の外にあって描かなかった点の数                                                  // 場所が足りずに書かなかった値のラベルの数（作業ウィンドウで知らせる）
+    var omitted = 0, outside = 0, valRange = null;                    // valRange：数値の軸の範囲（箱ひげ図の外れ値を範囲で切るのに使う）                                     // outside：軸の範囲の外にあって描かなかった点の数                                                  // 場所が足りずに書かなかった値のラベルの数（作業ウィンドウで知らせる）
     // 積み上げた棒・円グラフは図の中に空きがないので、凡例を「図の中」にしたときは右に出す（棒や文字と重ねない）
     if ((kind === 'stack100' || kind === 'stack' || kind === 'pie') && (st.legend === 'inTR' || st.legend === 'inTL')) st.legend = 'right';
     // 複数の設問の単純集計：集合棒は「横軸＝回答、色＝設問」、それ以外は「行＝設問、色＝回答」にする
@@ -409,6 +409,7 @@
       plot = { x0: x0, y0: y0, x1: x1, y1: y1 };
       var len = horiz ? x1 - x0 : y1 - y0;
       function pos(v) { var t = (v - sc.min) / (sc.max - sc.min); t = Math.max(0, Math.min(1, t)); return horiz ? x0 + t * len : y1 - t * len; }
+      valRange = sc;
       var pxPer = len / Math.max(1, sc.ticks.length - 1), show = horiz ? thin(sc.ticks, pxPer, function (t) { return tw(fmtTick(t), st.fsTick, st); }) : thin(sc.ticks, pxPer, function () { return st.fsTick; });
       sc.ticks.forEach(function (t, i) {
         var p = pos(t);
@@ -483,12 +484,15 @@
       var s = b.stats, col = seriesColors(['box'], st)[0], w = Math.max(0.5, st.lwAxis), tip = name + _t('：中央値 {0}（第1四分位 {1}、第3四分位 {2}、n = {3}）', s[2], s[1], s[3], b.n);
       var p = s.map(pos), c1 = b0 + thick * 0.25, c2 = b0 + thick * 0.75;
       function dot(cx, cy) { o.push('<circle cx="' + r1(cx) + '" cy="' + r1(cy) + '" r="2.5" fill="none" stroke="#000000" stroke-width="' + w + '"/>'); }
+      // 軸の範囲の外：外れ値の点は描かずに数え、ひげの端の横線は描かない（範囲の端で切れていることが分かるように）
+      function inR(v) { return !valRange || (v >= valRange.min - 1e-9 && v <= valRange.max + 1e-9); }
+      var outs = (b.out || []).filter(function (v) { if (inR(v)) return true; outside++; return false; });
       if (horiz) {
-        line(p[0], mid, p[1], mid, w); line(p[3], mid, p[4], mid, w); line(p[0], c1, p[0], c2, w); line(p[4], c1, p[4], c2, w);
-        rect(p[1], b0, p[3] - p[1], thick, col, tip); line(p[2], b0, p[2], b0 + thick, Math.max(1.5, w * 2)); (b.out || []).forEach(function (v) { dot(pos(v), mid); });
+        line(p[0], mid, p[1], mid, w); line(p[3], mid, p[4], mid, w); if (inR(s[0])) line(p[0], c1, p[0], c2, w); if (inR(s[4])) line(p[4], c1, p[4], c2, w);
+        rect(p[1], b0, p[3] - p[1], thick, col, tip); line(p[2], b0, p[2], b0 + thick, Math.max(1.5, w * 2)); outs.forEach(function (v) { dot(pos(v), mid); });
       } else {
-        line(mid, p[0], mid, p[1], w); line(mid, p[3], mid, p[4], w); line(c1, p[0], c2, p[0], w); line(c1, p[4], c2, p[4], w);
-        rect(b0, p[3], thick, p[1] - p[3], col, tip); line(b0, p[2], b0 + thick, p[2], Math.max(1.5, w * 2)); (b.out || []).forEach(function (v) { dot(mid, pos(v)); });
+        line(mid, p[0], mid, p[1], w); line(mid, p[3], mid, p[4], w); if (inR(s[0])) line(c1, p[0], c2, p[0], w); if (inR(s[4])) line(c1, p[4], c2, p[4], w);
+        rect(b0, p[3], thick, p[1] - p[3], col, tip); line(b0, p[2], b0 + thick, p[2], Math.max(1.5, w * 2)); outs.forEach(function (v) { dot(mid, pos(v)); });
       }
     }
     // 平均と 95% 信頼区間：点が平均、線が信頼区間（両端に短い横線）

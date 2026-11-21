@@ -1721,6 +1721,7 @@
 "第2次元（": "Dimension 2 (",
 "第3四分位": "Q3",
 "箱ひげ図": "Box plot",
+"箱ひげ図で数値の軸の範囲を決めたとき、範囲の外の外れ値を軸の端に描いていたのを直しました。範囲の外の点は描かず、その数を作業ウィンドウで知らせます。": "Fixed box plots drawing outliers outside a set value-axis range at the edge of the axis. Points outside the range are no longer drawn, and their number is shown in the task pane. ",
 "範囲の空欄は自動です。数値の文字が重なるときは、自動で間引きます。": "Leave the range blank for automatic. Overlapping numbers are thinned out automatically. ",
 "系列ごとに好きな色を選びます。まだ選んでいない系列は、配色の色のままです。": "Choose any color for each series. Series without a chosen color keep the palette color. ",
 "系列ごとに選ぶ": "By series",

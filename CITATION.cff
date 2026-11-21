@@ -12,7 +12,7 @@ abstract: >-
 authors:
   - family-names: "Okuyama"
     given-names: "Taiga"
-version: 0.10.4
+version: 0.10.5
 date-released: 2026-11-21
 license: MIT
 url: "https://okuyama23.github.io/crosstab-studio/"
