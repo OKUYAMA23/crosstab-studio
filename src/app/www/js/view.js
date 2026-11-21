@@ -468,8 +468,10 @@
   }
   function rawHtml() {
     var rows = S.data.rows, lim = Math.min(rows.length, S.ui.rawRows);
-    var h = '<div class="md-page md-wide"><table class="md-vars md-raw"><thead><tr><th>#</th>' + S.P.vars.filter(function (x) { return !x.comp; }).map(function (x) { return '<th data-tip="' + esc(x.header) + '">' + esc(x.label) + '</th>'; }).join('') + '</tr></thead><tbody>';
-    for (var i = 0; i < lim; i++) h += '<tr><td class="num">' + (i + 1) + '</td>' + rows[i].map(function (c) { return '<td>' + esc(c === null ? '' : c) + '</td>'; }).join('') + '</tr>';
+    var mk = S.P.rowMarks || {};
+    var h = '<div class="md-page md-wide"><table class="md-vars md-raw"><thead><tr><th>#</th>' + _t('<th data-tip="チェックした行は、すべての解析から除きます。">無効</th><th data-tip="目印です。解析には含めます。">フラッグ</th>') + S.P.vars.filter(function (x) { return !x.comp; }).map(function (x) { return '<th data-tip="' + esc(x.header) + '">' + esc(x.label) + '</th>'; }).join('') + '</tr></thead><tbody>';
+    for (var i = 0; i < lim; i++) h += '<tr id="md_row_' + (i + 1) + '" class="' + (mk[i + 1] && mk[i + 1].x ? 'md-rx' : '') + (mk[i + 1] && mk[i + 1].f ? ' md-rf' : '') + '"><td class="num">' + (i + 1) + '</td>' +
+      '<td class="md-rm"><input type="checkbox" data-rowmark="' + (i + 1) + ':x"' + (mk[i + 1] && mk[i + 1].x ? ' checked' : '') + '></td><td class="md-rm"><input type="checkbox" data-rowmark="' + (i + 1) + ':f"' + (mk[i + 1] && mk[i + 1].f ? ' checked' : '') + '></td>' + rows[i].map(function (c) { return '<td>' + esc(c === null ? '' : c) + '</td>'; }).join('') + '</tr>';
     h += '</tbody></table>';
     if (lim < S.data.nrow) h += '<div class="md-empty">' + lim + _t(' 件まで表示しています（全 {0} 件）。', S.data.nrow) + (lim < rows.length ? _t('<button class="md-btn" data-act="moreRows">さらに 500 件表示</button>') : _t('画面に出せるのは {0} 件までです。解析はすべての回答で行います。', rows.length)) + '</div>';
     return h + '</div>';
@@ -598,7 +600,8 @@
   }
   function repMeta() {
     var d = new Date(), pad = function (n) { return (n < 10 ? '0' : '') + n; };
-    return _t('データ：{0}（回答 {1} 件）　有意水準：{2}%　作成日：', S.data.name, S.data.nrow, S.P.settings.alpha * 100) + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    var nx = A.invalidRows().length;
+    return (nx ? _t('データ：{0}（回答 {1} 件、無効回答 {3} 件を除く）　有意水準：{2}%　作成日：', S.data.name, S.data.nrow - nx, S.P.settings.alpha * 100, nx) : _t('データ：{0}（回答 {1} 件）　有意水準：{2}%　作成日：', S.data.name, S.data.nrow, S.P.settings.alpha * 100)) + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
   }
   // ---------------- 引用のしかた：このアプリと R の参考文献の書き方（作成者・URL はここで決める）
   var CITE = { en: 'Okuyama, T.', full: 'Okuyama, Taiga', ja: '奥山泰冴', jaShort: '奥山', url: 'https://okuyama23.github.io/crosstab-studio/' };
@@ -668,13 +671,33 @@
       sec(_t('保存'), hint(_t('「上書き保存」で、データ（CSV の中身）・解析・図と表の設定を 1 つのプロジェクトとしてアプリの中に保存します。次からは「プロジェクトを開く」で、CSV なしで元どおりに開けます。') + (S.projName ? _t('今のプロジェクト：') + S.projName : '')),
         '<div class="md-row"><button class="md-btn" data-act="save"' + (S.data ? '' : ' disabled') + _t('>上書き保存</button><button class="md-btn" data-act="openProject">プロジェクトを開く</button></div>'));
   }
+  // 無効回答とフラッグの一覧（行番号、回答の一部、解除などのボタン）
+  function rowSnippet(r) {
+    var row = S.data.rows && S.data.rows[r - 1]; if (!row) return '';
+    var parts = [];
+    S.P.vars.forEach(function (x, j) { if (x.comp || x.type === 'time' || parts.length >= 3) return; var c = row[j]; if (c !== null && c !== '' && c !== undefined) parts.push(String(c)); });
+    var s = parts.join(' / '); return s.length > 60 ? s.slice(0, 60) + '…' : s;
+  }
+  function marksSecs() {
+    var mk = S.P.rowMarks || {}, xs = A.markedRows('x'), fs = A.markedRows('f');
+    if (!xs.length && !fs.length) return sec(_t('無効回答とフラッグ'), hint(_t('「データ」タブの「回答の一覧」で、行の「無効」にチェックを入れると、その回答をすべての解析から除きます。「フラッグ」は目印で、解析には含めます。どちらもここに一覧が出ます。')));
+    function item(r, kind) {
+      return '<div class="md-mkrow"><div class="md-mkhead"><b>' + _t('{0} 行目', r) + '</b><span class="md-mksnip" data-tip="' + esc(rowSnippet(r)) + '">' + esc(rowSnippet(r)) + '</span></div><div class="md-row">' +
+        _t('<button class="md-btn md-btn-sm" data-act="rowShow" data-arg="{0}" data-tip="「回答の一覧」でこの行を表示します。">表示</button>', r) +
+        (kind === 'f' && !(mk[r] && mk[r].x) ? _t('<button class="md-btn md-btn-sm" data-act="rowMark" data-arg="{0}:x" data-tip="この回答を無効にして、解析から除きます。">無効にする</button>', r) : '') +
+        _t('<button class="md-btn md-btn-sm" data-act="rowUnmark" data-arg="{0}:{1}" data-tip="印を外します。">解除</button>', r, kind) + '</div>' +
+        (kind === 'x' ? _t('<input type="text" class="md-in" data-rownote="{0}" value="{1}" placeholder="理由（例：金額が 1 億円）" data-tip="無効にした理由のメモです。">', r, esc((mk[r] && mk[r].note) || '')) : '') + '</div>';
+    }
+    return (xs.length ? sec(_t('無効回答（{0} 件）', xs.length), xs.map(function (r) { return item(r, 'x'); }).join(''), hint(_t('この行は、すべての解析・報告書・Excel・R のコードから除いています。「回答の内訳」の人数も除いた後の数です。'))) : '') +
+      (fs.length ? sec(_t('フラッグ（{0} 件）', fs.length), fs.map(function (r) { return item(r, 'f'); }).join(''), hint(_t('フラッグは目印です。解析には含めています。'))) : '');
+  }
   function paneData() {
     if (!S.data) return needTab(_t('データ'));
     var x = S.ui.selVar !== null ? A.v(S.ui.selVar) : null;
-    if (!x) return sec(_t('列の設定'), hint(_t('左の一覧で列をクリックすると、その列の種類と回答の内訳をここで確認できます。'))) +
+    if (!x) return marksSecs() + sec(_t('列の設定'), hint(_t('左の一覧で列をクリックすると、その列の種類と回答の内訳をここで確認できます。'))) +
       sec(_t('種類の見分け方'), hint(_t('単一回答：1 つだけ選ぶ質問。順序あり：「あてはまる〜あてはまらない」のように段階がある質問。複数回答：あてはまるものをすべて選ぶ質問。自動の判定が合わないときは、種類を選び直してください。')));
     var mx = Math.max.apply(null, (x.cats || []).map(function (c) { return c.n; }).concat([1]));
-    var h = sec(_t('列 {0} の設定', x.col), _t('<label class="md-field"><span>表示名</span><input type="text" data-varlabel="') + x.col + '" value="' + esc(x.label) + '"></label>',
+    var h = (S.ui.dataView === 'raw' ? marksSecs() : '') + sec(_t('列 {0} の設定', x.col), _t('<label class="md-field"><span>表示名</span><input type="text" data-varlabel="') + x.col + '" value="' + esc(x.label) + '"></label>',
       grid2(_t('<label class="md-field"><span>種類</span><select data-var="type">') + options([['nominal', _t('単一回答')], ['ordinal', _t('順序あり')], ['multi', _t('複数回答')], ['numeric', _t('数値')], ['text', _t('使わない（自由記述など）')]], x.type === 'time' || x.type === 'empty' ? 'text' : x.type) + '</select></label>',
         x.type === 'multi' ? _t('<label class="md-field"><span>回答の区切り</span><select data-var="delim">') + options([[';', _t('セミコロン（;）')], [', ', _t('カンマと空白（, ）')], [_t('、'), _t('読点（、）')]], x.delim) + '</select></label>' : '<span></span>'),
       hint(_t('表示名は図・表・報告書に出ます。短く書き直すと読みやすくなります。'))) +
@@ -899,7 +922,7 @@
     var h = '<span class="md-st-mode">' + esc(mode) + '</span>';
     if (S.ui.view === 'analysis' && res && res.ok && res.n) h += '<span class="md-st-num">n = ' + res.n.used + _t('（対象 {0}）</span>', res.n.total);
     if (S.ui.view === 'analysis' && res && res.ok && res.p !== null && res.p !== undefined) h += '<span class="md-st-num">' + pText(res.p) + '</span>';
-    if (S.data) h += '<span>' + esc(S.data.name) + _t('　回答 {0} 件</span>', S.data.nrow);
+    if (S.data) { var nxs = A.invalidRows().length; h += '<span>' + esc(S.data.name) + (nxs ? _t('　回答 {0} 件（無効 {1} 件を除く）</span>', S.data.nrow - nxs, nxs) : _t('　回答 {0} 件</span>', S.data.nrow)); }
     h += '<span class="md-st-r">' + (S.r ? _t('計算：R ') + esc(S.r) : _t('<b style="color:#C00000">R に接続できません</b>')) + '</span>';
     $('#md_status').innerHTML = h;
   }

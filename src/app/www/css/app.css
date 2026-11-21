@@ -372,3 +372,16 @@ body.md-moving, body.md-moving * { cursor: move !important; user-select: none; }
 .md-ordrow .md-bl { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .md-ordrow .md-bb { flex: 0 0 34%; height: 10px; background: var(--rule-l); } .md-ordrow .md-bb i { display: block; height: 100%; background: var(--t-6fa98a); }
 .md-ordrow .md-bn { font-family: Consolas, monospace; min-width: 34px; text-align: right; color: var(--ink-ui); }
+
+/* 無効回答とフラッグ */
+.md-raw td.md-rm { text-align: center; padding: 0 4px; }
+.md-raw td.md-rm input { width: 14px; height: 14px; margin: 0; vertical-align: middle; }
+.md-raw tr.md-rx td { color: var(--ink-sub); text-decoration: line-through; }
+.md-raw tr.md-rx td.md-rm, .md-raw tr.md-rx td.num { text-decoration: none; }
+.md-raw tr.md-rf td, .md-raw tr.md-rf:hover td { background: #FFF1C7; }
+.md-raw tr.md-rhl td { background: var(--sel); }
+.md-mkrow { padding: 5px 0; border-bottom: 1px solid var(--rule-l); }
+.md-mkrow:last-child { border-bottom: 0; }
+.md-mkhead { display: flex; gap: 8px; align-items: baseline; margin-bottom: 3px; }
+.md-mksnip { color: var(--ink-sub); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; }
+.md-mkrow .md-in { width: 100%; box-sizing: border-box; margin-top: 4px; }

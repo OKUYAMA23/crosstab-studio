@@ -1,6 +1,6 @@
 // sw.js ― アプリの一式を端末に保存して、通信なしでも起動できるようにする（ホーム画面のアプリ用）。
 // 版が変わると CACHE の名前が変わり、新しい一式を保存し直して古いものを消す。
-const CACHE = 'cts-0.10.5-b68f8c20';
+const CACHE = 'cts-0.11.0-be9b00dc';
 const FILES = ["./", "R/analyses.R.txt", "R/analyses2.R.txt", "R/data.R.txt", "R/excel.R.txt", "R/i18n.R.txt", "R/i18n_en.R.txt", "R/rexport.R.txt", "R/server.R.txt", "R/stats.R.txt", "R/web_json.R.txt", "R/web_server.R.txt", "css/app.css", "css/phone.css", "css/theme.css", "css/web.css", "fonts/OFL_BIZUDMincho.txt", "fonts/OFL_BIZUDPGothic.txt", "fonts/OFL_Tinos.txt", "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png", "index.html", "js/bridge.js", "js/changelog.js", "js/chart.js", "js/core.js", "js/docxreport.js", "js/events.js", "js/i18n.js", "js/i18n_en.js", "js/icons.js", "js/pdfreport.js", "js/phone.js", "js/textmine.js", "js/touch.js", "js/view.js", "js/web.js", "js/xlsx.js", "manifest.webmanifest", "vendor/fontkit.umd.min.js", "vendor/harfbuzz-subset.wasm", "vendor/harfbuzzjs.LICENSE.txt", "vendor/pdf-lib.LICENSE.txt", "vendor/pdf-lib.min.js"];
 // 字体（PDF の報告書に使う大きなファイル）は版ごとに保存し直さず、別の入れ物に 1 回だけ保存する（更新のたびに数十 MB を取り直さないため）
 const FONT_CACHE = 'cts-fonts-1';

@@ -368,6 +368,13 @@
     },
     // 並べ替えの一覧で選んだ選択肢を動かす。arg：「一覧の名前|向き」（向き：-1, 1, top, bottom）
     ordMove: function (arg) { var p = String(arg).split('|'); ordMoveSel(p[0], p[1]); },
+    // 無効回答とフラッグ
+    rowMark: function (arg) { var p = String(arg).split(':'); setRowMark(+p[0], p[1], true); },
+    rowUnmark: function (arg) { var p = String(arg).split(':'); setRowMark(+p[0], p[1], false); },
+    rowShow: function (arg) {
+      var r = +arg; S.ui.view = 'data'; S.ui.dataView = 'raw'; if (S.ui.rawRows < r) S.ui.rawRows = Math.ceil(r / 500) * 500; A.render();
+      setTimeout(function () { var tr = document.getElementById('md_row_' + r); if (!tr) { A.toast(_t('この行は表示している範囲の外です。'), true); return; } tr.scrollIntoView({ block: 'center' }); tr.classList.add('md-rhl'); setTimeout(function () { tr.classList.remove('md-rhl'); }, 1600); }, 60);
+    },
     figCatMove: function (arg) {
       var p = String(arg).split(':'), tab = A.curTab(), sl = tab && tab.slots[p[0]]; if (!sl) return;
       var labs = A.figOrderLabels(sl), i = +p[1], j = i + (+p[2]); if (j < 0 || j >= labs.length) return;
@@ -727,6 +734,13 @@
     A.render();
   }
   function stepRtab(d) { var ks = A.RTABS.map(function (t) { return t[0]; }), i = ks.indexOf(S.ui.rtab); setRtab(ks[(i + d + ks.length) % ks.length]); }
+  // 行の印を付ける・外す。無効が変わったときは、人数を数え直して解析をやり直す
+  function setRowMark(r, k, on) {
+    var was = A.invalidRows().join(',');
+    A.commit(function () { var m = A.rowMarks(), e = m[r] || {}; if (on) e[k] = 1; else { delete e[k]; if (k === 'x') delete e.note; } if (Object.keys(e).length) m[r] = e; else delete m[r]; }, { quiet: true });
+    if (A.invalidRows().join(',') !== was) { A.syncResults(); A.refreshCounts(); }
+    A.render();
+  }
   // 並べ替えの一覧：選んだ選択肢（S.ui.ordSel）を動かす
   function ordIds(key) {
     if (key.indexOf('var:') === 0) { var x = A.v(+key.slice(4)); return x ? x.cats.map(function (c) { return c.v; }) : []; }
@@ -846,6 +860,8 @@
       var x = A.v(+el.dataset.varlabel), nv2 = el.value.trim(); if (!x || !nv2 || nv2 === x.label) { A.render(); return; }
       A.commit(function () { x.label = nv2; S.P.tabs.forEach(A.autoName); }, { quiet: true }); A.syncResults(); A.render(); return;
     }
+    if (el.dataset.rowmark) { var rp = el.dataset.rowmark.split(':'); setRowMark(+rp[0], rp[1], el.checked); return; }
+    if (el.dataset.rownote) { var rn = +el.dataset.rownote, tv = el.value; A.commit(function () { var m = A.rowMarks(); if (m[rn]) m[rn].note = tv; }, { quiet: true }); return; }
     if (el.dataset.varscore || el.dataset.varpt !== undefined) {
       var xs = A.v(S.ui.selVar); if (!xs) return;
       if (el.dataset.varscore) {

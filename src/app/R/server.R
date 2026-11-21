@@ -1,7 +1,7 @@
 # server.R ― 画面（ブラウザ）と R をつなぐ小さなローカルサーバー。127.0.0.1 だけで待ち受ける。
 
 APP_ID <- "CrossTabStudio"
-APP_VERSION <- "0.10.5"
+APP_VERSION <- "0.11.0"
 STORE <- new.env()          # 読み込んだデータ（id → data.frame）
 STATE <- new.env()
 STATE$last_ping <- Sys.time(); STATE$had_client <- FALSE; STATE$bye_at <- NULL
@@ -107,6 +107,23 @@ route <- function(req) {
   df <- get_data(body$dataId)
   if (is.null(df)) return(json_resp(list(ok = FALSE, noData = TRUE, message = tr_("データが読み込まれていません。"))))
   if (length(body$computed)) df <- add_computed(df, body$computed)   # 画面で作った尺度得点の列
+  ex <- as.integer(unlist(body$exclude)); ex <- ex[!is.na(ex) & ex >= 1 & ex <= nrow(df)]
+  if (length(ex)) df <- df[-ex, , drop = FALSE]                       # 無効にした回答の行（元のデータの行番号）は、すべての計算から除く
+  if (path == "/api/counts") {                      # 無効回答を除いた後の人数（「回答の内訳」と数値の要約）
+    out <- lapply(body$vars, function(v) {
+      x <- df[[as.integer(v$col)]]; nn <- x[!is.na(x)]; r <- list(col = v$col, n = length(nn))
+      if (identical(v$type, "numeric")) {
+        val <- numeric_values(x, v$fix, v$unit); val <- val[!is.na(val)]
+        if (length(val)) r$summary <- list(min = min(val), max = max(val), mean = mean(val), median = stats::median(val))
+      } else {
+        tok <- if (identical(v$type, "multi")) unlist(split_multi(nn, if (is.null(v$delim)) ";" else v$delim)) else as.character(nn)
+        tb <- table(tok); nm <- names(tb); Encoding(nm) <- "UTF-8"
+        r$values <- A(nm); r$counts <- A(as.integer(tb))
+      }
+      r
+    })
+    return(json_resp(list(ok = TRUE, vars = out)))
+  }
   if (path == "/api/varinfo") {
     x <- df[[body$col]]
     info <- category_info(x, body$type, if (is.null(body$delim)) ";" else body$delim)

@@ -160,8 +160,27 @@
       return { col: x.col, name: x.label, method: x.comp.method, reverse: x.comp.reverse || [], items: x.comp.items.map(itemSlot).filter(Boolean) };
     });
   }
+  // 無効回答とフラッグ：S.P.rowMarks[元のデータの行番号] = { x: 無効, f: フラッグ, note: 無効の理由 }
+  function rowMarks() { return S.P.rowMarks || (S.P.rowMarks = {}); }
+  function markedRows(k) { var m = S.P.rowMarks || {}; return Object.keys(m).filter(function (r) { return m[r] && m[r][k]; }).map(Number).sort(function (a, b) { return a - b; }); }
+  function invalidRows() { return markedRows('x'); }
+  // 無効回答を除いた後の人数を R に数え直してもらい、「回答の内訳」と数値の要約を書き換える
+  async function refreshCounts() {
+    if (!S.data) return;
+    var vs = S.P.vars.filter(function (x) { return !x.comp && (isCat(x) || x.type === 'numeric'); });
+    var d = await apiData('/api/counts', { vars: vs.map(function (x) { return { col: x.col, type: x.type, delim: x.delim, fix: x.fix, unit: x.unit }; }) });
+    if (!d || !d.ok) return;
+    d.vars.forEach(function (r) {
+      var x = v(r.col); if (!x) return; x.n = r.n;
+      if (x.type === 'numeric') { if (r.summary) x.summary = r.summary; return; }
+      var cnt = {}; (r.values || []).forEach(function (val, i) { cnt[val] = r.counts[i]; });
+      (x.cats || []).forEach(function (c) { c.n = cnt[c.v] || 0; });
+    });
+    App.render();
+  }
   async function apiData(path, body) {
     body.dataId = S.data.dataId;
+    if (!body.exclude) { var ex0 = invalidRows(); if (ex0.length) body.exclude = ex0; }
     if (!body.computed && compVars().length) body.computed = compDefs();
     var d = await api(path, body);
     if (d && d.noData) { var up = await uploadData(S.data.bytes, S.data.name); S.data.dataId = up.dataId; body.dataId = up.dataId; d = await api(path, body); }
@@ -259,7 +278,8 @@
     var flt = null;
     if (tab.filter && tab.filter.col !== null && tab.filter.values && tab.filter.values.length) { var fv = v(tab.filter.col); if (fv) flt = { col: fv.col, type: fv.type, delim: fv.delim, label: fv.label, full: fv.full || fv.label, values: tab.filter.values }; }
     var usesComp = Object.keys(slots).some(function (k) { var s = slots[k]; return (s.cols || [s.col]).some(function (c) { var x = v(c); return x && x.comp; }); }) || (flt && v(flt.col) && v(flt.col).comp);
-    return { computed: usesComp ? compDefs() : undefined, type: tab.type, slots: slots, filter: flt, opts: Object.assign({}, tab.opts, { alpha: S.P.settings.alpha, lead0: S.P.settings.lead0 }) };
+    var exr = invalidRows();
+    return { computed: usesComp ? compDefs() : undefined, exclude: exr.length ? exr : undefined, type: tab.type, slots: slots, filter: flt, opts: Object.assign({}, tab.opts, { alpha: S.P.settings.alpha, lead0: S.P.settings.lead0 }) };
   }
   var timers = {}, seqs = {};
   function schedule(id) { clearTimeout(timers[id]); timers[id] = setTimeout(function () { runTab(id); }, 100); }
@@ -373,8 +393,9 @@
         });
         if (t.filter && t.filter.col !== null) { if (map[t.filter.col]) t.filter.col = map[t.filter.col]; else t.filter = null; }
       });
+      var hadMarks = Object.keys(S.P.rowMarks || {}).length > 0; delete S.P.rowMarks;   // 行番号が変わりうるので、無効・フラッグの印は外す
       S.undo = []; S.redo = []; markDirty(); S.results = {}; scheduleAll();
-      toast(_t('データを差し替えました（回答 {0} 件）。すべての解析を計算し直しました。', d.nrow));
+      toast(_t('データを差し替えました（回答 {0} 件）。すべての解析を計算し直しました。', d.nrow) + (hadMarks ? _t('無効回答とフラッグの印は外しました。') : ''));
     } else {
       S.P = newProject(); S.P.vars = clone(d.vars); S.results = {}; S.undo = []; S.redo = []; S.projName = ''; S.dirty = false;
       S.ui.view = 'analysis'; S.ui.rtab = 'home'; S.ui.selVar = null; S.ui.sel = null;
@@ -492,7 +513,7 @@
 
   window.App = window.App || {};
   Object.assign(window.App, { theme: theme, setTheme: setTheme, baseProject: baseProject, customGet: customGet, customSet: customSet, defMode: defMode, setDefMode: setDefMode, applyDefaults: applyDefaults, loadUrl: loadUrl, sheetCsvUrl: sheetCsvUrl, xlsxIn: xlsxIn, compVars: compVars, compDefs: compDefs, errLog: errLog, clearErrLog: clearErrLog, logErr: logErr, S: S, MAX_TABS: MAX_TABS, TYPE_NAMES: TYPE_NAMES, $: $, esc: esc, clone: clone, toast: toast, busy: busy, api: api, apiData: apiData, zip: zip, safeName: safeName,
-    v: v, def: def, tabById: tabById, slotCols: slotCols, sameChoices: sameChoices, setItems: setItems, defaultCatsMany: defaultCatsMany, curTab: curTab, curFig: curFig, isCat: isCat, catPoints: catPoints, scoreMode: scoreMode, figOrderLabels: figOrderLabels, defaultCats: defaultCats, setSlot: setSlot, autoName: autoName, newTab: newTab, newFig: newFig, tabReady: tabReady,
+    v: v, def: def, tabById: tabById, slotCols: slotCols, sameChoices: sameChoices, setItems: setItems, defaultCatsMany: defaultCatsMany, curTab: curTab, curFig: curFig, isCat: isCat, rowMarks: rowMarks, markedRows: markedRows, invalidRows: invalidRows, refreshCounts: refreshCounts, catPoints: catPoints, scoreMode: scoreMode, figOrderLabels: figOrderLabels, defaultCats: defaultCats, setSlot: setSlot, autoName: autoName, newTab: newTab, newFig: newFig, tabReady: tabReady,
     buildReq: buildReq, markDirty: markDirty, schedule: schedule, scheduleAll: scheduleAll, syncResults: syncResults, commit: commit, undo: undo, redo: redo, fixSel: fixSel, tableDefaults: tableDefaults,
     pickFile: pickFile, saveBlob: saveBlob, baseName: baseName, loadCsv: loadCsv, handleFile: handleFile, newProject: newProject,
     saveProjectAs: saveProjectAs, listProjects: listProjects, openProjectByName: openProjectByName, exportProjectFile: exportProjectFile });

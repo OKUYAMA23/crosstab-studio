@@ -7,7 +7,7 @@
   var realFetch = window.fetch.bind(window), webR = null, rVersion = null, rYear = null, bootErr = null;
   var bootStep = function () {};
   window.CTS_WEB = true;
-  window.CTS_VERSION = '0.10.5';
+  window.CTS_VERSION = '0.11.0';
 
   // ---------------- R（webR）を起動する
   // ホーム画面のアプリとして開いたときは、先に一式を端末に保存する（2 回目からは通信なしで起動できる）
