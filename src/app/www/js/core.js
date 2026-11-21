@@ -258,6 +258,8 @@
   }
   function tabReady(tab) { var d = def(tab.type); return !!d && d.slots.every(function (s) { var sl = tab.slots[s.id]; return s.optional || (sl && (s.many ? (sl.cols || []).length >= 2 : sl.col !== null && sl.col !== undefined)); }); }
   function buildReq(tab) {
+    // 複数回答のクロス集計の図は、凡例に「グループに使った質問」の名前を初めから出す（一度だけ。外したいときは図の設定で外せる）
+    if (tab.type === 'multi') (tab.figs || []).forEach(function (f) { if (!f.legTitleInit) { f.legTitle = true; f.legTitleInit = true; } });
     var d = def(tab.type), slots = {};
     d.slots.forEach(function (s) {
       var sl = tab.slots[s.id], onCats = sl.cats.filter(function (c) { return c.on; }).map(function (c) { return { label: c.label, values: [c.v] }; });

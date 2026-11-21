@@ -162,7 +162,7 @@
   function render(m, st0, lang) {
     var st = Object.assign(defaults(), st0 || {}); lang = lang || 'ja';
     var W = Math.max(160, +st.w || 560), H = Math.max(120, +st.h || 340), F = fam(st), o = [], defs = [], kind = kindOf(m, st), id = 'c' + (++uid);
-    var L = lang === 'en' ? { pct: 'Percentage (%)', count: 'Count', n: 'n = ', row: 'Row %', col: 'Column %', resid: 'Adjusted residual' } : { pct: '割合 (%)', count: '人数（人）', n: 'n = ', row: '行の割合 (%)', col: '列の割合 (%)', resid: '調整済み標準化残差' };
+    var L = lang === 'en' ? { pct: 'Percentage (%)', mpct: 'Percentage choosing each option (within each group, %)', count: 'Count', n: 'n = ', row: 'Row %', col: 'Column %', resid: 'Adjusted residual' } : { pct: '割合 (%)', mpct: '選んだ人の割合（グループごと, %）', count: '人数（人）', n: 'n = ', row: '行の割合 (%)', col: '列の割合 (%)', resid: '調整済み標準化残差' };
     var dec = Math.max(0, Math.min(2, isNum(st.labelDec) ? +st.labelDec : 1));
     var omitted = 0, outside = 0, valRange = null;                    // valRange：数値の軸の範囲（箱ひげ図の外れ値を範囲で切るのに使う）                                     // outside：軸の範囲の外にあって描かなかった点の数                                                  // 場所が足りずに書かなかった値のラベルの数（作業ウィンドウで知らせる）
     // 積み上げた棒・円グラフは図の中に空きがないので、凡例を「図の中」にしたときは右に出す（棒や文字と重ねない）
@@ -383,7 +383,7 @@
         // 割合の軸は 100% を超えて伸ばさない（入りきらない値のラベルは棒の中に書く）
         var fixedSc = kind === 'stack100' ? { min: 0, max: 100, step: 20 } : null;
         if (!fixedSc && mode === 'pct' && hi <= 100 && nice(0, hi * headroom, 5).max > 100) fixedSc = { min: 0, max: 100, step: 20 };
-        sc = scaleFor(st, 0, hi * headroom, fixedSc); vAuto = mode === 'pct' ? L.pct : L.count;
+        sc = scaleFor(st, 0, hi * headroom, fixedSc); vAuto = mode === 'pct' ? (m.type === 'multi' ? L.mpct : L.pct) : L.count;
       }
       vTitle = st.vTitle === null || st.vTitle === undefined ? vAuto : st.vTitle;
       cTitle = st.cTitle === null || st.cTitle === undefined ? (m.catTitle || '') : st.cTitle;

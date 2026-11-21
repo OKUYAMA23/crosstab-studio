@@ -1892,6 +1892,7 @@
 "複数回答": "Multiple choice",
 "複数回答で選んだ人が 1% 未満の回答（自由記述）は、最初から「その他」にまとめています。": "For multiple-choice questions, answers chosen by fewer than 1% of respondents (free text) are combined into “Other” from the start. ",
 "複数回答のクロス集計": "Multiple-choice cross-tabulation",
+"複数回答のクロス集計の図で、数値の軸の名前を「選んだ人の割合（グループごと, %）」にし、凡例の上にグループに使った質問の名前を出すようにしました。何に対する割合かが図だけで分かるようにするためです。": "In figures of the cross-tabulation of multiple-response questions, the value axis is now titled “Percentage choosing each option (within each group, %)”, and the legend shows the name of the grouping question, so the figure alone shows what the percentages refer to. ",
 "複数回答の一部の選択肢の検定（3 群以上のフィッシャーの正確確率検定）": "Tests for some options of a multiple-choice question (Fisher's exact test with three or more groups)",
 "複数回答の列が選ばれていません。": "No multiple-choice column is selected. ",
 "複数回答の質問": "Multiple-choice question",
