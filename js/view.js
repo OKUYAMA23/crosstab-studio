@@ -446,11 +446,14 @@
     if (x.numCand && x.type !== 'numeric') return '<div class="md-numfix"><button class="md-btn md-btn-sm" data-act="asNumeric" data-arg="' + x.col + _t('" data-tip="単位や全角文字を直して、数値として読み直します。ヒストグラムや平均の比較に使えるようになります。">数値として読む</button></div>');
     return '';
   }
+  // 「質問の一覧」の種類の欄：その場で種類を選び直せる（スマートフォンでも作業ウィンドウを開かずに変えられるように）
+  var TYPE_OPTS = function () { return [['nominal', _t('単一回答')], ['ordinal', _t('順序あり')], ['multi', _t('複数回答')], ['numeric', _t('数値')], ['time', _t('日時')], ['text', _t('使わない（自由記述など）')]]; };
+  function typeSelect(x) { return '<select class="md-typesel" data-vartype="' + x.col + '" data-tip="' + _t('列の種類を変えます。自動の判定が合わないときに直します。') + '">' + options(TYPE_OPTS(), x.type === 'empty' ? 'text' : x.type) + '</select>'; }
   function varsHtml() {
     var h = _t('<div class="md-page md-wide"><table class="md-vars"><thead><tr><th>列</th><th style="min-width:300px">表示名（図・表・報告書に使う名前）</th><th>質問文</th><th style="min-width:150px">種類</th><th>回答数</th><th>選択肢</th></tr></thead><tbody>');
     S.P.vars.forEach(function (x) {
       if (x.comp) { h += compRow(x); return; }
-      h += '<tr class="' + (S.ui.selVar === x.col ? 'sel' : '') + '" data-varrow="' + x.col + '"><td class="num">' + x.col + '</td><td><input type="text" data-varlabel="' + x.col + '" value="' + esc(x.label) + '"></td><td class="q" data-tip="' + esc(x.header) + '">' + esc(x.header.replace(/\s+/g, ' ')) + '</td><td>' + esc(A.TYPE_NAMES[x.type] || x.type) + '</td><td class="num">' + x.n + '</td><td class="num">' + (A.isCat(x) ? x.cats.length : '–') + numCell(x) + '</td></tr>';
+      h += '<tr class="' + (S.ui.selVar === x.col ? 'sel' : '') + '" data-varrow="' + x.col + '"><td class="num">' + x.col + '</td><td><input type="text" data-varlabel="' + x.col + '" value="' + esc(x.label) + '"></td><td class="q" data-tip="' + esc(x.header) + '">' + esc(x.header.replace(/\s+/g, ' ')) + '</td><td>' + typeSelect(x) + '</td><td class="num">' + x.n + '</td><td class="num">' + (A.isCat(x) ? x.cats.length : '–') + numCell(x) + '</td></tr>';
     });
     return h + '</tbody></table></div>';
   }

@@ -816,7 +816,7 @@
     el = e.target.closest('[data-rtab]'); if (el) { setRtab(el.dataset.rtab); return; }
     el = e.target.closest('[data-view]'); if (el && !el.disabled) { setView(el.dataset.view); return; }
     el = e.target.closest('[data-ordid]'); if (el) { S.ui.ordSel = { key: el.dataset.ordkey, id: el.dataset.ordid }; A.render(); ordFocus(el.dataset.ordkey); return; }
-    el = e.target.closest('[data-varrow]'); if (el && !e.target.closest('input')) { S.ui.selVar = +el.dataset.varrow; S.ui.rtab = 'data'; A.render(); return; }
+    el = e.target.closest('[data-varrow]'); if (el && !e.target.closest('input, select')) { S.ui.selVar = +el.dataset.varrow; S.ui.rtab = 'data'; A.render(); return; }
     el = e.target.closest('.md-merged'); if (el) { var inp = el.parentNode.querySelector('[data-cat$=":label"]'), p = inp.dataset.cat.split(':'), tab = A.curTab(), c = tab.slots[p[0]].cats[+p[1]]; A.commit(function () { c.label = c.v; }, { run: tab.id }); return; }
     el = e.target.closest('.md-figwrap [data-el^="legend:"]'); if (el && !legDragged) pickSeriesColor(+el.getAttribute('data-el').split(':')[1], e.clientX, e.clientY + 8);
     legDragged = false;
@@ -874,6 +874,7 @@
       }
       A.syncResults(); A.render(); return;
     }
+    if (el.dataset.vartype) { var xt = A.v(+el.dataset.vartype); if (!xt) return; S.ui.selVar = xt.col; changeVar(xt, el.value, xt.delim); return; }   // 「質問の一覧」の表で種類を直接変える
     if (el.dataset.var) { var xv = A.v(S.ui.selVar); if (!xv) return; changeVar(xv, el.dataset.var === 'type' ? el.value : xv.type, el.dataset.var === 'delim' ? el.value : xv.delim); return; }
     if (el.dataset.reptext) A.render('chrome');
   });

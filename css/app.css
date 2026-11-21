@@ -385,3 +385,6 @@ body.md-moving, body.md-moving * { cursor: move !important; user-select: none; }
 .md-mkhead { display: flex; gap: 8px; align-items: baseline; margin-bottom: 3px; }
 .md-mksnip { color: var(--ink-sub); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; }
 .md-mkrow .md-in { width: 100%; box-sizing: border-box; margin-top: 4px; }
+
+/* 質問の一覧：種類を選ぶ欄 */
+.md-vars select.md-typesel { width: 100%; min-width: 130px; height: 26px; }
