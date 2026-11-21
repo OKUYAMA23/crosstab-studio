@@ -118,7 +118,12 @@
     for (var v = Math.ceil(mn / step - 1e-9) * step; v <= mx + step * 1e-6; v += step) ticks.push(Math.round(v * 1e6) / 1e6);
     return { min: mn, max: mx, step: step, ticks: ticks };
   }
-  function fmtTick(v) { return String(Math.round(v * 1000) / 1000); }
+  // 目盛りの数値：1,000 以上は 3 桁ごとにコンマを入れる（小数はそのまま）
+  function fmtTick(v) {
+    var s = String(Math.round(v * 1000) / 1000), neg = s.charAt(0) === '-', p = (neg ? s.slice(1) : s).split('.');
+    if (/e/i.test(s)) return s;
+    return (neg ? '-' : '') + p[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (p[1] ? '.' + p[1] : '');
+  }
   function sum(a) { return a.reduce(function (s, v) { return s + (v || 0); }, 0); }
   function maxOf(a) { return a.length ? Math.max.apply(null, a) : 0; }
 
@@ -159,7 +164,7 @@
     var W = Math.max(160, +st.w || 560), H = Math.max(120, +st.h || 340), F = fam(st), o = [], defs = [], kind = kindOf(m, st), id = 'c' + (++uid);
     var L = lang === 'en' ? { pct: 'Percentage (%)', count: 'Count', n: 'n = ', row: 'Row %', col: 'Column %', resid: 'Adjusted residual' } : { pct: '割合 (%)', count: '人数（人）', n: 'n = ', row: '行の割合 (%)', col: '列の割合 (%)', resid: '調整済み標準化残差' };
     var dec = Math.max(0, Math.min(2, isNum(st.labelDec) ? +st.labelDec : 1));
-    var omitted = 0;                                                  // 場所が足りずに書かなかった値のラベルの数（作業ウィンドウで知らせる）
+    var omitted = 0, outside = 0;                                     // outside：軸の範囲の外にあって描かなかった点の数                                                  // 場所が足りずに書かなかった値のラベルの数（作業ウィンドウで知らせる）
     // 積み上げた棒・円グラフは図の中に空きがないので、凡例を「図の中」にしたときは右に出す（棒や文字と重ねない）
     if ((kind === 'stack100' || kind === 'stack' || kind === 'pie') && (st.legend === 'inTR' || st.legend === 'inTL')) st.legend = 'right';
     // 複数の設問の単純集計：集合棒は「横軸＝回答、色＝設問」、それ以外は「行＝設問、色＝回答」にする
@@ -312,7 +317,7 @@
     var cTitle, vTitle, plot;
     if (kind === 'heat') drawHeat(); else if (kind === 'scatter') drawScatter(); else if (kind === 'pie') drawPie(); else if (kind === 'hist') drawHist(); else if (kind === 'map') drawMap(); else if (kind === 'cloud') drawCloud(); else if (kind === 'net') drawNet(); else drawAxes();
     drawLegend(plot);
-    return { svg: '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">' + (defs.length ? '<defs>' + defs.join('') + '</defs>' : '') + o.join('') + '</svg>', w: W, h: H, kind: kind, omitted: omitted };
+    return { svg: '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">' + (defs.length ? '<defs>' + defs.join('') + '</defs>' : '') + o.join('') + '</svg>', w: W, h: H, kind: kind, omitted: omitted, outside: outside };
 
     function frameAndAxes(x0, y0, x1, y1) {
       if (st.frame === 'box') { line(x0, y0, x1, y0, st.lwAxis); line(x1, y0, x1, y1, st.lwAxis); }
@@ -569,22 +574,24 @@
       o.push('</g>');
     }
     function drawScatter() {
-      var sx = nice(Math.min.apply(null, m.x), Math.max.apply(null, m.x), 5), sy = scaleFor(st, 0, 0, nice(Math.min.apply(null, m.y), Math.max.apply(null, m.y), 5));
+      var sx = scaleFor({ min: st.xMin, max: st.xMax, step: st.xStep }, 0, 0, nice(Math.min.apply(null, m.x), Math.max.apply(null, m.x), 5)), sy = scaleFor(st, 0, 0, nice(Math.min.apply(null, m.y), Math.max.apply(null, m.y), 5));
       vTitle = st.vTitle === null || st.vTitle === undefined ? (m.yTitle || '') : st.vTitle; cTitle = st.cTitle === null || st.cTitle === undefined ? (m.xTitle || '') : st.cTitle;
       var tickW = maxOf(sy.ticks.map(function (t) { return tw(fmtTick(t), st.fsTick, st); }));
       var sL = aLines(vTitle, H - top - bottom - 60), bL = aLines(cTitle, W - left - right - 40);
       var x0 = left + aRes(sL) + tickW + tickPad + 4, x1 = W - right - 6, y0 = top + 6, y1 = H - bottom - (st.fsTick + tickPad + 4) - aRes(bL);
       if (x1 - x0 < 30) x1 = x0 + 30; if (y1 - y0 < 30) y1 = y0 + 30; plot = { x0: x0, y0: y0, x1: x1, y1: y1 };
       function px(v) { return x0 + (v - sx.min) / (sx.max - sx.min) * (x1 - x0); } function py(v) { return y1 - (v - sy.min) / (sy.max - sy.min) * (y1 - y0); }
-      var showY = thin(sy.ticks, (y1 - y0) / Math.max(1, sy.ticks.length - 1), function () { return st.fsTick; }), xt = [];
-      for (var v = sx.min; v <= sx.max + sx.step * 1e-6; v += sx.step) xt.push(Math.round(v * 1e6) / 1e6);
+      var showY = thin(sy.ticks, (y1 - y0) / Math.max(1, sy.ticks.length - 1), function () { return st.fsTick; }), xt = sx.ticks;
       var showX = thin(xt, (x1 - x0) / Math.max(1, xt.length - 1), function (t) { return tw(fmtTick(t), st.fsTick, st); });
       sy.ticks.forEach(function (t, i) { if (gridOn && t > sy.min) line(x0, py(t), x1, py(t), st.lwGrid, st.gridColor, gridDash); tick(x0, py(t), false); if (showY(i)) T(x0 - tickPad, py(t) + st.fsTick * 0.35, fmtTick(t), { anchor: 'end' }); });
       xt.forEach(function (t, i) { tick(px(t), y1, true); if (showX(i)) T(px(t), y1 + tickPad + st.fsTick * 0.85, fmtTick(t), { anchor: 'middle' }); });
       var col = fillOf(seriesColors(['pt'], st)[0]);
-      m.x.forEach(function (xv, i) { o.push('<circle cx="' + r1(px(xv)) + '" cy="' + r1(py(m.y[i])) + '" r="3" fill="' + col + '" fill-opacity="0.55" stroke="#000000" stroke-width="' + Math.min(0.5, st.lwBar) + '"/>'); });
+      m.x.forEach(function (xv, i) {                                              // 軸の範囲の外の点は描かずに数える（作業ウィンドウで知らせる）
+        var yv = m.y[i]; if (xv < sx.min - 1e-9 || xv > sx.max + 1e-9 || yv < sy.min - 1e-9 || yv > sy.max + 1e-9) { outside++; return; }
+        o.push('<circle cx="' + r1(px(xv)) + '" cy="' + r1(py(yv)) + '" r="3" fill="' + col + '" fill-opacity="0.55" stroke="#000000" stroke-width="' + Math.min(0.5, st.lwBar) + '"/>');
+      });
       if (m.fit && m.fit.length === 2) {                                         // 回帰直線（表示する範囲で切る）
-        var xa = Math.min.apply(null, m.x), xb = Math.max.apply(null, m.x), ya = m.fit[0] + m.fit[1] * xa, yb = m.fit[0] + m.fit[1] * xb;
+        var xa = Math.max(sx.min, Math.min.apply(null, m.x)), xb = Math.min(sx.max, Math.max.apply(null, m.x)), ya = m.fit[0] + m.fit[1] * xa, yb = m.fit[0] + m.fit[1] * xb;
         var clip = function (yv) { return Math.max(sy.min, Math.min(sy.max, yv)); };
         if (Math.abs(m.fit[1]) > 1e-12) { var xa2 = (clip(ya) - m.fit[0]) / m.fit[1], xb2 = (clip(yb) - m.fit[0]) / m.fit[1]; xa = Math.max(xa, Math.min(xa2, xb2)); xb = Math.min(xb, Math.max(xa2, xb2)); }
         line(px(xa), py(m.fit[0] + m.fit[1] * xa), px(xb), py(m.fit[0] + m.fit[1] * xb), Math.max(1.2, st.lwAxis * 1.5), '#C00000');

@@ -772,7 +772,10 @@
     if (heat) h += sec(_t('カラーバー（色と値の対応）'), fSelect(_t('色を決める値'), 'fig.heatBy', HEAT_BY.slice(1).filter(function (x) { return x[0] !== 'resid' || m.resid; })), _t('<div class="md-sub">位置</div>{0}<div class="md-sub">形</div>', tiles('fig.bar', fromMini('bar', [['right', _t('右')], ['bottom', _t('下')], ['none', _t('なし')]]))) + tiles('fig.barShape', fromMini('barShape', [['smooth', _t('なめらか')], ['step', _t('5 段階')]])));
     else if (pie) { if (ser.length > 1) h += sec(_t('凡例'), hint(_t('図の上の凡例をドラッグしても動かせます。')), _t('<div class="md-sub">位置</div>') + tiles('fig.legend', fromMini('leg', LEG_POS.filter(function (x) { return x[0] !== 'inTR' && x[0] !== 'inTL'; }))), legOpts()); }
     else {
-      h += sec(_t('目盛り'), grid3(fText(_t('最小'), 'fig.min', { type: 'numnull', ph: _t('自動') }), fText(_t('最大'), 'fig.max', { type: 'numnull', ph: _t('自動') }), fText(_t('間隔'), 'fig.step', { type: 'numnull', ph: _t('自動') })),
+      var scat = kind === 'scatter', outN = scat ? Chart.render(m, st, S.P.settings.figLang).outside : 0;
+      h += sec(_t('目盛り'), (scat ? '<div class="md-sub">' + _t('縦軸') + '</div>' : '') + grid3(fText(_t('最小'), 'fig.min', { type: 'numnull', ph: _t('自動') }), fText(_t('最大'), 'fig.max', { type: 'numnull', ph: _t('自動') }), fText(_t('間隔'), 'fig.step', { type: 'numnull', ph: _t('自動') })) +
+        (scat ? '<div class="md-sub">' + _t('横軸') + '</div>' + grid3(fText(_t('最小'), 'fig.xMin', { type: 'numnull', ph: _t('自動') }), fText(_t('最大'), 'fig.xMax', { type: 'numnull', ph: _t('自動') }), fText(_t('間隔'), 'fig.xStep', { type: 'numnull', ph: _t('自動') })) : '') +
+        (outN ? hint(_t('軸の範囲の外にある {0} 個の点は描いていません。計算には含めています。', outN)) : ''),
         _t('<div class="md-sub">目盛りの向き</div>{0}<div class="md-sub">目盛線</div>', tiles('fig.tickDir', fromMini('tick', [['out', _t('外向き')], ['in', _t('内向き')], ['none', _t('なし')]]))) + tiles('fig.grid', fromMini('grid', [['solid', _t('実線')], ['dash', _t('破線')], ['dot', _t('点線')], ['none', _t('なし')]])) +
         grid2(fText(_t('目盛りの長さ'), 'fig.tickLen', { type: 'num' }), fColor(_t('目盛線の色'), 'fig.gridColor')),
         hint(_t('範囲の空欄は自動です。数値の文字が重なるときは、自動で間引きます。')));
